@@ -8,6 +8,14 @@
 \description{
 Internal package declarations for NSE checks.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/PrigasG/explodemap}
+  \item Report bugs at \url{https://github.com/PrigasG/explodemap/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: George Arthur \email{prigasgenthian48@gmail.com}
 

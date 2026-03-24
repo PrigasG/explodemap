@@ -2,40 +2,40 @@
 
 ## New features
 
-* Three-level grouped layout engine via `explode_grouped()`, supporting
-  `"auto"`, `"auto_collision"`, and `"manual"` anchor modes (Section 12
-  of the paper).
-* `layout_regions()` computes anchor positions as a standalone step for
-  custom workflows.
-* `estimate_block_radii()` estimates per-region block radii using the
-  85th percentile of unit-to-centroid distances.
-* `export_topojson()` exports exploded maps as TopoJSON via external
-  `mapshaper` CLI tool (optional, requires `npm install -g mapshaper`).
-* `summary.grouped_exploded_map()` provides full diagnostic output
-  including Level 1 parameters, anchor parameters, and block radii.
-* `fmt_dist()` internal helper for adaptive km/m formatting in print
-  output (fixes "0 km" display on small test geometries).
+* Added a three-level grouped layout engine via `explode_grouped()`,
+  supporting `"auto"`, `"auto_collision"`, and `"manual"` anchor modes
+  for multi-region and national-scale layouts.
+* Added `layout_regions()` to compute region anchors as a standalone step
+  for custom grouped-layout workflows.
+* Added `estimate_block_radii()` to estimate per-region block radii using
+  the 85th percentile of unit-to-centroid distances.
+* Added `export_topojson()` for optional TopoJSON export via the external
+  `mapshaper` CLI tool, for downstream tools such as Power BI.
+* Added `summary.grouped_exploded_map()` for grouped-layout diagnostics,
+  including local displacement parameters, anchor parameters, and block
+  radii.
 
 ## Improvements
 
-* All centroid operations now use `st_geometry()` to avoid sf attribute
-  warnings. Shared `centroid_geoms()` helper used throughout.
-* `compute_stats()` accepts `centroid_fun` parameter for consistent
-  centroid semantics across stats and displacement.
-* `validate_input()` returns visibly (not `invisible()`).
-* `explode_sf_core()` demoted to internal (`@keywords internal`).
-* Grouped class inheritance: `c("grouped_exploded_map", "exploded_map", "list")`.
-* Duplicate S3 methods removed from `grouped.R`; all methods live in
-  `methods.R`.
-* Direction comments in `core.R` corrected: "Cs → Cr" and "Cr → Ci".
-* Variable naming in `methods.R` standardised: `params` not `p`.
+* Centroid handling was refactored throughout the package to avoid `sf`
+  attribute warnings during centroid calculations.
+* `compute_stats()` now accepts `centroid_fun` so geometry statistics and
+  displacement use the same centroid semantics.
+* Grouped objects now inherit from both `grouped_exploded_map` and
+  `exploded_map`, improving method consistency.
+* Grouped S3 methods were consolidated and cleaned up for more consistent
+  printing, plotting, and summary output.
+* Distance formatting in diagnostic output now adapts between metres and
+  kilometres, improving readability for both small synthetic examples and
+  real-world datasets.
+* `validate_input()` now returns visibly, making repaired geometries less
+  fragile in internal workflows.
 
 ## Documentation
 
-* Three vignettes: getting-started, grouped-layouts,
-  reproducing-paper-examples.
-* `pkgdown` site configuration with hex logo.
-* `R/explodemap-package.R` added for `.data` pronoun import.
+* Added three vignettes: getting started, grouped layouts, and paper
+  replication.
+* Added pkgdown site configuration and GitHub Pages support.
 
 ---
 
@@ -43,15 +43,18 @@
 
 ## Initial release
 
-* Core two-level displacement engine (`explode_sf_core()`).
-* Three public entry points: `explode_sf()`, `explode_sf_with_lookup()`,
-  `explode_state()`.
-* Analytical parameter derivation via `derive_params()` implementing
-  Analytical Results 1 and 2.
-* Geometry statistics via `compute_stats()`.
-* S3 class `exploded_map` with `print()`, `plot()`, `summary()` methods.
-* `calibration_row()` for cross-dataset calibration tables.
-* TIGER/Line download and caching via `explode_state()`.
-* State registry with NJ, PA, OH, NY configurations.
-* Example scripts for cross-state calibration, Canada validation, and
-  HHS grouped layout.
+* Added the core two-level displacement engine for exploded-view
+  cartography of dense administrative boundary data.
+* Added three public entry points: `explode_sf()`,
+  `explode_sf_with_lookup()`, and `explode_state()`.
+* Added analytical parameter derivation via `derive_params()`,
+  implementing Analytical Results 1 and 2.
+* Added geometry statistics via `compute_stats()`.
+* Added the `exploded_map` S3 class with `print()`, `plot()`, and
+  `summary()` methods.
+* Added `calibration_row()` for cross-dataset calibration tables.
+* Added TIGER/Line download and caching support via `explode_state()`.
+* Added a state registry with New Jersey, Pennsylvania, Ohio, and New
+  York configurations.
+* Added example workflows for cross-state calibration, Canada
+  validation, and HHS grouped layouts.

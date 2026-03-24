@@ -1,63 +1,107 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
 
+# explodemap <img src="man/figures/logo.png" alt="explodemap logo" align="right" height="139"/>
 
-# explodemap
+<!-- badges: start -->
 
-Hierarchical exploded-view cartography for dense administrative maps.
+[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/george-arthur/explodemap)
+[![License:
+MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-A deterministic, O(n) framework for generating exploded-view maps that
-separate geographic units using a hierarchical centroid-driven displacement
-field while preserving each feature's geometry exactly.
+<!-- badges: end -->
 
-Implements the methodology from:
+`explodemap` provides tools for hierarchical exploded-view cartography
+of dense administrative boundary data.
 
-> Arthur, G. "A Hierarchical Vector-Based Framework for Multi-Scale
+The package generates exploded maps by applying rigid-body translations
+to polygon geometries, separating units within and across regions while
+preserving each feature's internal geometry exactly. It supports both
+the two-level core workflow described in the paper and a three-level
+grouped layout extension for larger multi-region or national displays.
+
+The methodology implemented here is described in:
+
+> Arthur, G. *A Hierarchical Vector-Based Framework for Multi-Scale
 > Exploded-View Cartography: Centroid-Driven Spatial Displacement for
-> Dense Administrative Maps."
+> Dense Administrative Maps.*
 
 ## Installation
 
-```r
-# From source
+``` r
+# Install from a local package source directory
 devtools::install_local("path/to/explodemap")
 
 # Or install from a tarball
 install.packages("explodemap_0.2.0.tar.gz", repos = NULL, type = "source")
 ```
 
+## What the package does
+
+`explodemap` supports three main workflows:
+
+-   explode any projected sf polygon dataset using a grouping column
+-   explode U.S. municipal or county subdivision data directly from
+    TIGER/Line via explode_state()
+-   generate three-level grouped layouts for national or multi-region
+    displays using explode_grouped()
+
+The package also includes analytical parameter derivation, cross-dataset
+calibration helpers, and optional TopoJSON export for downstream tools
+such as Power BI.
+
 ## Quick start
 
-```r
+``` r
 library(sf)
 library(explodemap)
 
-# Four squares in two regions
-sq <- function(xmin, ymin, size = 1) {
+sq <- function(xmin, ymin, size = 1000) {
   st_polygon(list(matrix(
-    c(xmin, ymin, xmin+size, ymin, xmin+size, ymin+size, xmin, ymin+size, xmin, ymin),
-    ncol = 2, byrow = TRUE)))
+    c(
+      xmin, ymin,
+      xmin + size, ymin,
+      xmin + size, ymin + size,
+      xmin, ymin + size,
+      xmin, ymin
+    ),
+    ncol = 2,
+    byrow = TRUE
+  )))
 }
 
-x <- st_sf(
-  id     = c("a1", "a2", "b1", "b2"),
-  region = c("A", "A", "B", "B"),
-  geometry = st_sfc(sq(0,0), sq(2,0), sq(10,0), sq(12,0), crs = 3857)
+geom <- st_sfc(
+  sq(0, 0), sq(3000, 0),      # Region A
+  sq(12000, 0), sq(15000, 0), # Region B
+  crs = 3857
 )
 
-result <- explode_sf(x, region_col = "region")
+x <- st_sf(
+  id = c("a1", "a2", "b1", "b2"),
+  region = c("A", "A", "B", "B"),
+  geometry = geom
+)
+
+result <- explode_sf(x, region_col = "region", plot = FALSE)
+
+print(result)
 plot(result, "both")
 ```
 
-## Three entry points
+## Core entry points
 
-### 1. Any sf object with a grouping column
+### Explode any projected `sf` object
 
-```r
+``` r
 result <- explode_sf(my_sf, region_col = "district")
 ```
 
-### 2. US state from TIGER/Line
+### Explode a US state from TIGER/Line
 
-```r
+``` r
 nj <- explode_state(
   state_fips = "34", crs = 32118,
   region_map = list(
@@ -70,21 +114,23 @@ nj <- explode_state(
 )
 ```
 
-### 3. External lookup table
+### Explode using an external lookup table
 
-```r
+``` r
 groups <- read.csv("region_assignments.csv")
+
 result <- explode_sf_with_lookup(
   my_sf, join_col = "GEOID", lookup = groups,
   lookup_key = "geoid", region_col = "region"
 )
 ```
 
-## Three-level grouped layouts
+## Grouped layouts
 
-For national-scale displays with region blocks (e.g., HHS regions):
+For larger layouts where region blocks need to be separated at an
+additional level, `use explode_grouped()`:
 
-```r
+``` r
 result <- explode_grouped(
   states_sf, region_col = "hhs_region",
   mode = "auto_collision",
@@ -92,12 +138,21 @@ result <- explode_grouped(
 )
 ```
 
-Anchor modes: `"auto"` (radial placement), `"auto_collision"` (radial +
-spring-repulsion solver), `"manual"` (user-supplied positions).
+Anchor modes:
 
-## S3 methods
+-   `"auto"`: radial anchor placement
+-   `"auto_collision"`: radial placement with iterative collision-aware
+    refinement
+-   `"manual"`: user-supplied positions
 
-```r
+## Working with results
+
+Two-level outputs are returned as exploded_map objects. Grouped layouts
+are returned as grouped_exploded_map objects.
+
+Common methods and helpers include:
+
+``` r
 print(result)           # Geometry stats and parameters
 summary(result)         # Full diagnostic with implied gammas
 plot(result)            # Exploded map
@@ -105,48 +160,77 @@ plot(result, "both")    # Original + exploded
 calibration_row(result) # One-row data.frame for calibration tables
 ```
 
+Grouped layouts also support:
+
+``` r
+plot(result, "all")       # original + local + grouped
+```
+
 ## Mathematical guarantees
 
+For the two-level core workflow, the package implements the analytical
+parameter formulas described in the paper:
+
+-   alpha_r = gamma_r \* w_bar / (2 \* sin(pi / n_regions))
+-   alpha_l = gamma_l \* 2 \* R_local / sqrt(n_bar)
+
+Default coefficients are:
+
+-   gamma_r = 3.0
+-   gamma_l = 1.136
+-   p = 1.25
+
+All geometric quantities other than the gamma coefficients are computed
+from the dataset itself. The gamma coefficients are dimensionless
+legibility constants calibrated on New Jersey and validated across
+multiple U.S. states and a Canada example.
+
+For the two-level core, the paper states three key properties:
+
 | Property | Guarantee | Scope |
-|----------|-----------|-------|
+|----|----|----|
 | **Proposition 1** | Internal geometry preserved exactly (rigid translation) | Per feature |
 | **Proposition 2** | Radial ordering within regions preserved | Per region |
 | **Proposition 3** | Max displacement bounded by α_r + α_l | Global |
+
+The grouped three-level extension preserves structural grouping and
+directional correspondence at higher levels rather than topological
+coverage.
 
 ## Parameters
 
 Two-level parameters derived automatically via Analytical Results 1–2:
 
-- `alpha_r = gamma_r * w_bar / (2 * sin(pi / n_regions))` — regional separation
-- `alpha_l = gamma_l * 2 * R_local / sqrt(n_bar)` — local expansion
+-   `alpha_r = gamma_r * w_bar / (2 * sin(pi / n_regions))` — regional
+    separation
+-   `alpha_l = gamma_l * 2 * R_local / sqrt(n_bar)` — local expansion
 
 Defaults: `gamma_r = 3.0`, `gamma_l = 1.136`, `p = 1.25`
 
-All quantities except `gamma_r` and `gamma_l` are computed from the dataset
-geometry. The gamma coefficients are dimensionless legibility constants
-calibrated on NJ and validated across multiple US states and Canada.
+All quantities except `gamma_r` and `gamma_l` are computed from the
+dataset geometry. The gamma coefficients are dimensionless legibility
+constants calibrated on NJ and validated across multiple US states and
+Canada.
 
-## Package structure
+## Export
 
+`explodemap` can optionally export `TopoJSON` through the external
+`mapshaper` command-line tool:
+
+``` r
+export_topojson(result, "exploded.topojson")
 ```
-R/
-  core.R      — Validation, stats, parameter derivation, displacement engine
-  api.R       — Three public entry points + internal runner + S3 constructor
-  grouped.R   — Three-level grouped layout engine (Section 12)
-  methods.R   — print/plot/summary/calibration_row for S3 objects
-  plot.R      — ggplot rendering helpers
-  tiger.R     — TIGER/Line download, caching, region attachment
-inst/
-  registries/ — State registry with known-good values (NJ, PA, OH, NY)
-  examples/   — Cross-state calibration, Canada validation, HHS grouped layout
-vignettes/
-  getting-started.Rmd  — Two-level core workflow
-  grouped-layouts.Rmd  — Three-level anchor-based extension
+
+This is useful for downstream tools such as Power BI. To use it, install
+mapshaper separately:
+
+``` bash
+npm install -g mapshaper
 ```
 
 ## Vignettes
 
-```r
+``` r
 vignette("getting-started", package = "explodemap")
 vignette("grouped-layouts", package = "explodemap")
 ```
@@ -155,5 +239,5 @@ vignette("grouped-layouts", package = "explodemap")
 
 If you use this package in academic work, please cite:
 
-> Arthur, G. (2026). A hierarchical vector-based framework for multi-scale
-> exploded-view cartography. *Working paper*.
+> Arthur, G. (2026). A hierarchical vector-based framework for
+> multi-scale exploded-view cartography. *Working paper*.

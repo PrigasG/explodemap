@@ -1,4 +1,7 @@
-url: https://george-arthur.github.io/explodemap/
+url: https://prigasg.github.io/explodemap/
+
+development:
+  mode: auto
 
 template:
   bootstrap: 5
@@ -9,11 +12,12 @@ template:
     btn-border-radius: 0.25rem
 
 home:
-  title: "explodemap — Hierarchical Exploded-View Cartography"
+  title: "explodemap"
   description: >
-    A deterministic, O(n) framework for generating exploded-view maps of
-    dense administrative boundaries. Preserves each feature's geometry
-    exactly through rigid-body translation.
+    Tools for hierarchical exploded-view cartography of dense
+    administrative boundary data. The package supports deterministic
+    two-level exploded maps, grouped multi-region layouts, analytical
+    parameter derivation, and export workflows for downstream mapping.
   sidebar:
     structure: [links, license, community, dev]
 
@@ -24,11 +28,11 @@ figures:
 
 navbar:
   structure:
-    left:  [intro, reference, articles]
+    left: [intro, reference, articles, news]
     right: [search, github]
   components:
     intro:
-      text: Get Started
+      text: Get started
       href: articles/getting-started.html
     reference:
       text: Reference
@@ -38,61 +42,59 @@ navbar:
       menu:
         - text: "Getting started"
           href: articles/getting-started.html
-        - text: "Grouped layouts"
+        - text: "Grouped layouts and anchor placement"
           href: articles/grouped-layouts.html
         - text: "---"
-        - text: "Reproducing paper examples"
+        - text: "Reproducing the paper examples"
           href: articles/reproducing-paper-examples.html
+    news:
+      text: News
+      href: news/index.html
     github:
-      icon: fa-github
-      href: https://github.com/george-arthur/explodemap
+      icon: fab fa-github
+      href: https://github.com/PrigasG/explodemap
       aria-label: GitHub
 
 reference:
-  - title: "Core API — Two-Level Displacement"
+  - title: "Core workflow"
     desc: >
-      The primary entry points for generating exploded-view maps.
-      These functions handle data loading, parameter derivation,
-      displacement, and output in a single call.
+      Main entry points for generating two-level exploded-view maps from
+      projected sf data or state-level TIGER/Line inputs.
     contents:
       - explode_sf
       - explode_sf_with_lookup
       - explode_state
 
-  - title: "Grouped Layouts — Three-Level Extension"
+  - title: "Grouped layouts"
     desc: >
-      Functions for national-scale grouped layouts with anchor-based
-      region block placement and optional collision-aware refinement.
+      Functions for three-level grouped layouts with anchor placement and
+      optional collision-aware refinement.
     contents:
       - explode_grouped
       - layout_regions
+      - estimate_block_radii
 
-  - title: "Parameter Derivation and Calibration"
+  - title: "Statistics and calibration"
     desc: >
-      Tools for computing geometry statistics, deriving displacement
-      parameters from Analytical Results 1–2, and building cross-dataset
-      calibration tables.
+      Tools for computing geometry statistics, deriving parameters, and
+      building calibration summaries across datasets.
     contents:
       - compute_stats
       - derive_params
       - calibration_row
 
-  - title: "Export"
+  - title: "Export and cache helpers"
     desc: >
-      Optional export helpers for downstream tools.
+      Optional export helpers and cache management utilities.
     contents:
       - export_topojson
-
-  - title: "Cache Management"
-    desc: >
-      Manage locally cached TIGER/Line downloads.
-    contents:
-      - cache_clear
       - cache_list
+      - cache_clear
 
-  - title: "S3 Methods"
+  - title: "Methods"
     desc: >
-      Print, plot, and summary methods for exploded map objects.
+      S3 methods for printing, plotting, summarising, and extracting
+      tabular results from exploded map objects.
     contents:
       - print.exploded_map
       - plot.exploded_map
@@ -102,16 +104,16 @@ reference:
       - summary.grouped_exploded_map
 
 articles:
-  - title: "Getting Started"
+  - title: "Get started"
     navbar: ~
     contents:
       - getting-started
 
-  - title: "Advanced Usage"
+  - title: "Grouped layouts"
     contents:
       - grouped-layouts
 
-  - title: "Paper Replication"
+  - title: "Paper replication"
     contents:
       - reproducing-paper-examples
 
