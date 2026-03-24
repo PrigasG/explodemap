@@ -1,0 +1,121 @@
+url: https://george-arthur.github.io/explodemap/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    primary: "#2166ac"
+    border-radius: 0.25rem
+    btn-border-radius: 0.25rem
+
+home:
+  title: "explodemap — Hierarchical Exploded-View Cartography"
+  description: >
+    A deterministic, O(n) framework for generating exploded-view maps of
+    dense administrative boundaries. Preserves each feature's geometry
+    exactly through rigid-body translation.
+  sidebar:
+    structure: [links, license, community, dev]
+
+figures:
+  dev: ragg::agg_png
+  dpi: 150
+  fig.ext: png
+
+navbar:
+  structure:
+    left:  [intro, reference, articles]
+    right: [search, github]
+  components:
+    intro:
+      text: Get Started
+      href: articles/getting-started.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    articles:
+      text: Articles
+      menu:
+        - text: "Getting started"
+          href: articles/getting-started.html
+        - text: "Grouped layouts"
+          href: articles/grouped-layouts.html
+        - text: "---"
+        - text: "Reproducing paper examples"
+          href: articles/reproducing-paper-examples.html
+    github:
+      icon: fa-github
+      href: https://github.com/george-arthur/explodemap
+      aria-label: GitHub
+
+reference:
+  - title: "Core API — Two-Level Displacement"
+    desc: >
+      The primary entry points for generating exploded-view maps.
+      These functions handle data loading, parameter derivation,
+      displacement, and output in a single call.
+    contents:
+      - explode_sf
+      - explode_sf_with_lookup
+      - explode_state
+
+  - title: "Grouped Layouts — Three-Level Extension"
+    desc: >
+      Functions for national-scale grouped layouts with anchor-based
+      region block placement and optional collision-aware refinement.
+    contents:
+      - explode_grouped
+      - layout_regions
+
+  - title: "Parameter Derivation and Calibration"
+    desc: >
+      Tools for computing geometry statistics, deriving displacement
+      parameters from Analytical Results 1–2, and building cross-dataset
+      calibration tables.
+    contents:
+      - compute_stats
+      - derive_params
+      - calibration_row
+
+  - title: "Export"
+    desc: >
+      Optional export helpers for downstream tools.
+    contents:
+      - export_topojson
+
+  - title: "Cache Management"
+    desc: >
+      Manage locally cached TIGER/Line downloads.
+    contents:
+      - cache_clear
+      - cache_list
+
+  - title: "S3 Methods"
+    desc: >
+      Print, plot, and summary methods for exploded map objects.
+    contents:
+      - print.exploded_map
+      - plot.exploded_map
+      - summary.exploded_map
+      - print.grouped_exploded_map
+      - plot.grouped_exploded_map
+      - summary.grouped_exploded_map
+
+articles:
+  - title: "Getting Started"
+    navbar: ~
+    contents:
+      - getting-started
+
+  - title: "Advanced Usage"
+    contents:
+      - grouped-layouts
+
+  - title: "Paper Replication"
+    contents:
+      - reproducing-paper-examples
+
+footer:
+  structure:
+    left: developed_by
+    right: built_with

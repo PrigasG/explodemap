@@ -1,0 +1,250 @@
+---
+title: "Getting started with explodemap"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with explodemap}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+## Overview
+
+`explodemap` generates hierarchical exploded-view maps for dense
+administrative boundary data. It applies rigid-body translations to
+polygon geometries so that features are visually separated while each
+feature's internal geometry is preserved exactly.
+
+The basic two-level workflow is:
+
+1. Group units into regions using a column in your data.
+2. Displace units within and across those regions using a centroid-driven
+   vector field with analytically derived parameters.
+
+For the two-level core described in the paper, the package is designed
+to satisfy three key properties:
+
+- **Proposition 1:** each polygon's shape, area, perimeter, and topology
+  are preserved exactly.
+- **Proposition 2:** the radial ordering of units within each region is
+  preserved.
+- **Proposition 3:** no unit is displaced by more than
+  `alpha_r + alpha_l` metres.
+
+## Input requirements
+
+`explodemap` expects an `sf` object with:
+
+- Polygon or multipolygon geometries
+- A grouping column identifying the parent region for each unit
+- A **projected** CRS with linear metre units
+
+Geographic coordinates such as EPSG:4326 (longitude/latitude) must be
+transformed before use. For U.S. work, a state plane, UTM, or Albers-type
+projected CRS is usually appropriate.
+
+```{r setup}
+library(sf)
+library(explodemap)
+```
+
+## A minimal example
+
+We create a small synthetic dataset with four square polygons in two
+regions.
+
+```{r synthetic-data}
+sq <- function(xmin, ymin, size = 1000) {
+  st_polygon(list(matrix(
+    c(xmin, ymin,
+      xmin + size, ymin,
+      xmin + size, ymin + size,
+      xmin, ymin + size,
+      xmin, ymin),
+    ncol = 2,
+    byrow = TRUE
+  )))
+}
+
+geom <- st_sfc(
+  sq(0, 0), sq(3000, 0),       # Region A
+  sq(12000, 0), sq(15000, 0),  # Region B
+  crs = 3857
+)
+
+x <- st_sf(
+  id     = c("a1", "a2", "b1", "b2"),
+  region = c("A", "A", "B", "B"),
+  geometry = geom
+)
+
+x
+```
+
+## Running the explosion
+
+The simplest entry point is `explode_sf()`. Pass your sf object and the
+name of the grouping column:
+
+```{r explode-basic}
+result <- explode_sf(x, region_col = "region", plot = FALSE)
+```
+
+The returned object is an S3 object of class `exploded_map`:
+
+```{r class-check}
+class(result)
+names(result)
+```
+
+It contains the original and exploded geometries, a WGS84 export-ready
+version, derived statistics and parameters, plots, and diagnostics.
+
+## Diagnostics
+
+`print()` shows geometry statistics and derived parameters:
+
+```{r print}
+print(result)
+```
+
+`summary()` adds implied gamma coefficients that are useful for
+calibration work:
+
+```{r summary}
+summary(result)
+```
+
+## Plotting
+
+```{r plot-exploded}
+plot(result)
+```
+
+You can also view both original and exploded layouts side by side:
+
+```{r plot-both, fig.width = 10}
+plot(result, "both")
+```
+
+## Calibration output
+
+`calibration_row()` returns a one-row data frame suitable for combining
+across datasets when building a cross-dataset calibration table:
+
+```{r calibration}
+calibration_row(result)
+```
+
+## Manual parameter overrides
+
+By default, `explodemap` derives displacement parameters analytically
+from dataset geometry using the paper's two closed-form results. You can
+also supply parameters directly:
+
+```{r manual}
+manual <- explode_sf(
+  x,
+  region_col = "region",
+  alpha_r = 100,
+  alpha_l = 200,
+  plot = FALSE
+)
+
+manual$params
+```
+
+## Centroid options
+
+For irregular or multipart polygons, `"point_on_surface"` may be
+preferable to the default geometric centroid:
+
+```{r centroid-mode}
+pos <- explode_sf(
+  x,
+  region_col = "region",
+  centroid_fun = "point_on_surface",
+  plot = FALSE
+)
+```
+
+## Using TIGER/Line data for U.S. states
+
+`explode_state()` downloads U.S. Census TIGER/Line boundaries
+automatically and groups municipalities by a county-to-region mapping:
+
+```{r tiger-example, eval = FALSE}
+nj <- explode_state(
+  state_fips = "34", crs = 32118,
+  region_map = list(
+    North   = c("Bergen", "Essex", "Hudson", "Morris",
+                "Passaic", "Sussex", "Union", "Warren"),
+    Central = c("Hunterdon", "Mercer", "Middlesex",
+                "Monmouth", "Somerset"),
+    South   = c("Atlantic", "Burlington", "Camden", "Cape May",
+                "Cumberland", "Gloucester", "Ocean", "Salem")
+  ),
+  label = "New Jersey"
+)
+```
+
+Downloaded data is cached locally so subsequent runs are faster.
+
+## Using a lookup table
+
+`explode_sf_with_lookup()` joins an external lookup table to your sf
+object before exploding:
+
+```{r lookup-example, eval = FALSE}
+groups <- read.csv("region_assignments.csv")
+
+result <- explode_sf_with_lookup(
+  my_sf,
+  join_col   = "GEOID",
+  lookup     = groups,
+  lookup_key = "geoid",
+  region_col = "region"
+)
+```
+
+Unmatched units are labelled `"Other"`. This is useful when a lookup
+table is incomplete. You can include or exclude those units using
+`allow_other`.
+
+## Export
+
+The `export` parameter supports three modes:
+
+- `NULL` (default): no export
+- `TRUE`: auto-named GeoJSON file
+- A file path string: explicit output location
+
+```{r export-example, eval = FALSE}
+result <- explode_sf(
+  my_sf,
+  region_col = "region",
+  export = "output.geojson"
+)
+```
+
+## Notes
+
+- Always use a projected CRS before running the algorithm.
+- The two-level core preserves each feature's internal geometry exactly
+  through rigid-body translation.
+- Parameter derivation is deterministic and reproducible: the same
+  dataset and gamma coefficients always produce the same output.
+
+## Next steps
+
+See `vignette("grouped-layouts")` for the three-level extension using
+`explode_grouped()`, which adds region-block anchor placement for larger
+multi-region or national layouts.
