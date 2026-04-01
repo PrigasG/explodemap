@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # explodemap <img src="man/figures/logo.png" alt="explodemap logo" align="right" height="139"/>
 
 <!-- badges: start -->
@@ -188,7 +182,7 @@ multiple U.S. states and a Canada example.
 For the two-level core, the paper states three key properties:
 
 | Property | Guarantee | Scope |
-|----|----|----|
+|--------------------------|----------------------------|------------------|
 | **Proposition 1** | Internal geometry preserved exactly (rigid translation) | Per feature |
 | **Proposition 2** | Radial ordering within regions preserved | Per region |
 | **Proposition 3** | Max displacement bounded by α_r + α_l | Global |
