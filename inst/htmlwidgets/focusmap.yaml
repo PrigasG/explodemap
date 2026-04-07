@@ -1,0 +1,9 @@
+dependencies:
+  - name: d3
+    version: 7.9.0
+    src: htmlwidgets/lib
+    script: d3.v7.min.js
+  - name: topojson-client
+    version: 3.1.0
+    src: htmlwidgets/lib
+    script: topojson-client.v3.min.js
