@@ -9,15 +9,25 @@
 focus_map(
   x,
   label_col = NULL,
+  id_col = NULL,
   group_col = NULL,
   simplify = TRUE,
   fill = "#2d6ea3",
   fill_opacity = 0.58,
   stroke = "#ffffff",
   lift_scale = 1.16,
+  focus_padding = 40,
+  focus_size = 0.76,
+  max_zoom = NULL,
   font_size = 14,
   show_labels = TRUE,
   show_sidebar = TRUE,
+  performance_mode = NULL,
+  info_cols = NULL,
+  info_labels = NULL,
+  info_title = NULL,
+  info_position = c("top-right", "top-left", "bottom-right", "bottom-left"),
+  info_card_scale = 1,
   area_min = 5000,
   width_min = 95,
   height_min = 28,
@@ -37,6 +47,9 @@ renderFocusmap(expr, env = parent.frame(), quoted = FALSE)
 \item{label_col}{Character. Column name for polygon labels.
 Auto-detected if \code{NULL}.}
 
+\item{id_col}{Optional stable feature ID column for Shiny selection events.
+Defaults to row order if \code{NULL}.}
+
 \item{group_col}{Character. Optional column for region/group
 colouring. Polygons sharing a group value share a hue.}
 
@@ -54,13 +67,45 @@ Default \code{"#2d6ea3"}.}
 
 \item{stroke}{Stroke colour. Default \code{"#ffffff"}.}
 
-\item{lift_scale}{Initial toast lift scale. Default \code{1.16}.}
+\item{lift_scale}{Initial toast lift scale. Default \code{1.16}.
+Increase this to make the lifted feature larger.}
+
+\item{focus_padding}{Extra screen-space padding in pixels around the lifted
+feature during focus. Increase this if large lifted features feel too
+close to the map edge.}
+
+\item{focus_size}{Target fraction of the map viewport the lifted feature
+may occupy. Increase this to make selected areas appear larger while
+preserving \code{focus_padding}.}
+
+\item{max_zoom}{Optional maximum camera zoom. If \code{NULL}, a density-aware
+default is used.}
 
 \item{font_size}{Label font size in px. Default \code{14}.}
 
 \item{show_labels}{Show labels on lifted shapes? Default \code{TRUE}.}
 
 \item{show_sidebar}{Show control sidebar? Default \code{TRUE}.}
+
+\item{performance_mode}{Logical or \code{NULL}. If \code{NULL}, dense
+layers automatically use shorter camera transitions and lighter
+in-flight rendering. Set \code{TRUE} to force it or \code{FALSE} to
+disable it.}
+
+\item{info_cols}{Optional character vector of columns to show in a
+non-blocking focus card when a feature is selected.}
+
+\item{info_labels}{Optional named character vector or list for display
+labels in the focus card. Names should match \code{info_cols}.}
+
+\item{info_title}{Optional column to use as the focus card title. Defaults
+to \code{label_col}.}
+
+\item{info_position}{Position for the focus card: \code{"top-right"},
+\code{"top-left"}, \code{"bottom-right"}, or \code{"bottom-left"}.}
+
+\item{info_card_scale}{Relative size for the focus card. Values above
+\code{1} make the card larger; values below \code{1} make it more compact.}
 
 \item{area_min}{Min screen area (px^2) for label visibility.}
 
@@ -73,6 +118,14 @@ Default \code{"#2d6ea3"}.}
 \item{height}{Widget height. Default \code{"600px"}.}
 
 \item{elementId}{Optional element ID.}
+
+\item{outputId}{Shiny output ID.}
+
+\item{expr}{Expression that returns a \code{focus_map()} widget.}
+
+\item{env}{Environment in which to evaluate \code{expr}.}
+
+\item{quoted}{Logical. Is \code{expr} already quoted?}
 }
 \value{
 An \code{htmlwidgets} object.

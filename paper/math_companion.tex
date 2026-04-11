@@ -1,0 +1,734 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{xcolor}
+
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = blue!60!black,
+  citecolor  = blue!60!black,
+  urlcolor   = blue!60!black,
+  pdftitle   = {Mathematical Foundations of Hierarchical Exploded-View Cartography},
+  pdfauthor  = {George Arthur}
+}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
+
+\numberwithin{equation}{section}
+
+\setlength{\parskip}{6pt}
+\onehalfspacing
+
+% ── Theorem environments ──────────────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{theorem}{Theorem}[section]
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{interpretation}{Interpretation}
+\newtheorem*{notation}{Notation}
+
+% ── Macros ────────────────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+\newcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\dhat}[1]{\hat{d}_{\text{#1}}}
+\newcommand{\dhati}[1]{\hat{d}_{\text{#1},i}}
+\newcommand{\inner}[2]{\langle #1, #2 \rangle}
+
+\begin{document}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\begin{center}
+{\LARGE\bfseries Mathematical Foundations of\\[4pt]
+Hierarchical Exploded-View Cartography}
+
+\bigskip
+{\large Complete Proofs and Derivations}
+
+\bigskip
+George Arthur
+
+\medskip
+{\small\itshape Companion to: ``A Hierarchical Vector-Based Framework for Multi-Scale Exploded-View Cartography''}
+\end{center}
+
+\bigskip
+
+% ═════════════════════════════════════════════════════════════════════════════
+\begin{abstract}
+This document provides a self-contained mathematical treatment of the hierarchical centroid-driven displacement framework for exploded-view cartography. Every variable is defined precisely, every proposition is proved from first principles, and the two analytical parameter-derivation results are derived step by step. The presentation assumes familiarity with Euclidean geometry, basic vector algebra, and elementary calculus (derivatives and gradients). No knowledge of cartography or GIS is required.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Notation and Definitions}
+\label{sec:notation}
+
+We work in $\R^2$ with the standard Euclidean norm $\norm{\cdot}$ and inner product $\inner{\cdot}{\cdot}$.
+
+\begin{definition}[Administrative unit]
+An \emph{administrative unit} is a bounded polygonal region $G_i \subset \R^2$ with well-defined area $A_i = \mathrm{area}(G_i) > 0$ and perimeter $P_i = \mathrm{perimeter}(G_i) > 0$. We consider a finite collection $\mathcal{G} = \{G_1, G_2, \ldots, G_n\}$ of $n$ such units.
+\end{definition}
+
+\begin{definition}[Hierarchy]
+A \emph{two-level hierarchy} on $\mathcal{G}$ consists of:
+\begin{enumerate}[label=(\roman*)]
+  \item A partition of $\{1, 2, \ldots, n\}$ into $n_r \geq 2$ disjoint nonempty groups $R_1, R_2, \ldots, R_{n_r}$, called \emph{regions}.
+  \item A function $r: \{1, \ldots, n\} \to \{1, \ldots, n_r\}$ mapping each unit $i$ to its parent region $r(i)$.
+\end{enumerate}
+We write $r$ or $r(i)$ interchangeably to denote the region containing unit $i$.
+\end{definition}
+
+\begin{definition}[Centroids]
+\label{def:centroids}
+Three levels of centroids are defined:
+\begin{align}
+  C_i &= \mathrm{centroid}(G_i) && \text{(unit centroid)} \label{eq:ci} \\
+  C_r &= \mathrm{centroid}\!\left(\bigcup_{j \in R_r} G_j\right) && \text{(region centroid)} \label{eq:cr} \\
+  C_s &= \mathrm{centroid}\!\left(\bigcup_{i=1}^{n} G_i\right) && \text{(global centroid)} \label{eq:cs}
+\end{align}
+where $\mathrm{centroid}(S)$ denotes the area-weighted centroid of a planar region $S$.
+\end{definition}
+
+\begin{definition}[Regional direction vector]
+\label{def:dir_region}
+For each region $r$ with $C_r \neq C_s$, the \emph{regional direction vector} is
+\begin{equation}
+  \dhat{state,r} = \frac{C_r - C_s}{\norm{C_r - C_s}}.
+  \label{eq:dstate_r}
+\end{equation}
+This is a unit vector pointing from the global centroid toward the region centroid. It is shared by all units in region $r$.
+
+If $C_r = C_s$ (region centroid coincides with the global centroid), set $\dhat{state,r} = \mathbf{0}$ by convention; units in this region receive no regional displacement.
+\end{definition}
+
+\begin{definition}[Unit direction vectors]
+\label{def:directions}
+Two direction vectors are associated with each unit $i$:
+\begin{align}
+  \dhati{state} &= \dhat{state,r(i)} && \text{(regional direction, inherited from parent region)} \label{eq:dstate} \\[6pt]
+  \dhati{local} &= \frac{C_i - C_{r(i)}}{\norm{C_i - C_{r(i)}}} && \text{(local direction: $C_{r(i)} \to C_i$)} \label{eq:dlocal}
+\end{align}
+The regional direction is a unit vector ($\norm{\dhati{state}} = 1$ when $C_r \neq C_s$) shared by all units in the same region. The local direction is a unit vector ($\norm{\dhati{local}} = 1$ when $C_i \neq C_{r(i)}$) unique to each unit.
+
+\medskip\noindent\textbf{Edge-case conventions:}
+\begin{itemize}
+  \item If $C_i = C_{r(i)}$ (unit centroid coincides with region centroid), set $\dhati{local} = \mathbf{0}$ and $s_i = 0$. The unit receives only the regional displacement term.
+  \item If $C_{r(i)} = C_s$ (region centroid coincides with global centroid), set $\dhati{state} = \mathbf{0}$. The unit receives only the local displacement term.
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Maximum intra-region distance]
+\label{def:dmax}
+For each region $r$, define
+\begin{equation}
+  d_{\max,r} = \max_{j \in R_r} \norm{C_j - C_r}.
+  \label{eq:dmax}
+\end{equation}
+This is the distance from the region centroid to the farthest unit centroid within that region. If region $r$ contains a single unit ($|R_r| = 1$), then $C_r = C_i$ and $d_{\max,r} = 0$; in this case, $s_i = 0$ by convention and the unit receives only the regional displacement term.
+\end{definition}
+
+\begin{definition}[Distance-scaling coefficient]
+\label{def:si}
+For each unit $i$ with parent region $r = r(i)$, the \emph{distance-scaling coefficient} is
+\begin{equation}
+  s_i = \left(\frac{\norm{C_i - C_{r(i)}}}{d_{\max,r(i)}}\right)^{\!p}
+  \label{eq:si}
+\end{equation}
+where $p > 0$ is a fixed exponent. By construction, $0 \leq s_i \leq 1$ for all $i$, with $s_i = 0$ when $C_i = C_{r(i)}$ and $s_i = 1$ when $\norm{C_i - C_{r(i)}} = d_{\max,r(i)}$.
+\end{definition}
+
+\begin{definition}[Displacement parameters]
+\label{def:params}
+Two positive real numbers govern displacement magnitudes:
+\begin{itemize}
+  \item $\alpha_r > 0$: the \emph{regional separation parameter}, controlling the magnitude of inter-region displacement.
+  \item $\alpha_l > 0$: the \emph{local expansion parameter}, controlling the magnitude of intra-region displacement.
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Displacement vector]
+\label{def:ti}
+The \emph{displacement vector} for unit $i$ is
+\begin{equation}
+  t_i = \alpha_r\,\dhati{state} + \alpha_l\, s_i\, \dhati{local}
+  \label{eq:ti}
+\end{equation}
+where $\dhati{state}$, $\dhati{local}$, and $s_i$ are defined in Definitions~\ref{def:directions}--\ref{def:si}.
+\end{definition}
+
+\begin{definition}[Exploded geometry]
+\label{def:exploded}
+The \emph{exploded geometry} of unit $i$ is
+\begin{equation}
+  G_i' = G_i + t_i = \{x + t_i : x \in G_i\}
+  \label{eq:exploded}
+\end{equation}
+where $t_i$ is the displacement vector (Definition~\ref{def:ti}). The map $T_i: \R^2 \to \R^2$ defined by $T_i(x) = x + t_i$ is called the \emph{displacement map} for unit $i$.
+\end{definition}
+
+\begin{definition}[Characteristic polygon diameter]
+\label{def:wbar}
+For each unit $i$, define the \emph{equivalent-circle diameter}
+\begin{equation}
+  w_i = \sqrt{\frac{4\,A_i}{\pi}}
+  \label{eq:wi}
+\end{equation}
+which is the diameter of a circle with the same area as $G_i$. The \emph{characteristic polygon diameter} of the dataset is
+\begin{equation}
+  \bar{w} = \mathrm{median}(w_1, w_2, \ldots, w_n).
+  \label{eq:wbar}
+\end{equation}
+\end{definition}
+
+\begin{remark}
+The median is preferred over the mean because it is robust to bimodal size distributions (e.g., Michigan, where Upper Peninsula municipalities are substantially larger than Lower Peninsula townships).
+\end{remark}
+
+\begin{definition}[Regional radius and median unit count]
+\label{def:rlocal}
+The \emph{regional radius} is
+\begin{equation}
+  \widetilde{R}_{\text{local}} = \mathrm{median}(d_{\max,1}, d_{\max,2}, \ldots, d_{\max,n_r})
+  \label{eq:rlocal}
+\end{equation}
+and the \emph{median unit count per region} is
+\begin{equation}
+  \bar{n} = \mathrm{median}(|R_1|, |R_2|, \ldots, |R_{n_r}|).
+  \label{eq:nbar}
+\end{equation}
+\end{definition}
+
+\begin{definition}[Legibility coefficients]
+\label{def:gamma}
+Two dimensionless constants parametrize cartographic spacing requirements:
+\begin{itemize}
+  \item $\gamma_r > 0$: the \emph{regional clearance coefficient}, specifying the desired inter-region gap in units of $\bar{w}$.
+  \item $\gamma_l > 0$: the \emph{local clearance coefficient}, specifying the desired intra-region spacing above the natural cell diameter.
+\end{itemize}
+These are the only empirically calibrated quantities in the framework. All other quantities are computed from the data.
+\end{definition}
+
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Structural Properties}
+\label{sec:properties}
+
+\subsection{Geometry Preservation}
+
+\begin{proposition}[Feature-level geometry preservation]
+\label{prop:geometry}
+Let $G_i \subset \R^2$ be a polygonal administrative unit and let $G_i' = G_i + t_i$ for a constant vector $t_i \in \R^2$. Then the displacement map $T_i(x) = x + t_i$ preserves the internal geometry of $G_i$, including:
+\begin{enumerate}[label=(\alph*)]
+  \item all pairwise distances,
+  \item all angles,
+  \item orientation,
+  \item area,
+  \item perimeter,
+  \item boundary structure and topological type.
+\end{enumerate}
+That is, $G_i'$ is congruent to $G_i$.
+\end{proposition}
+
+\begin{proof}
+We prove each property.
+
+\medskip\noindent\textbf{(a) Pairwise distances.}
+Let $x, y \in G_i$ be arbitrary. Then
+\begin{equation}
+  \norm{T_i(x) - T_i(y)} = \norm{(x + t_i) - (y + t_i)} = \norm{x - y}.
+  \label{eq:isometry}
+\end{equation}
+Since $x$ and $y$ were arbitrary, every pairwise distance within $G_i$ is preserved.
+
+\medskip\noindent\textbf{(b) Angles.}
+Any angle at a point $z \in G_i$ is determined by the distances between three points (the law of cosines). Since all pairwise distances are preserved by~(a), all angles are preserved.
+
+Alternatively, for any vectors $u, v$ emanating from a point $z \in G_i$:
+\[
+  \cos\theta = \frac{\inner{u}{v}}{\norm{u}\norm{v}}
+\]
+Under translation, $u$ and $v$ are unchanged (translation does not rotate vectors), so $\theta$ is preserved.
+
+\medskip\noindent\textbf{(c) Orientation.}
+The Jacobian matrix of $T_i$ is the $2 \times 2$ identity matrix $I$, which has determinant $+1$. A positive Jacobian determinant preserves orientation.
+
+\medskip\noindent\textbf{(d) Area.}
+By the change-of-variables theorem,
+\[
+  \mathrm{area}(G_i') = \int_{G_i'} 1\,dA = \int_{G_i} |\det(J_{T_i})|\,dA = \int_{G_i} 1\,dA = \mathrm{area}(G_i)
+\]
+since $\det(J_{T_i}) = \det(I) = 1$.
+
+\medskip\noindent\textbf{(e) Perimeter.}
+The boundary $\partial G_i'$ is the image of $\partial G_i$ under translation. Since translation preserves arc length (it preserves all distances), $\mathrm{perimeter}(G_i') = \mathrm{perimeter}(G_i)$.
+
+\medskip\noindent\textbf{(f) Boundary structure and topology.}
+Translation is a homeomorphism of $\R^2$ (it is continuous with continuous inverse $T_i^{-1}(x) = x - t_i$). Homeomorphisms preserve topological properties including connectedness, number of holes, and boundary structure. Therefore $G_i'$ has the same topological type as $G_i$.
+\end{proof}
+
+\begin{remark}[Scope of preservation]
+Proposition~\ref{prop:geometry} applies \emph{within each individual polygon}. It does not assert that adjacency or shared-boundary coincidence between distinct units $G_i$ and $G_j$ is preserved after displacement. The loss of shared boundaries is intentional: the purpose of the method is to introduce whitespace between units.
+\end{remark}
+
+
+\subsection{Radial Ordering Preservation}
+
+\begin{lemma}[Monotonicity of the power function]
+\label{lem:monotone}
+For $p > 0$ and $a > 0$, the function $f: [0, \infty) \to [0, \infty)$ defined by $f(r) = (r/a)^p$ is strictly increasing on $(0, \infty)$.
+\end{lemma}
+
+\begin{proof}
+The derivative is $f'(r) = p\,r^{p-1}/a^p > 0$ for all $r > 0$. A function with a strictly positive derivative on an interval is strictly increasing on that interval.
+\end{proof}
+
+\begin{proposition}[Radial ordering preservation]
+\label{prop:ordering}
+Let units $i$ and $j$ belong to the same region $r$, and suppose
+\[
+  \norm{C_i - C_r} < \norm{C_j - C_r}.
+\]
+Then after displacement,
+\[
+  \norm{C_i' - C_r'} < \norm{C_j' - C_r'},
+\]
+where $C_r' = C_r + \alpha_r\,\hat{d}_{\text{state},r}$ is the displaced region centroid. That is, radial ordering of units within a region is preserved by the transformation.
+\end{proposition}
+
+\begin{proof}
+Write $r_i = \norm{C_i - C_r}$ and $r_j = \norm{C_j - C_r}$, with $r_i < r_j$ by assumption.
+
+\medskip\noindent\textbf{Step 1: Displacement is strictly radial.}
+By Definition~\ref{def:directions}, $\dhati{local}$ is the unit vector in the direction $C_i - C_r$. The local displacement of unit $i$ is therefore $\alpha_l\,s_i\,\dhati{local}$, which points radially outward from $C_r$ along the direction toward $C_i$. The magnitude of the local displacement along this radial direction is
+\begin{equation}
+  \delta_i = \alpha_l\,s_i = \alpha_l\left(\frac{r_i}{d_{\max,r}}\right)^{\!p}.
+  \label{eq:delta_i}
+\end{equation}
+
+\medskip\noindent\textbf{Step 2: The regional term cancels.}
+Both $C_i$ and $C_r$ are translated by the same regional vector $\alpha_r\,\dhat{state,r}$ (which depends only on the region, not on the individual unit). Therefore:
+\begin{align*}
+  C_i' &= C_i + \alpha_r\,\dhat{state,r} + \alpha_l\,s_i\,\dhati{local} \\
+  C_r' &= C_r + \alpha_r\,\dhat{state,r}
+\end{align*}
+The relative displacement is:
+\begin{equation}
+  C_i' - C_r' = (C_i - C_r) + \alpha_l\,s_i\,\dhati{local}
+  \label{eq:relative}
+\end{equation}
+Since $\dhati{local}$ is the unit vector in the direction $C_i - C_r$, and $C_i - C_r = r_i\,\dhati{local}$, we have:
+\[
+  C_i' - C_r' = r_i\,\dhati{local} + \delta_i\,\dhati{local} = (r_i + \delta_i)\,\dhati{local}
+\]
+Therefore:
+\begin{equation}
+  \norm{C_i' - C_r'} = r_i + \delta_i.
+  \label{eq:radial_new}
+\end{equation}
+By the same argument, $\norm{C_j' - C_r'} = r_j + \delta_j$.
+
+\medskip\noindent\textbf{Step 3: Ordering is preserved.}
+By Lemma~\ref{lem:monotone}, $r \mapsto (r/d_{\max,r})^p$ is strictly increasing. Since $r_i < r_j$, it follows that $\delta_i < \delta_j$.
+
+Adding the two strict inequalities:
+\begin{align*}
+  r_i &< r_j \\
+  \delta_i &< \delta_j \\
+  \hline
+  r_i + \delta_i &< r_j + \delta_j
+\end{align*}
+Therefore $\norm{C_i' - C_r'} < \norm{C_j' - C_r'}$.
+\end{proof}
+
+\begin{corollary}[Alternative proof via monotonicity of the position function]
+\label{cor:monotone_f}
+Define the radial position function $f: [0, d_{\max,r}] \to \R$ by
+\begin{equation}
+  f(r) = r + \alpha_l\left(\frac{r}{d_{\max,r}}\right)^{\!p}.
+  \label{eq:f}
+\end{equation}
+Then $f$ is strictly increasing on $[0, d_{\max,r}]$.
+\end{corollary}
+
+\begin{proof}
+The derivative is
+\begin{equation}
+  f'(r) = 1 + \frac{\alpha_l\,p\,r^{p-1}}{d_{\max,r}^{\,p}}.
+  \label{eq:fprime}
+\end{equation}
+Since $\alpha_l > 0$ and $p > 0$, we have $f'(r) > 0$ for all $r > 0$. At $r = 0$: $f(0) = 0$ and for any $r > 0$, $f(r) = r + \alpha_l(r/d_{\max,r})^p > 0 = f(0)$. Therefore $f$ is strictly increasing on $[0, d_{\max,r}]$.
+
+Since $\norm{C_i' - C_r'} = f(r_i)$ and $\norm{C_j' - C_r'} = f(r_j)$ by~\eqref{eq:radial_new}, the ordering $r_i < r_j$ implies $f(r_i) < f(r_j)$.
+\end{proof}
+
+\begin{interpretation}
+Proposition~\ref{prop:ordering} guarantees that units closer to their regional centroid in geographic space remain closer after displacement. The transformation expands each region outward like a radial elastic sheet rather than shuffling units. Dense urban cores near the centroid remain correctly compressed; peripheral municipalities receive proportionally larger displacement.
+\end{interpretation}
+
+
+\subsection{Bounded Displacement}
+
+\begin{proposition}[Bounded displacement]
+\label{prop:bounded}
+For every unit $i$,
+\begin{equation}
+  \norm{t_i} \leq \alpha_r + \alpha_l.
+  \label{eq:bound}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+By the triangle inequality:
+\begin{align}
+  \norm{t_i} &= \norm{\alpha_r\,\dhati{state} + \alpha_l\,s_i\,\dhati{local}} \nonumber \\
+  &\leq \alpha_r\,\norm{\dhati{state}} + \alpha_l\,s_i\,\norm{\dhati{local}} \label{eq:triangle} \\
+  &= \alpha_r \cdot 1 + \alpha_l\,s_i \cdot 1 \nonumber \\
+  &= \alpha_r + \alpha_l\,s_i \nonumber \\
+  &\leq \alpha_r + \alpha_l \nonumber
+\end{align}
+where the first inequality is the triangle inequality, the equalities use $\norm{\dhati{state}} = \norm{\dhati{local}} = 1$ (Definition~\ref{def:directions}), and the final inequality uses $0 \leq s_i \leq 1$ (Definition~\ref{def:si}).
+\end{proof}
+
+\begin{remark}[Tightness of the bound]
+The bound is achieved when $s_i = 1$ (unit at maximum distance from its regional centroid) and $\dhati{state}$ and $\dhati{local}$ are parallel (point in the same direction). In this case, $\norm{t_i} = \alpha_r + \alpha_l$.
+\end{remark}
+
+\begin{interpretation}
+Proposition~\ref{prop:bounded} provides a global stability guarantee. The displacement of every feature is predictable and controlled entirely by two parameters. The layout cannot diverge regardless of the number of units or the complexity of the hierarchy. This distinguishes the method from iterative force-based systems, which may exhibit unbounded displacement under certain configurations.
+\end{interpretation}
+
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Parameter Derivation}
+\label{sec:params}
+
+The displacement framework requires two scale parameters: $\alpha_r$ (regional separation) and $\alpha_l$ (local expansion). This section derives their functional dependence on geometric properties of the dataset using two idealized spatial models.
+
+\subsection{Analytical Result 1: Regional Separation (Radial Gap Criterion)}
+
+\begin{theorem}[Regional separation formula]
+\label{thm:alpha_r}
+Let $n_r$ parent regions be arranged around a common centroid with equal angular spacing $\theta = 2\pi/n_r$. If each region centroid is displaced radially outward by $\alpha_r$, the increase in chord length between adjacent region centroids is
+\begin{equation}
+  \Delta c = 2\alpha_r\sin\!\left(\frac{\pi}{n_r}\right).
+  \label{eq:chord_increase}
+\end{equation}
+Setting the desired gap to $g_r = \gamma_r\bar{w}$ polygon widths and solving for $\alpha_r$ yields
+\begin{equation}
+  \boxed{\alpha_r = \frac{\gamma_r\,\bar{w}}{2\sin(\pi/n_r)}}
+  \label{eq:alpha_r}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Place $n_r$ points equally spaced on a circle of radius $R$ centered at the origin. The angular separation between adjacent points is $\theta = 2\pi/n_r$.
+
+\medskip\noindent\textbf{Step 1: Chord length on a circle.}
+Two adjacent points on a circle of radius $R$ separated by angle $\theta$ have chord length
+\begin{equation}
+  c(R) = 2R\sin\!\left(\frac{\theta}{2}\right) = 2R\sin\!\left(\frac{\pi}{n_r}\right).
+  \label{eq:chord}
+\end{equation}
+This is a standard result from Euclidean geometry (inscribed angle theorem applied to the isosceles triangle formed by the two points and the center).
+
+\medskip\noindent\textbf{Step 2: Chord length after radial displacement.}
+If each point moves radially outward by $\alpha_r$, the new radius is $R + \alpha_r$ and the new chord length is
+\begin{equation}
+  c(R + \alpha_r) = 2(R + \alpha_r)\sin\!\left(\frac{\pi}{n_r}\right).
+  \label{eq:chord_new}
+\end{equation}
+
+\medskip\noindent\textbf{Step 3: Increase in chord length.}
+\begin{align}
+  \Delta c &= c(R + \alpha_r) - c(R) \nonumber \\
+  &= 2(R + \alpha_r)\sin\!\left(\frac{\pi}{n_r}\right) - 2R\sin\!\left(\frac{\pi}{n_r}\right) \nonumber \\
+  &= 2\alpha_r\sin\!\left(\frac{\pi}{n_r}\right). \label{eq:delta_c_proof}
+\end{align}
+Note that this result is independent of $R$: the chord increase depends only on the displacement $\alpha_r$ and the angular spacing $\pi/n_r$.
+
+\medskip\noindent\textbf{Step 4: Solve for $\alpha_r$.}
+Setting $\Delta c = g_r = \gamma_r\bar{w}$:
+\[
+  \gamma_r\bar{w} = 2\alpha_r\sin\!\left(\frac{\pi}{n_r}\right)
+  \quad\Longrightarrow\quad
+  \alpha_r = \frac{\gamma_r\,\bar{w}}{2\sin(\pi/n_r)}. \qedhere
+\]
+\end{proof}
+
+\begin{interpretation}
+Equation~\eqref{eq:alpha_r} states that regional displacement grows linearly with the desired gap $\gamma_r\bar{w}$ and inversely with the angular spacing between regions. As regions are packed more tightly ($n_r$ large, $\sin(\pi/n_r)$ small), larger displacement is needed to achieve the same gap. The geometric dependence is derived analytically; only the legibility coefficient $\gamma_r$ is empirical.
+\end{interpretation}
+
+
+\subsection{Analytical Result 2: Local Expansion (Equal-Area Partition Model)}
+
+\begin{theorem}[Local expansion formula]
+\label{thm:alpha_l}
+Let a parent region be approximated as a disk of radius $\widetilde{R}_{\text{local}}$ containing $\bar{n}$ child units that partition the region into approximately equal effective areas. The equivalent-circle diameter of a typical unit cell is
+\begin{equation}
+  d_{\text{cell}} = \frac{2\,\widetilde{R}_{\text{local}}}{\sqrt{\bar{n}}}.
+  \label{eq:dcell}
+\end{equation}
+Setting the local expansion parameter proportional to this characteristic spacing yields
+\begin{equation}
+  \boxed{\alpha_l = \gamma_l \cdot \frac{2\,\widetilde{R}_{\text{local}}}{\sqrt{\bar{n}}}}
+  \label{eq:alpha_l}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+
+\medskip\noindent\textbf{Step 1: Area per cell.}
+The total area of the disk is $\pi\widetilde{R}_{\text{local}}^2$. Partitioned into $\bar{n}$ equal cells, each cell has area
+\begin{equation}
+  A_{\text{cell}} = \frac{\pi\widetilde{R}_{\text{local}}^2}{\bar{n}}.
+  \label{eq:acell}
+\end{equation}
+
+\medskip\noindent\textbf{Step 2: Equivalent-circle diameter.}
+The diameter of a circle with area $A_{\text{cell}}$ satisfies
+\[
+  \pi\left(\frac{d_{\text{cell}}}{2}\right)^{\!2} = A_{\text{cell}} = \frac{\pi\widetilde{R}_{\text{local}}^2}{\bar{n}}.
+\]
+Cancelling $\pi$ from both sides:
+\[
+  \left(\frac{d_{\text{cell}}}{2}\right)^{\!2} = \frac{\widetilde{R}_{\text{local}}^2}{\bar{n}}.
+\]
+Taking square roots:
+\[
+  \frac{d_{\text{cell}}}{2} = \frac{\widetilde{R}_{\text{local}}}{\sqrt{\bar{n}}}.
+\]
+Therefore:
+\begin{equation}
+  d_{\text{cell}} = \frac{2\,\widetilde{R}_{\text{local}}}{\sqrt{\bar{n}}}. \label{eq:dcell_proof}
+\end{equation}
+
+\medskip\noindent\textbf{Step 3: Local expansion parameter.}
+The quantity $d_{\text{cell}}$ represents the characteristic spatial scale of unit spacing under the equal-area approximation. Scaling by the local legibility coefficient $\gamma_l$ gives the local expansion parameter:
+\[
+  \alpha_l = \gamma_l \cdot d_{\text{cell}} = \gamma_l \cdot \frac{2\,\widetilde{R}_{\text{local}}}{\sqrt{\bar{n}}}. \qedhere
+\]
+\end{proof}
+
+\begin{interpretation}
+Equation~\eqref{eq:alpha_l} states that local expansion scales linearly with regional radius and inversely with the square root of unit count. Larger regions with fewer units have more natural spacing; denser regions require less additional expansion because the units are already tightly packed. The coefficient $\gamma_l$ captures the cartographic clearance factor above the natural cell diameter.
+\end{interpretation}
+
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Vector-Field Structure}
+\label{sec:field}
+
+\subsection{Piecewise-Rigid Displacement Field}
+
+The transformation may be written in vector-field form:
+\begin{equation}
+  T(x) = x + V(x), \qquad V(x) = V_{\text{region}}(x) + V_{\text{local}}(x)
+  \label{eq:field}
+\end{equation}
+where $V: \R^2 \to \R^2$ is the displacement field. A key structural property is that $V$ is \emph{piecewise constant} over the polygon partition:
+\begin{equation}
+  V(x) = t_i \quad \text{for all } x \in G_i.
+  \label{eq:piecewise}
+\end{equation}
+Because the displacement vector is constant within each polygon domain, the transformation acts as a rigid-body translation on each feature. This is precisely why Proposition~\ref{prop:geometry} holds exactly rather than approximately.
+
+\begin{definition}[Piecewise-rigid hierarchical displacement]
+A map $T: \R^2 \to \R^2$ is a \emph{piecewise-rigid hierarchical displacement} if:
+\begin{enumerate}[label=(\roman*)]
+  \item $T(x) = x + V(x)$ for a vector field $V$,
+  \item $V$ is constant on each polygon domain $G_i$ (piecewise rigid),
+  \item the constant values $t_i = V|_{G_i}$ are generated by a hierarchical spatial model (centroid-derived directions and magnitudes).
+\end{enumerate}
+\end{definition}
+
+
+\subsection{Scalar Potential Representation}
+
+\begin{proposition}[Generating scalar potential]
+\label{prop:potential}
+Within each parent region $r$, define the continuous scalar potential
+\begin{equation}
+  \Phi_r(x) = \alpha_r\,\inner{\dhat{state,r}}{x} + \frac{\alpha_l}{(p+1)\,d_{\max,r}^{\,p}}\,r(x)^{p+1}
+  \label{eq:potential}
+\end{equation}
+with $r(x) = \norm{x - C_r}$. Then the gradient $\nabla\Phi_r$, evaluated at the unit centroid $C_i$, equals the displacement vector $t_i$:
+\[
+  \nabla\Phi_r(C_i) = t_i.
+\]
+The centroid displacement vectors may therefore be interpreted as samples of the gradient of $\Phi_r$ evaluated at unit centroids. The executed map transformation is obtained by applying these sampled vectors as piecewise-rigid translations over polygon interiors, \emph{not} by applying the continuous gradient field $\nabla\Phi_r$ pointwise.
+\end{proposition}
+
+\begin{proof}
+We verify that $\nabla\Phi_r(C_i)$ reproduces the displacement components.
+
+\medskip\noindent\textbf{Regional component.}
+Since $\dhat{state,r}$ is constant within parent region $r$, the gradient is
+\[
+  \nabla \inner{\dhat{state,r}}{x} = \dhat{state,r}.
+\]
+The regional component assigned to every unit in region $r$ is inherited from the parent-region direction $\dhat{state,r}$ (Definition~\ref{def:dir_region}). Therefore:
+\[
+  \nabla\!\left(\alpha_r\,\inner{\dhat{state,r}}{x}\right)\big|_{x = C_i} = \alpha_r\,\dhat{state,r}.
+\]
+
+\medskip\noindent\textbf{Local component.}
+Since $r(x) = \norm{x - C_r}$, the gradient is $\nabla r(x) = (x - C_r)/\norm{x - C_r}$. By the chain rule:
+\[
+  \nabla\!\left(\frac{\alpha_l}{(p+1)\,d_{\max,r}^{\,p}}\,r(x)^{p+1}\right)
+  = \alpha_l\left(\frac{r(x)}{d_{\max,r}}\right)^{\!p}\frac{x - C_r}{\norm{x - C_r}}.
+\]
+Evaluated at $x = C_i$: the ratio $(r(C_i)/d_{\max,r})^p = (\norm{C_i - C_r}/d_{\max,r})^p = s_i$, and the unit vector $(C_i - C_r)/\norm{C_i - C_r} = \dhati{local}$. Therefore this term gives $\alpha_l\,s_i\,\dhati{local}$.
+
+\medskip\noindent\textbf{Total.}
+$\nabla\Phi_r(C_i) = \alpha_r\,\dhat{state,r} + \alpha_l\,s_i\,\dhati{local} = t_i$.
+\end{proof}
+
+\begin{remark}[Distinction between generating field and executed transformation]
+The gradient field $\nabla\Phi_r(x)$ varies continuously with $x$ inside the region. The executed displacement field $V(x) = t_i$ for $x \in G_i$ is piecewise constant. These are not the same field. The potential $\Phi_r$ is a \emph{generative model} from which displacement vectors are derived by centroid sampling; the executed transformation applies each sampled vector rigidly to the entire polygon. This distinction is what makes Proposition~\ref{prop:geometry} (geometry preservation) hold exactly: constant translation within each polygon, not a continuously varying deformation.
+\end{remark}
+
+\begin{interpretation}
+The first term of $\Phi_r$ is a \emph{linear directional potential} with constant gradient $\alpha_r\,\dhat{state,r}$, producing uniform regional displacement inherited from the parent-region centroid direction. The second term is a \emph{power-law radial potential} centered on $C_r$ with exponent $p + 1$: its gradient magnitude $\alpha_l(r/d_{\max})^p$ increases monotonically with distance from $C_r$. This directly explains Proposition~\ref{prop:ordering}: because the local potential grows faster than linearly (for $p > 0$), its gradient increases with radial distance, preserving ordering.
+\end{interpretation}
+
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Multi-Level Extension}
+\label{sec:multilevel}
+
+\subsection{General Hierarchical Displacement}
+
+For a hierarchy of $L$ levels $\ell \in \{1, 2, \ldots, L\}$, the displacement vector generalizes to
+\begin{equation}
+  t_i = \sum_{\ell=1}^{L} \alpha_\ell\, s_{i,\ell}\, \hat{d}_{i,\ell}
+  \label{eq:multilevel}
+\end{equation}
+where each level $\ell$ contributes its own direction vector $\hat{d}_{i,\ell}$, scaling coefficient $s_{i,\ell}$, and magnitude $\alpha_\ell$.
+
+\begin{proposition}[Generalized bound]
+\label{prop:gen_bound}
+For the multi-level displacement~\eqref{eq:multilevel},
+\begin{equation}
+  \norm{t_i} \leq \sum_{\ell=1}^{L} \alpha_\ell.
+  \label{eq:gen_bound}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+By iterated application of the triangle inequality:
+\[
+  \norm{t_i} = \norm{\sum_{\ell=1}^{L} \alpha_\ell\, s_{i,\ell}\, \hat{d}_{i,\ell}}
+  \leq \sum_{\ell=1}^{L} \alpha_\ell\, s_{i,\ell}\, \underbrace{\norm{\hat{d}_{i,\ell}}}_{=\,1}
+  \leq \sum_{\ell=1}^{L} \alpha_\ell
+\]
+using $0 \leq s_{i,\ell} \leq 1$ for each $\ell$.
+\end{proof}
+
+
+\subsection{Zoom-Dependent Extension}
+
+For interactive visualization, the displacement can be modulated by a zoom-dependent scalar:
+\begin{equation}
+  t_i(z) = \lambda(z) \cdot t_i, \qquad \lambda(z) \in [0, 1]
+  \label{eq:zoom}
+\end{equation}
+where $\lambda(z)$ decreases monotonically with zoom level $z$. At full extent $\lambda = 1$ (full explosion); at maximum zoom $\lambda = 0$ (geographic positions). This requires no modification of the displacement field itself --- only a scalar multiplication at render time.
+
+\begin{proposition}[Zoom-dependent bound]
+\label{prop:zoom_bound}
+For any zoom level $z$, $\norm{t_i(z)} \leq \alpha_r + \alpha_l$.
+\end{proposition}
+
+\begin{proof}
+$\norm{t_i(z)} = \lambda(z)\norm{t_i} \leq 1 \cdot (\alpha_r + \alpha_l) = \alpha_r + \alpha_l$.
+\end{proof}
+
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Algorithm}
+\label{sec:algorithm}
+
+The complete procedure is summarized below. The algorithm is $O(n)$ in the number of units: each unit requires a fixed number of centroid and vector computations independent of all other units. No iterative passes, energy minimization, or topology reconstruction are required.
+
+\bigskip
+\noindent\textbf{Algorithm.} $\textsc{ExplodeMap}(\mathcal{G}, \text{hierarchy}, \alpha_r, \alpha_l, p)$
+
+\medskip
+\noindent\textbf{Input:} Geometries $\mathcal{G} = \{G_i\}_{i=1}^n$; two-level hierarchy $r(\cdot)$; parameters $\alpha_r, \alpha_l, p$.\\
+\textbf{Output:} Exploded geometries $\mathcal{G}' = \{G_i'\}_{i=1}^n$ with $\norm{t_i} \leq \alpha_r + \alpha_l$ for all $i$.
+
+\begin{enumerate}[label=\arabic*.]
+  \item Compute $C_i = \mathrm{centroid}(G_i)$ for all $i$.
+  \item Compute $C_r = \mathrm{centroid}\!\left(\bigcup_{j \in R_r} G_j\right)$ for each region $r$.
+  \item Compute $C_s = \mathrm{centroid}\!\left(\bigcup_{i} G_i\right)$.
+  \item For each region $r$:
+  \begin{enumerate}[label=4.\arabic*.]
+    \item Compute $\dhat{state,r}$: if $C_r \neq C_s$, set $\dhat{state,r} \leftarrow (C_r - C_s)/\norm{C_r - C_s}$; otherwise set $\dhat{state,r} \leftarrow \mathbf{0}$.
+    \item Compute $d_{\max,r} = \max_{j \in R_r} \norm{C_j - C_r}$.
+    \item For each unit $i \in R_r$:
+    \begin{enumerate}[label=4.3.\arabic*.]
+      \item $\dhati{state} \leftarrow \dhat{state,r}$ \quad (shared by all units in region $r$)
+      \item If $C_i \neq C_r$ and $d_{\max,r} > 0$:\\
+        \quad $\dhati{local} \leftarrow (C_i - C_r) / \norm{C_i - C_r}$\\
+        \quad $s_i \leftarrow (\norm{C_i - C_r} / d_{\max,r})^p$\\
+        Otherwise: $\dhati{local} \leftarrow \mathbf{0}$, \; $s_i \leftarrow 0$.
+      \item $t_i \leftarrow \alpha_r\,\dhati{state} + \alpha_l\,s_i\,\dhati{local}$
+      \item $G_i' \leftarrow G_i + t_i$
+    \end{enumerate}
+  \end{enumerate}
+  \item Return $\mathcal{G}' = \{G_i'\}_{i=1}^n$.
+\end{enumerate}
+
+\bigskip\noindent
+Propositions~\ref{prop:geometry}, \ref{prop:ordering}, and \ref{prop:bounded} guarantee, respectively, that every output polygon is congruent to its input, that radial ordering within each region is preserved, and that no polygon is displaced by more than $\alpha_r + \alpha_l$.
+
+The parameters $\alpha_r$ and $\alpha_l$ may be supplied directly or computed from Theorems~\ref{thm:alpha_r} and \ref{thm:alpha_l} using the dataset's geometric properties ($\bar{w}$, $\widetilde{R}_{\text{local}}$, $\bar{n}$, $n_r$) and the legibility coefficients ($\gamma_r$, $\gamma_l$).
+
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Summary of Results}
+\label{sec:summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.6}
+\begin{tabular}{lp{10cm}}
+\toprule
+\textbf{Result} & \textbf{Statement} \\
+\midrule
+Proposition~\ref{prop:geometry} & Translation preserves all internal geometry exactly (shape, area, perimeter, angles, topology). \\
+Proposition~\ref{prop:ordering} & Radial ordering within each region is preserved: $r_i < r_j \Rightarrow r_i + \delta_i < r_j + \delta_j$. \\
+Corollary~\ref{cor:monotone_f} & The position function $f(r) = r + \alpha_l(r/d_{\max})^p$ is strictly increasing; $f'(r) > 0$ for $r > 0$. \\
+Proposition~\ref{prop:bounded} & $\norm{t_i} \leq \alpha_r + \alpha_l$ for every unit. \\
+Theorem~\ref{thm:alpha_r} & $\alpha_r = \gamma_r\bar{w}\,/\,(2\sin(\pi/n_r))$ from the radial gap criterion. \\
+Theorem~\ref{thm:alpha_l} & $\alpha_l = \gamma_l \cdot 2\widetilde{R}_{\text{local}}\,/\,\sqrt{\bar{n}}$ from the equal-area partition model. \\
+Proposition~\ref{prop:potential} & $\nabla\Phi_r(C_i) = t_i$; displacement vectors are centroid samples of a generating potential. \\
+Proposition~\ref{prop:gen_bound} & Multi-level bound: $\norm{t_i} \leq \sum_\ell \alpha_\ell$. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

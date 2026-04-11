@@ -19,6 +19,8 @@
 #'   \code{grouped_exploded_map} object.
 #' @param label_col Character. Column name for polygon labels.
 #'   Auto-detected if \code{NULL}.
+#' @param id_col Optional stable feature ID column for Shiny selection events.
+#'   Defaults to row order if \code{NULL}.
 #' @param group_col Character. Optional column for region/group
 #'   colouring. Polygons sharing a group value share a hue.
 #' @param simplify Controls geometry simplification for rendering
@@ -32,9 +34,32 @@
 #' @param fill_opacity Fill opacity. Default \code{0.58}.
 #' @param stroke Stroke colour. Default \code{"#ffffff"}.
 #' @param lift_scale Initial toast lift scale. Default \code{1.16}.
+#'   Increase this to make the lifted feature larger.
+#' @param focus_padding Extra screen-space padding in pixels around the lifted
+#'   feature during focus. Increase this if large lifted features feel too
+#'   close to the map edge.
+#' @param focus_size Target fraction of the map viewport the lifted feature
+#'   may occupy. Increase this to make selected areas appear larger while
+#'   preserving \code{focus_padding}.
+#' @param max_zoom Optional maximum camera zoom. If \code{NULL}, a density-aware
+#'   default is used.
 #' @param font_size Label font size in px. Default \code{14}.
 #' @param show_labels Show labels on lifted shapes? Default \code{TRUE}.
 #' @param show_sidebar Show control sidebar? Default \code{TRUE}.
+#' @param performance_mode Logical or \code{NULL}. If \code{NULL}, dense
+#'   layers automatically use shorter camera transitions and lighter
+#'   in-flight rendering. Set \code{TRUE} to force it or \code{FALSE} to
+#'   disable it.
+#' @param info_cols Optional character vector of columns to show in a
+#'   non-blocking focus card when a feature is selected.
+#' @param info_labels Optional named character vector or list for display
+#'   labels in the focus card. Names should match \code{info_cols}.
+#' @param info_title Optional column to use as the focus card title. Defaults
+#'   to \code{label_col}.
+#' @param info_position Position for the focus card: \code{"top-right"},
+#'   \code{"top-left"}, \code{"bottom-right"}, or \code{"bottom-left"}.
+#' @param info_card_scale Relative size for the focus card. Values above
+#'   \code{1} make the card larger; values below \code{1} make it more compact.
 #' @param area_min Min screen area (px^2) for label visibility.
 #' @param width_min Min screen width (px) for label visibility.
 #' @param height_min Min screen height (px) for label visibility.
@@ -56,15 +81,25 @@
 #' @export
 focus_map <- function(x,
                       label_col    = NULL,
+                      id_col       = NULL,
                       group_col    = NULL,
                       simplify     = TRUE,
                       fill         = "#2d6ea3",
                       fill_opacity = 0.58,
                       stroke       = "#ffffff",
                       lift_scale   = 1.16,
+                      focus_padding = 40,
+                      focus_size   = 0.76,
+                      max_zoom     = NULL,
                       font_size    = 14,
                       show_labels  = TRUE,
                       show_sidebar = TRUE,
+                      performance_mode = NULL,
+                      info_cols    = NULL,
+                      info_labels  = NULL,
+                      info_title   = NULL,
+                      info_position = c("top-right", "top-left", "bottom-right", "bottom-left"),
+                      info_card_scale = 1,
                       area_min     = 5000,
                       width_min    = 95,
                       height_min   = 28,
@@ -73,6 +108,7 @@ focus_map <- function(x,
                       elementId    = NULL) {
 
   sf_obj <- .as_viewer_sf(x)
+  info_position <- match.arg(info_position)
 
   # Auto-detect label column
   if (is.null(label_col)) {
@@ -91,10 +127,45 @@ focus_map <- function(x,
   }
   stopifnot_col(label_col)
 
+  if (!is.null(id_col)) {
+    if (!id_col %in% names(sf_obj)) {
+      warning("id_col '", id_col, "' not found; using row order.", call. = FALSE)
+      id_col <- NULL
+    }
+  }
+
   if (!is.null(group_col)) {
     if (!group_col %in% names(sf_obj)) {
       warning("group_col '", group_col, "' not found; ignoring.", call. = FALSE)
       group_col <- NULL
+    }
+  }
+
+  if (is.null(info_title)) {
+    info_title <- label_col
+  }
+  if (!is.null(info_title) && !info_title %in% names(sf_obj)) {
+    warning("info_title '", info_title, "' not found; using label_col.", call. = FALSE)
+    info_title <- label_col
+  }
+  if (!is.null(info_cols)) {
+    missing_info_cols <- setdiff(info_cols, names(sf_obj))
+    if (length(missing_info_cols) > 0) {
+      warning(
+        "Ignoring info_cols not found in data: ",
+        paste(missing_info_cols, collapse = ", "),
+        call. = FALSE
+      )
+      info_cols <- intersect(info_cols, names(sf_obj))
+    }
+  }
+  if (!is.null(info_labels)) {
+    info_labels <- unlist(info_labels, use.names = TRUE)
+    if (is.null(names(info_labels)) || any(!nzchar(names(info_labels)))) {
+      warning("info_labels must be a named character vector/list; ignoring.", call. = FALSE)
+      info_labels <- NULL
+    } else {
+      info_labels <- as.character(info_labels)
     }
   }
 
@@ -123,7 +194,13 @@ focus_map <- function(x,
   if (isTRUE(simplify)) {
     n <- nrow(sf_obj)
 
-    tol <- if (n > 220) {
+    tol <- if (n > 3000) {
+      0.05
+    } else if (n > 1500) {
+      0.04
+    } else if (n > 500) {
+      0.03
+    } else if (n > 220) {
       0.02
     } else if (n > 150) {
       0.01
@@ -148,7 +225,14 @@ focus_map <- function(x,
     sf_obj <- sf_obj[!sf::st_is_empty(sf_obj), ]
   }
 
-  geojson_str <- .sf_to_geojson_fast(sf_obj, label_col, group_col)
+  geojson_str <- .sf_to_geojson_fast(
+    sf_obj = sf_obj,
+    label_col = label_col,
+    id_col = id_col,
+    group_col = group_col,
+    info_cols = info_cols,
+    info_title = info_title
+  )
 
   payload <- list(
     geojson_str = geojson_str,
@@ -157,9 +241,20 @@ focus_map <- function(x,
       fillOpacity  = fill_opacity,
       stroke       = stroke,
       liftScale    = lift_scale,
+      focusPadding = focus_padding,
+      focusSize    = focus_size,
+      maxZoom      = max_zoom,
       fontSize     = font_size,
       showLabels   = show_labels,
       showSidebar  = show_sidebar,
+      performanceMode = performance_mode,
+      showInfoCard = !is.null(info_cols) && length(info_cols) > 0,
+      infoPosition = info_position,
+      infoCols = info_cols,
+      infoKeys = make.names(info_cols %||% character()),
+      infoLabels = info_labels,
+      infoTitle = info_title,
+      infoCardScale = info_card_scale,
       areaMin      = area_min,
       widthMin     = width_min,
       heightMin    = height_min,
@@ -179,6 +274,7 @@ focus_map <- function(x,
 
 
 #' @rdname focus_map
+#' @param outputId Shiny output ID.
 #' @export
 focusmapOutput <- function(outputId, width = "100%", height = "600px") {
   htmlwidgets::shinyWidgetOutput(outputId, "focusmap",
@@ -186,6 +282,9 @@ focusmapOutput <- function(outputId, width = "100%", height = "600px") {
 }
 
 #' @rdname focus_map
+#' @param expr Expression that returns a \code{focus_map()} widget.
+#' @param env Environment in which to evaluate \code{expr}.
+#' @param quoted Logical. Is \code{expr} already quoted?
 #' @export
 renderFocusmap <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) expr <- substitute(expr)
@@ -217,16 +316,27 @@ renderFocusmap <- function(expr, env = parent.frame(), quoted = FALSE) {
 #' avoids the \code{fromJSON → R list → toJSON} round-trip that can
 #' mangle deeply nested coordinate arrays.
 #' @keywords internal
-.sf_to_geojson_fast <- function(sf_obj, label_col, group_col = NULL) {
+.sf_to_geojson_fast <- function(sf_obj, label_col, id_col = NULL, group_col = NULL,
+                                info_cols = NULL, info_title = label_col) {
   # Build a slim sf with only the columns the widget needs
   slim <- data.frame(
     feature_id = as.character(seq_len(nrow(sf_obj))),
+    id         = if (is.null(id_col)) as.character(seq_len(nrow(sf_obj))) else as.character(sf_obj[[id_col]]),
     NAME       = as.character(sf_obj[[label_col]]),
     stringsAsFactors = FALSE
   )
 
   if (!is.null(group_col)) {
     slim$group <- as.character(sf_obj[[group_col]])
+  }
+
+  if (!is.null(info_title)) {
+    slim$info_title <- as.character(sf_obj[[info_title]])
+  }
+
+  for (col in info_cols %||% character()) {
+    safe_col <- make.names(col)
+    slim[[paste0("info_", safe_col)]] <- as.character(sf_obj[[col]])
   }
 
   slim <- sf::st_sf(slim, geometry = sf::st_geometry(sf_obj))

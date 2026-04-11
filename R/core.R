@@ -153,7 +153,8 @@ compute_stats <- function(sf_obj, region_col,
   # Per-region unit counts — preserve original column name
   region_summary <- sf_obj |>
     sf::st_drop_geometry() |>
-    dplyr::count(.data[[region_col]], name = "n_units")
+    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
+    dplyr::summarise(n_units = dplyr::n(), .groups = "drop")
 
   list(
     n_units        = nrow(sf_obj),
@@ -188,6 +189,17 @@ compute_stats <- function(sf_obj, region_col,
 derive_params <- function(stats, gamma_r = 3.0, gamma_l = 1.136, p = 1.25) {
   if (stats$n_regions < 2)
     stop("Need at least 2 regions.", call. = FALSE)
+  if (!is.numeric(gamma_r) || length(gamma_r) != 1 || is.na(gamma_r) ||
+      gamma_r < 0) {
+    stop("`gamma_r` must be a single non-negative number.", call. = FALSE)
+  }
+  if (!is.numeric(gamma_l) || length(gamma_l) != 1 || is.na(gamma_l) ||
+      gamma_l < 0) {
+    stop("`gamma_l` must be a single non-negative number.", call. = FALSE)
+  }
+  if (!is.numeric(p) || length(p) != 1 || is.na(p) || p <= 0) {
+    stop("`p` must be a single positive number.", call. = FALSE)
+  }
   list(
     alpha_r = gamma_r * stats$w_bar / (2 * sin(pi / stats$n_regions)),
     alpha_l = gamma_l * 2 * stats$R_local / sqrt(stats$n_bar),
@@ -255,13 +267,13 @@ explode_sf_core <- function(sf_obj, region_col,
       # Regional direction: Cs -> Cr (vector from state centroid to region centroid)
       dr_x = .data$rx - Cs[1], dr_y = .data$ry - Cs[2],
       dr_len   = sqrt(.data$dr_x^2 + .data$dr_y^2),
-      dhat_r_x = .data$dr_x / pmax(.data$dr_len, 1),
-      dhat_r_y = .data$dr_y / pmax(.data$dr_len, 1),
+      dhat_r_x = dplyr::if_else(.data$dr_len > 0, .data$dr_x / .data$dr_len, 0),
+      dhat_r_y = dplyr::if_else(.data$dr_len > 0, .data$dr_y / .data$dr_len, 0),
       # Local direction: Cr -> Ci (vector from region centroid to unit centroid)
       dl_x = .data$cx - .data$rx, dl_y = .data$cy - .data$ry,
       dl_len   = sqrt(.data$dl_x^2 + .data$dl_y^2),
-      dhat_l_x = .data$dl_x / pmax(.data$dl_len, 1),
-      dhat_l_y = .data$dl_y / pmax(.data$dl_len, 1)
+      dhat_l_x = dplyr::if_else(.data$dl_len > 0, .data$dl_x / .data$dl_len, 0),
+      dhat_l_y = dplyr::if_else(.data$dl_len > 0, .data$dl_y / .data$dl_len, 0)
     )
 
   # d_max per region (for s_i normalization)
@@ -273,7 +285,7 @@ explode_sf_core <- function(sf_obj, region_col,
   df <- df |>
     dplyr::left_join(d_max_tbl, by = region_col) |>
     dplyr::mutate(
-      s_i   = (.data$dl_len / pmax(.data$d_max, 1))^p,
+      s_i   = dplyr::if_else(.data$d_max > 0, (.data$dl_len / .data$d_max)^p, 0),
       x_off = alpha_r * .data$dhat_r_x + alpha_l * .data$s_i * .data$dhat_l_x,
       y_off = alpha_r * .data$dhat_r_y + alpha_l * .data$s_i * .data$dhat_l_y
     )
@@ -286,6 +298,130 @@ explode_sf_core <- function(sf_obj, region_col,
     crs = orig_crs
   )
   sf::st_as_sf(sf_exp)
+}
+
+.translate_by_offsets <- function(sf_obj, x_off, y_off) {
+  out <- sf_obj
+  out$geometry <- sf::st_sfc(
+    purrr::pmap(
+      list(sf::st_geometry(sf_obj), x_off, y_off),
+      function(g, dx, dy) g + c(dx, dy)
+    ),
+    crs = sf::st_crs(sf_obj)
+  )
+  sf::st_as_sf(out)
+}
+
+refine_collisions <- function(sf_obj, region_col,
+                              min_gap,
+                              max_shift,
+                              max_iter = 20,
+                              step = 0.5,
+                              within = c("region", "all"),
+                              centroid_fun = c("centroid", "point_on_surface")) {
+  within <- match.arg(within)
+  centroid_fun <- match.arg(centroid_fun)
+
+  if (!is.numeric(min_gap) || length(min_gap) != 1 || is.na(min_gap) ||
+      min_gap <= 0) {
+    stop("`refine_min_gap` must be a single positive number.", call. = FALSE)
+  }
+  if (!is.numeric(max_shift) || length(max_shift) != 1 || is.na(max_shift) ||
+      max_shift < 0) {
+    stop("`refine_max_shift` must be a single non-negative number.",
+         call. = FALSE)
+  }
+  if (!is.numeric(max_iter) || length(max_iter) != 1 || is.na(max_iter) ||
+      max_iter < 1) {
+    stop("`refine_max_iter` must be a positive integer.", call. = FALSE)
+  }
+  if (!is.numeric(step) || length(step) != 1 || is.na(step) ||
+      step <= 0 || step > 1) {
+    stop("`refine_step` must be a single number in (0, 1].", call. = FALSE)
+  }
+
+  n <- nrow(sf_obj)
+  diagnostics <- list(
+    enabled = TRUE,
+    min_gap = min_gap,
+    max_shift = max_shift,
+    max_iter = as.integer(max_iter),
+    step = step,
+    within = within,
+    iterations = 0L,
+    corrected_pairs = 0L,
+    active_pairs_last = 0L,
+    max_shift_observed = 0
+  )
+  if (n < 2 || max_shift == 0) {
+    return(list(sf = sf_obj, diagnostics = diagnostics))
+  }
+
+  current <- sf_obj
+  total_offsets <- matrix(0, nrow = n, ncol = 2)
+
+  for (iter in seq_len(as.integer(max_iter))) {
+    diagnostics$iterations <- iter
+    geom <- sf::st_geometry(current)
+    close <- sf::st_is_within_distance(geom, geom, dist = min_gap)
+    cent <- sf::st_coordinates(centroid_geoms(current, centroid_fun))
+    delta <- matrix(0, nrow = n, ncol = 2)
+    active_pairs <- 0L
+
+    for (i in seq_len(n - 1L)) {
+      js <- close[[i]]
+      js <- js[js > i]
+      if (!length(js)) next
+
+      for (j in js) {
+        if (within == "region" &&
+            !isTRUE(current[[region_col]][i] == current[[region_col]][j])) {
+          next
+        }
+
+        d <- as.numeric(sf::st_distance(geom[i], geom[j], by_element = TRUE))
+        if (!is.finite(d) || d >= min_gap) next
+
+        dir <- cent[j, ] - cent[i, ]
+        dir_len <- sqrt(sum(dir^2))
+        if (!is.finite(dir_len) || dir_len == 0) {
+          theta <- ((i * 73856093 + j * 19349663) %% 360) * pi / 180
+          dir <- c(cos(theta), sin(theta))
+        } else {
+          dir <- dir / dir_len
+        }
+
+        move <- 0.5 * step * (min_gap - d)
+        delta[i, ] <- delta[i, ] - dir * move
+        delta[j, ] <- delta[j, ] + dir * move
+        active_pairs <- active_pairs + 1L
+      }
+    }
+
+    diagnostics$active_pairs_last <- active_pairs
+    if (active_pairs == 0L) break
+
+    for (i in seq_len(n)) {
+      if (all(delta[i, ] == 0)) next
+      proposed <- total_offsets[i, ] + delta[i, ]
+      proposed_norm <- sqrt(sum(proposed^2))
+      if (proposed_norm > max_shift) {
+        capped_total <- proposed / proposed_norm * max_shift
+        delta[i, ] <- capped_total - total_offsets[i, ]
+      }
+    }
+
+    if (max(abs(delta)) < sqrt(.Machine$double.eps)) break
+
+    current <- .translate_by_offsets(current, delta[, 1], delta[, 2])
+    total_offsets <- total_offsets + delta
+    diagnostics$corrected_pairs <- diagnostics$corrected_pairs + active_pairs
+  }
+
+  shift_norms <- sqrt(rowSums(total_offsets^2))
+  diagnostics$max_shift_observed <- max(shift_norms, na.rm = TRUE)
+
+  list(sf = current, diagnostics = diagnostics)
 }
 
 

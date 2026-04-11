@@ -8,8 +8,12 @@ HTMLWidgets.widget({
     /* ── scoped state ──────────────────────────────────────── */
     var features, projection, geoPath, opts = {};
     var svgEl, cameraLayer, baseLayer, socketFill, socketOutline, toastLayer;
+    var focusCardEl;
     var zoomBehaviour, tooltipEl;
     var groupColorScale = null;
+    var lastTargetFeature = null;
+    var tooltipFrame = null;
+    var tooltipEvent = null;
 
     var S = {
       mode: "idle",
@@ -23,11 +27,29 @@ HTMLWidgets.widget({
     /* ── util ──────────────────────────────────────────────── */
     function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 
+    function setShinyInput(id, value) {
+      if (!window.Shiny) return;
+      if (typeof Shiny.setInputValue === "function") {
+        Shiny.setInputValue(id, value, { priority: "event" });
+      } else if (typeof Shiny.onInputChange === "function") {
+        Shiny.onInputChange(id, value);
+      }
+    }
+
     // All values come from opts (set by R via the payload).
     // When show_sidebar is TRUE the widget builds its own controls;
     // when FALSE the host app (Shiny) owns them and passes values
     // through opts on each render.
     function liftScale() { return opts.liftScale || 1.16; }
+    function focusPadding() { return Math.max(0, opts.focusPadding == null ? 40 : +opts.focusPadding); }
+    function focusSize() { return clamp(opts.focusSize == null ? 0.76 : +opts.focusSize, 0.25, 1.35); }
+    function infoCardScale() { return clamp(opts.infoCardScale == null ? 1 : +opts.infoCardScale, 0.75, 1.6); }
+    function maxZoom(fromHome) {
+      if (opts.maxZoom != null && isFinite(+opts.maxZoom) && +opts.maxZoom > 0) return +opts.maxZoom;
+      if (fromHome && opts.performanceMode) return 18;
+      if (opts.performanceMode) return 20;
+      return 18;
+    }
     function fontSize()  { return opts.fontSize  || 14; }
     function showLabels() { return opts.showLabels !== false; }
     function areaMin()   { return opts.areaMin   || 5000; }
@@ -62,6 +84,9 @@ HTMLWidgets.widget({
       blur.append("feGaussianBlur").attr("stdDeviation", "5.5");
 
       cameraLayer  = svgEl.append("g").attr("id", "fm-camera");
+      cameraLayer
+        .style("transform-origin", "0 0")
+        .style("transform-box", "view-box");
       baseLayer    = cameraLayer.append("g").attr("id", "fm-base");
       var sg       = cameraLayer.append("g");
       socketFill   = sg.append("path").attr("id", "fm-sfill")
@@ -78,6 +103,11 @@ HTMLWidgets.widget({
       tooltipEl = document.createElement("div");
       tooltipEl.className = "fm-tooltip";
       wrap.appendChild(tooltipEl);
+
+      focusCardEl = document.createElement("div");
+      focusCardEl.className = "fm-focus-card fm-card-top-right";
+      focusCardEl.style.display = "none";
+      wrap.appendChild(focusCardEl);
 
       // Right-click to dismiss — robust cross-browser/iframe handling
       var rightClickHandler = function (e) {
@@ -98,7 +128,7 @@ HTMLWidgets.widget({
       // Zoom — programmatic only, no scroll/drag
       zoomBehaviour = d3.zoom().scaleExtent([1, 50])
         .on("zoom", function (e) {
-          cameraLayer.attr("transform", e.transform);
+          applyCameraTransform(e.transform);
           S.currentTransform = e.transform;
         });
 
@@ -151,6 +181,8 @@ HTMLWidgets.widget({
         "#fm-camera{will-change:transform}",
         ".fm-county{cursor:pointer;stroke-linejoin:round;stroke-linecap:round}",
         ".fm-county:hover,.fm-county.is-target{fill-opacity:.72!important;stroke:#16385c;stroke-width:1.1px;transition:fill-opacity 100ms ease}",
+        ".fm-performance-mode .fm-county:hover{fill-opacity:.64!important;stroke:#fff!important;stroke-width:.8px!important;transition:none!important}",
+        ".fm-performance-mode .fm-county.is-target{fill-opacity:.72!important;stroke:#16385c;stroke-width:1px!important;transition:none!important}",
         "#fm-base.fm-has-focus .fm-county{fill-opacity:.3!important;pointer-events:auto}",
         "#fm-base.fm-has-focus .fm-county.hidden-src{opacity:0;pointer-events:none}",
         ".fm-county.hidden-src{opacity:0;pointer-events:none}",
@@ -160,7 +192,13 @@ HTMLWidgets.widget({
         "@keyframes fm-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}",
         ".fm-toast-g{pointer-events:none;animation:fm-rise 180ms cubic-bezier(.22,1,.36,1)}",
         ".fm-tooltip{position:absolute;pointer-events:none;background:rgba(26,26,46,.88);color:#fff;font-size:12px;font-weight:500;padding:4px 10px;border-radius:6px;white-space:nowrap;opacity:0;transition:opacity 80ms;z-index:20;font-family:'DM Sans',system-ui,sans-serif}",
-        ".fm-is-flying .fm-county{stroke:none!important;vector-effect:none!important;shape-rendering:optimizeSpeed}",
+        ".fm-focus-card{--fm-card-scale:1;position:absolute;z-index:25;max-width:min(calc(320px * var(--fm-card-scale)),calc(100% - 28px));background:rgba(255,255,255,.94);color:#10233a;border:1px solid #d7e3ef;border-radius:8px;box-shadow:0 14px 34px rgba(15,35,60,.16);padding:calc(12px * var(--fm-card-scale)) calc(14px * var(--fm-card-scale));font-family:'DM Sans',system-ui,sans-serif;backdrop-filter:blur(8px);pointer-events:auto}",
+        ".fm-card-top-right{top:14px;right:14px}.fm-card-top-left{top:14px;left:14px}.fm-card-bottom-right{right:14px;bottom:14px}.fm-card-bottom-left{left:14px;bottom:14px}",
+        ".fm-card-title{font-size:calc(15px * var(--fm-card-scale));font-weight:800;line-height:1.2;margin:0 calc(20px * var(--fm-card-scale)) calc(8px * var(--fm-card-scale)) 0;color:#10233a}",
+        ".fm-card-close{position:absolute;top:7px;right:8px;border:0;background:transparent;color:#5c7188;font-size:calc(18px * var(--fm-card-scale));line-height:1;cursor:pointer;padding:2px 4px}",
+        ".fm-card-row{display:grid;grid-template-columns:minmax(calc(72px * var(--fm-card-scale)),.8fr) minmax(0,1.2fr);gap:calc(8px * var(--fm-card-scale));font-size:calc(12px * var(--fm-card-scale));line-height:1.35;padding:calc(4px * var(--fm-card-scale)) 0;border-top:1px solid #edf2f7}",
+        ".fm-card-key{color:#60758c;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fm-card-val{color:#16324f;font-weight:600;overflow-wrap:anywhere}",
+        ".fm-is-flying .fm-county{stroke:none!important;vector-effect:none!important;shape-rendering:optimizeSpeed;pointer-events:none}",
         ".fm-is-flying .fm-county:hover,.fm-is-flying .fm-county.is-target{stroke:none!important}",
         ".fm-is-flying .fm-toast-g{display:none}"
       ].join("\n");
@@ -241,15 +279,29 @@ HTMLWidgets.widget({
               .on("click", function (e, d) { onCountyClick(d); })
               .on("mouseenter", function (e, d) { showTooltip(e, d); })
               .on("mousemove",  function (e)    { moveTooltip(e); })
-              .on("mouseleave", function ()     { hideTooltip(); });
+              .on("mouseleave", function ()     { hideTooltip(); })
+              .each(function (d) { d._node = this; });
           },
           function (update) {
             return update
               .attr("d", function (d) { return d._s.pathD; })
-              .attr("fill", featureFill);
+              .attr("fill", featureFill)
+              .each(function (d) { d._node = this; });
           },
           function (exit) { return exit.remove(); }
         );
+    }
+
+    function applyCameraTransform(t) {
+      if (opts.performanceMode) {
+        cameraLayer
+          .attr("transform", null)
+          .style("transform", "translate(" + t.x + "px," + t.y + "px) scale(" + t.k + ")");
+      } else {
+        cameraLayer
+          .style("transform", null)
+          .attr("transform", t);
+      }
     }
 
     /* ── tooltip ───────────────────────────────────────────── */
@@ -260,11 +312,78 @@ HTMLWidgets.widget({
       moveTooltip(e);
     }
     function moveTooltip(e) {
-      var r = el.querySelector(".fm-map-wrap").getBoundingClientRect();
-      tooltipEl.style.left = (e.clientX - r.left + 12) + "px";
-      tooltipEl.style.top  = (e.clientY - r.top  - 28) + "px";
+      tooltipEvent = e;
+      if (tooltipFrame) return;
+      tooltipFrame = requestAnimationFrame(function () {
+        tooltipFrame = null;
+        if (!tooltipEvent) return;
+        var r = el.querySelector(".fm-map-wrap").getBoundingClientRect();
+        tooltipEl.style.left = (tooltipEvent.clientX - r.left + 12) + "px";
+        tooltipEl.style.top  = (tooltipEvent.clientY - r.top  - 28) + "px";
+      });
     }
-    function hideTooltip() { tooltipEl.style.opacity = "0"; }
+    function hideTooltip() {
+      tooltipEl.style.opacity = "0";
+      tooltipEvent = null;
+    }
+
+    function escapeHTML(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function labelFromColumn(col) {
+      if (opts.infoLabels && opts.infoLabels[col]) return opts.infoLabels[col];
+      return String(col || "")
+        .replace(/^info_/, "")
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, function (m) { return m.toUpperCase(); });
+    }
+
+    function showFocusCard(f) {
+      if (!focusCardEl || !opts.showInfoCard) return;
+
+      var position = opts.infoPosition || "top-right";
+      focusCardEl.className = "fm-focus-card fm-card-" + position;
+      focusCardEl.style.setProperty("--fm-card-scale", infoCardScale());
+
+      var props = f.properties || {};
+      var title = props.info_title || props.NAME || props.feature_id || "";
+      var cols = opts.infoCols || [];
+      var keys = opts.infoKeys || cols;
+      var rows = cols.map(function (col, i) {
+        var key = keys[i] || col;
+        var value = props["info_" + key];
+        if (value == null || value === "" || value === "NA" || value === "NaN") return "";
+        return "<div class=\"fm-card-row\"><div class=\"fm-card-key\">" +
+          escapeHTML(labelFromColumn(col)) + "</div><div class=\"fm-card-val\">" +
+          escapeHTML(value) + "</div></div>";
+      }).join("");
+
+      focusCardEl.innerHTML =
+        "<button class=\"fm-card-close\" type=\"button\" aria-label=\"Reset focus\">&times;</button>" +
+        "<div class=\"fm-card-title\">" + escapeHTML(title) + "</div>" +
+        rows;
+
+      focusCardEl.querySelector(".fm-card-close").addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        clearFocus();
+      });
+
+      focusCardEl.style.display = null;
+    }
+
+    function hideFocusCard() {
+      if (focusCardEl) {
+        focusCardEl.style.display = "none";
+        focusCardEl.innerHTML = "";
+      }
+    }
 
     /* ── label visibility (χ_i) ────────────────────────────── */
     function labelVis(f, camK) {
@@ -295,34 +414,33 @@ HTMLWidgets.widget({
       var dx = Math.max(s.w, 1);
       var dy = Math.max(s.h, 1);
       var ls = liftScale();
-      var ex = Math.max(0, ls - 1);
+      var pad = focusPadding();
 
       var cx = isFinite(s.ax) ? s.ax : (s.x0 + s.x1) / 2;
-      var cy0 = isFinite(s.ay) ? s.ay : (s.y0 + s.y1) / 2;
+      var cy = isFinite(s.ay) ? s.ay : (s.y0 + s.y1) / 2;
+      var rise = clamp(Math.max(22, 0.12 * dy + 8), 12, 50);
 
-      var padX   = Math.max(16, 0.05 * dx + 0.10 * ex * dx);
-      var padTop = Math.max(34, 0.09 * dy + 0.020 * H + 0.16 * ex * dy);
-      var padBot = Math.max(16, 0.05 * dy + 0.06 * ex * dy);
+      // Fit the lifted clone, not just the original path. The clone is scaled
+      // around its bbox center and shifted upward by `rise`, so use that final
+      // bounds box for camera placement.
+      var x0 = cx + (s.x0 - cx) * ls;
+      var x1 = cx + (s.x1 - cx) * ls;
+      var y0 = cy + (s.y0 - cy) * ls - rise;
+      var y1 = cy + (s.y1 - cy) * ls - rise;
 
-      var bw = dx + 2 * padX;
-      var bh = dy + padTop + padBot;
+      var liftedW = Math.max(x1 - x0, 1);
+      var liftedH = Math.max(y1 - y0, 1);
+      var bw = liftedW + 2 * pad;
+      var bh = liftedH + 2 * pad;
+      var fitCx = (x0 + x1) / 2;
+      var fitCy = (y0 + y1) / 2;
 
-      var maxScale;
-      if (fromHome && opts.performanceMode) {
-        maxScale = 10.5;
-      } else if (opts.performanceMode) {
-        maxScale = 12;
-      } else {
-        maxScale = 18;
-      }
-
-      var sc = clamp(Math.min(W / bw, H / bh), 1, maxScale);
-
-      // push selected feature slightly upward on screen
-      var cy = cy0 + 0.18 * (padTop - padBot);
+      var fitScale = Math.min(W / bw, H / bh);
+      var sizeScale = Math.min((W * focusSize()) / liftedW, (H * focusSize()) / liftedH);
+      var sc = clamp(Math.min(fitScale, sizeScale), 1, maxZoom(fromHome));
 
       return d3.zoomIdentity
-        .translate(W / 2 - sc * cx, H / 2 - sc * cy)
+        .translate(W / 2 - sc * fitCx, H / 2 - sc * fitCy)
         .scale(sc);
     }
 
@@ -355,10 +473,14 @@ HTMLWidgets.widget({
       // Label
       var vis = labelVis(f, S.currentTransform.k);
       if (showLabels() && vis.visible) {
+        var labelScale = Math.max((S.currentTransform.k || 1) * ls, 1);
+        var labelFontSize = fontSize() / labelScale;
+        var labelStrokeWidth = 2.2 / labelScale;
         g.append("text").attr("class", "fm-focus-label")
           .attr("x", s.ax).attr("y", s.ay)
           .attr("text-anchor", "middle").attr("dominant-baseline", "middle")
-          .attr("font-size", fontSize() + "px")
+          .attr("font-size", labelFontSize + "px")
+          .style("stroke-width", labelStrokeWidth + "px")
           .attr("transform",
             "translate(" + cx + "," + cy + ") scale(" + ls +
             ") translate(" + -cx + "," + -cy + ") translate(0," + -rise + ")")
@@ -383,6 +505,19 @@ HTMLWidgets.widget({
       cameraLayer.classed("fm-is-flying", !!on);
     }
 
+    function setFeatureClass(f, className, on) {
+      if (f && f._node) f._node.classList.toggle(className, !!on);
+    }
+
+    function clearTargetFeature() {
+      setFeatureClass(lastTargetFeature, "is-target", false);
+      lastTargetFeature = null;
+    }
+
+    function unhideSelectedFeature() {
+      setFeatureClass(S.selectedFeature, "hidden-src", false);
+    }
+
     // Deferred version: waits 2 frames before removing flight mode.
     // This prevents a thundering herd of style recalculations (254 paths
     // simultaneously restoring vector-effect + shape-rendering) from
@@ -399,9 +534,11 @@ HTMLWidgets.widget({
       var ds = Math.abs((to.k || 1) - (from.k || 1));
       var dt = Math.hypot((to.x || 0) - (from.x || 0), (to.y || 0) - (from.y || 0));
 
-      var base = fromHome ? 240 : 200;
-      var dur = base + 45 * ds + 0.025 * dt;
+      var dense = !!opts.performanceMode;
+      var base = dense ? (fromHome ? 150 : 120) : (fromHome ? 240 : 200);
+      var dur = base + (dense ? 24 : 45) * ds + (dense ? 0.012 : 0.025) * dt;
 
+      if (dense) return clamp(dur, fromHome ? 180 : 140, fromHome ? 320 : 260);
       return clamp(dur, fromHome ? 300 : 200, fromHome ? 560 : 460);
     }
 
@@ -424,24 +561,23 @@ HTMLWidgets.widget({
       S.scrollOutCount = 0;
       clearTimeout(S.scrollOutTimer);
 
+      setFlightRenderMode(true);
+
       hideTooltip();
       clearToast();
       hideSocket();
 
-      // clear previous focus visuals
+      // Clear previous focus visuals without touching every path.
+      clearTargetFeature();
+      unhideSelectedFeature();
       baseLayer.classed("fm-has-focus", false);
-      baseLayer.selectAll(".fm-county")
-        .classed("hidden-src", false)
-        .classed("is-target", false);
 
-      baseLayer.select("#fm-b-" + f.properties.feature_id)
-        .classed("is-target", true);
+      lastTargetFeature = f;
+      setFeatureClass(f, "is-target", true);
 
       var fromT = S.currentTransform || d3.zoomIdentity;
       var toT = transformFor(f, fromHome);
       var dur = flightDuration(fromT, toT, fromHome);
-
-      setFlightRenderMode(true);
 
       try {
         await flyTo(toT, dur);
@@ -466,21 +602,21 @@ HTMLWidgets.widget({
       S.currentTransform = t;
       S.mode = "focused";
 
-      baseLayer.selectAll(".fm-county").classed("is-target", false);
+      clearTargetFeature();
       baseLayer.classed("fm-has-focus", true);
-      baseLayer.select("#fm-b-" + f.properties.feature_id)
-        .classed("hidden-src", true);
+      setFeatureClass(f, "hidden-src", true);
 
       showSocket(f);
       showToast(f);
+      showFocusCard(f);
 
-      if (window.Shiny) {
-        Shiny.setInputValue(el.id + "_selected", {
-          feature_id: f.properties.feature_id,
-          name: f.properties.NAME,
-          group: f.properties.group || null
-        });
-      }
+      setShinyInput(el.id + "_selected", {
+        id: f.properties.id || f.properties.feature_id,
+        feature_id: f.properties.feature_id,
+        name: f.properties.NAME,
+        group: f.properties.group || null,
+        properties: selectedProperties(f)
+      });
     }
 
     async function clearFocus() {
@@ -490,20 +626,20 @@ HTMLWidgets.widget({
       S.scrollOutCount = 0;
       clearTimeout(S.scrollOutTimer);
 
+      setFlightRenderMode(true);
+
       hideTooltip();
+      hideFocusCard();
       clearToast();
       hideSocket();
 
       baseLayer.classed("fm-has-focus", false);
-      baseLayer.selectAll(".fm-county")
-        .classed("hidden-src", false)
-        .classed("is-target", false);
+      clearTargetFeature();
+      unhideSelectedFeature();
 
       var fromT = S.currentTransform || d3.zoomIdentity;
       var toT = d3.zoomIdentity;
       var dur = flightDuration(fromT, toT, false);
-
-      setFlightRenderMode(true);
 
       try {
         await flyTo(toT, dur);
@@ -516,9 +652,7 @@ HTMLWidgets.widget({
       S.currentTransform = d3.zoomIdentity;
       S.mode = "idle";
 
-      if (window.Shiny) {
-        Shiny.setInputValue(el.id + "_selected", null);
-      }
+      setShinyInput(el.id + "_selected", null);
     }
 
     function rebuildFocus(f) {
@@ -537,6 +671,20 @@ HTMLWidgets.widget({
 
     function onCountyClick(f) {
       if (S.mode === "idle" || S.mode === "focused") beginSelection(f);
+    }
+
+    function selectedProperties(f) {
+      var props = f.properties || {};
+      var out = {};
+      var cols = opts.infoCols || [];
+      var keys = opts.infoKeys || cols;
+
+      cols.forEach(function (col, i) {
+        var key = keys[i] || col;
+        out[col] = props["info_" + key] == null ? null : props["info_" + key];
+      });
+
+      return out;
     }
 
 
@@ -587,11 +735,13 @@ HTMLWidgets.widget({
         features = geojson.features;
         opts = x.options || {};
 
-        // Auto-detect performance mode for dense states (TX=254, GA=159)
+        // Auto-detect performance mode for dense county and municipal layers.
         // Caps max zoom scale and shortens transitions to keep SVG repaint smooth
-        if (opts.performanceMode === undefined) {
+        if (opts.performanceMode === undefined || opts.performanceMode === null) {
           opts.performanceMode = features.length > 100;
         }
+        opts.performanceMode = !!opts.performanceMode;
+        el.classList.toggle("fm-performance-mode", opts.performanceMode);
 
         features.forEach(function (f, i) {
           if (!f.properties.feature_id) f.properties.feature_id = String(i + 1);
@@ -626,6 +776,7 @@ HTMLWidgets.widget({
         S.selectedFeature = null;
         S.pendingFeature = null;
         S.currentTransform = d3.zoomIdentity;
+        lastTargetFeature = null;
       },
 
       resize: function (w, h) {

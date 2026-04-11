@@ -1,5 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.claude$
 ^LICENSE\.md$
 ^doc$
 ^Meta$
+^paper$

@@ -20,6 +20,7 @@ Depends:
 Imports:
     dplyr,
     ggplot2,
+    htmlwidgets,
     purrr,
     rlang,
     sf,
@@ -27,7 +28,9 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    shiny,
+    testthat (>= 3.0.0),
+    tigris
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3

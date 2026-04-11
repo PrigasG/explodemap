@@ -12,6 +12,12 @@ explode_sf(
   p = 1.25,
   alpha_r = NULL,
   alpha_l = NULL,
+  refine = FALSE,
+  refine_min_gap = NULL,
+  refine_max_shift = NULL,
+  refine_max_iter = 20,
+  refine_step = 0.5,
+  refine_within = c("region", "all"),
   allow_other = FALSE,
   fix_invalid = TRUE,
   centroid_fun = c("centroid", "point_on_surface"),
@@ -31,9 +37,27 @@ explode_sf(
 
 \item{p}{Distance scaling exponent (default 1.25)}
 
-\item{alpha_r}{Manual override (metres); skips derivation}
+\item{alpha_r}{Optional manual override for regional separation (metres).
+May be supplied independently of \code{alpha_l}.}
 
-\item{alpha_l}{Manual override (metres); skips derivation}
+\item{alpha_l}{Optional manual override for local expansion (metres).
+May be supplied independently of \code{alpha_r}.}
+
+\item{refine}{If TRUE, apply a bounded collision-refinement pass after the
+analytical displacement. Default is FALSE.}
+
+\item{refine_min_gap}{Optional minimum boundary-to-boundary gap in map units.
+If NULL and \code{refine = TRUE}, uses 2\% of the characteristic diameter.}
+
+\item{refine_max_shift}{Optional maximum correction per feature in map units.
+If NULL and \code{refine = TRUE}, uses 10\% of \code{alpha_r + alpha_l}.}
+
+\item{refine_max_iter}{Maximum refinement iterations.}
+
+\item{refine_step}{Fraction of each gap deficit corrected per iteration.}
+
+\item{refine_within}{Refine pairs within each \code{"region"} (default) or across
+\code{"all"} features.}
 
 \item{allow_other}{If TRUE, permits "Other" units}
 

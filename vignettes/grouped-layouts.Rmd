@@ -204,7 +204,7 @@ Level 2 and Level 3 parameters control anchor placement and refinement:
 |-----------|---------|---------|
 | `kappa` | 1.8 | Radial expansion factor |
 | `padding` | 50000 | Base padding (map units) |
-| `delta` | 15000 | Density scaling factor |
+| `delta` | 15000 | Log-density scaling factor |
 | `lambda` | 0.18 | Spring coefficient for refinement |
 | `eta` | 0.18 | Repulsion step size for refinement |
 | `padding_sep` | 20000 | Minimum separation between blocks |

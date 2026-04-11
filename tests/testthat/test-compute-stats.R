@@ -11,3 +11,12 @@ test_that("compute_stats returns expected fields and positive values", {
   expect_true(s$R_local >= 0)
   expect_true(s$ratio >= 0)
 })
+
+test_that("derive_params validates user-controlled parameters", {
+  x <- make_test_sf()
+  s <- compute_stats(x, "region")
+
+  expect_error(derive_params(s, gamma_r = -1), "gamma_r")
+  expect_error(derive_params(s, gamma_l = -1), "gamma_l")
+  expect_error(derive_params(s, p = 0), "`p`")
+})

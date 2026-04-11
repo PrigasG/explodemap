@@ -45,7 +45,7 @@ explode_grouped(
 
 \item{padding}{Base padding (default 50000)}
 
-\item{delta}{Density scaling (default 15000)}
+\item{delta}{Log-density scaling (default 15000)}
 
 \item{lambda}{Spring coefficient (default 0.18)}
 

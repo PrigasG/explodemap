@@ -38,3 +38,40 @@ test_that("layout_regions manual mode merges supplied anchors", {
   expect_equal(anchors$anchor_x, c(0, 100, 200))
   expect_equal(anchors$anchor_y, c(0, 50, 100))
 })
+
+test_that("layout_regions manual mode requires anchors for every region", {
+  x <- make_grouped_sf()
+
+  anchors_in <- data.frame(
+    region = c("R1", "R2"),
+    anchor_x = c(0, 100),
+    anchor_y = c(0, 50)
+  )
+
+  expect_error(
+    layout_regions(
+      x,
+      region_col = "region",
+      mode = "manual",
+      anchors = anchors_in
+    ),
+    "Missing manual anchors"
+  )
+})
+
+test_that("layout_regions collision mode is deterministic for coincident anchors", {
+  block_df <- data.frame(
+    region = c("R1", "R2"),
+    anchor_x = c(0, 0),
+    anchor_y = c(0, 0),
+    target_x = c(0, 0),
+    target_y = c(0, 0),
+    block_radius = c(10, 10)
+  )
+
+  a <- .refine_anchors(block_df, max_iter = 2)
+  b <- .refine_anchors(block_df, max_iter = 2)
+
+  expect_equal(a$anchor_x, b$anchor_x)
+  expect_equal(a$anchor_y, b$anchor_y)
+})

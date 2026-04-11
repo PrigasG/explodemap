@@ -148,7 +148,9 @@ calibration_row(result)
 
 By default, `explodemap` derives displacement parameters analytically
 from dataset geometry using the paper's two closed-form results. You can
-also supply parameters directly:
+also supply parameters directly. Overrides may be supplied
+independently, so you can tune regional separation without changing
+local expansion, or vice versa:
 
 ```{r manual}
 manual <- explode_sf(
@@ -161,6 +163,41 @@ manual <- explode_sf(
 
 manual$params
 ```
+
+```{r partial-manual}
+more_region_gap <- explode_sf(
+  x,
+  region_col = "region",
+  alpha_r = result$params$alpha_r * 1.5,
+  plot = FALSE
+)
+
+more_region_gap$params
+```
+
+## Optional collision refinement
+
+The two-level algorithm is the clean paper model. For dense municipal
+cores, you can add a bounded refinement pass that nudges close
+same-region neighbors apart after the analytical displacement:
+
+```{r refine}
+refined <- explode_sf(
+  x,
+  region_col = "region",
+  refine = TRUE,
+  refine_min_gap = 0.15,
+  refine_max_shift = 0.10,
+  plot = FALSE
+)
+
+refined$refinement
+```
+
+`refine_max_shift` caps the extra correction per feature, so the
+refinement remains a small display adjustment rather than a replacement
+for the displacement model. Use `refine_within = "all"` when the
+remaining crowding crosses region boundaries.
 
 ## Centroid options
 

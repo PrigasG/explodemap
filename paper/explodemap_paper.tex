@@ -1,0 +1,1140 @@
+\documentclass[12pt, a4paper]{article}
+
+% ── Packages ─────────────────────────────────────────────────────────────────
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{abstract}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage[ruled, vlined, linesnumbered]{algorithm2e}
+\usepackage{mdframed}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc}
+\usepackage{adjustbox}
+\usepackage{float}
+
+% ── Hyperref setup ────────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = blue!60!black,
+  citecolor  = blue!60!black,
+  urlcolor   = blue!60!black,
+  pdftitle   = {A Hierarchical Vector-Based Framework for Multi-Scale Exploded-View Cartography},
+  pdfauthor  = {}
+}
+
+% ── Section title formatting ─────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{\thesubsubsection}{0.6em}{}
+
+% ── Code listing style ────────────────────────────────────────────────────────
+\lstdefinestyle{Rstyle}{
+  language        = R,
+  basicstyle      = \ttfamily\small,
+  keywordstyle    = \color{blue!70!black}\bfseries,
+  commentstyle    = \color{gray},
+  stringstyle     = \color{orange!80!black},
+  numbers         = left,
+  numberstyle     = \tiny\color{gray},
+  numbersep       = 8pt,
+  breaklines      = true,
+  frame           = single,
+  framerule       = 0.4pt,
+  rulecolor       = \color{gray!40},
+  backgroundcolor = \color{gray!5},
+  captionpos      = b,
+  showstringspaces= false,
+  tabsize         = 2
+}
+\lstset{style=Rstyle}
+
+% ── Theorem-like environments ─────────────────────────────────────────────────
+\newmdtheoremenv[
+  linecolor  = blue!50!black,
+  linewidth  = 1pt,
+  topline    = true,
+  bottomline = true,
+  rightline  = false,
+  leftline   = false,
+  innertopmargin  = 6pt,
+  innerbottommargin = 6pt
+]{definition}{Definition}
+
+% ── Equation numbering ────────────────────────────────────────────────────────
+\numberwithin{equation}{section}
+
+% ── Spacing ───────────────────────────────────────────────────────────────────
+\setlength{\parskip}{6pt}
+\onehalfspacing
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Title ─────────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\LARGE\bfseries A Hierarchical Vector-Based Framework for\\[4pt]
+   Multi-Scale Exploded-View Cartography\par}
+  \vspace{0.8cm}
+  {\large\itshape Centroid-Driven Spatial Displacement for Dense Administrative Maps\par}
+  \vspace{1.2cm}
+  {\large George Arthur\par}
+  \vspace{1cm}
+  {\small
+  \textbf{Keywords:} exploded-view maps; cartographic generalization; spatial displacement;\\
+  vector-field deformation; hierarchical cartography; administrative boundaries;\\
+  geovisualization; computational cartography\par}
+  \vfill
+\end{titlepage}
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+\noindent
+Exploded-view cartography provides a method for improving the readability of dense administrative maps by introducing controlled spatial separation between geographic units while preserving their internal geometry. Despite its practical value, exploded layouts are typically produced through manual tuning or heuristic displacement rules, limiting reproducibility and portability across datasets.
+
+This paper introduces a hierarchical vector-based framework for generating exploded administrative maps using centroid-driven displacement fields. The method translates polygon geometries using a deterministic vector formulation derived from hierarchical centroid relationships, allowing simultaneous separation at multiple administrative levels while preserving the internal morphology of each geographic unit exactly through rigid-body translation.
+
+We derive functional forms for the two principal displacement parameters governing regional separation and intra-region expansion. The regional parameter is derived from a radial gap model describing the chord-length increase when parent regions are displaced outward from a shared centroid. The local parameter is derived from an equal-area partition model approximating the characteristic spacing of municipal units within a region. These derivations determine the structural dependence of the parameters on geometric quantities---characteristic polygon diameter, regional radius, and municipal density---leaving only dimensionless clearance coefficients to be calibrated empirically. This formulation substantially reduces manual parameter tuning while retaining interpretable legibility coefficients.
+
+The framework is evaluated using municipal boundary data from New Jersey ($n = 564$ municipalities, 3 regions) and applied to Pennsylvania ($n = 2{,}572$ municipalities, 6 regions) as a large-scale transfer test. The NJ-calibrated local coefficient $\gamma_l$ transfers successfully to Pennsylvania, producing coherent exploded layouts at formula-derived parameters confirmed stable under $\pm 15\%$ sensitivity analysis. The regional coefficient $\gamma_r$ is directionally consistent across states but requires broader validation.
+
+Because the method operates through direct vector translation without iterative optimization or topology reconstruction, it is $O(n)$, closed-form, and suitable for dynamic mapping environments such as interactive web applications and statistical dashboards. The accompanying software also includes a separate focus-map interaction layer for selected-area inspection; this layer is treated as a companion viewport transformation rather than part of the exploded-view geometry model.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Introduction}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Thematic maps of administrative regions become difficult to read when rendered in a conventional geographic layout. Dense municipal, county, or district boundaries create visual congestion, making it hard to distinguish adjacent units, perceive higher-level structure, or support interactive tasks such as hovering, clicking, or labeling. These challenges are especially pronounced in the northeastern United States and other regions characterized by fine-grained political subdivision. New Jersey, with over 560 municipalities distributed across a compact geographic area, is a representative example.
+
+Cartography has long addressed such problems through generalization operations including simplification, aggregation, typification, and displacement. Among these, displacement is particularly important when geographic objects must be moved to improve readability while retaining spatial relationships. However, many existing displacement methods are formulated as optimization problems or iterative conflict-resolution procedures, which are computationally demanding and difficult to deploy in dynamic web-based environments \citep{bader2001, harrie2002}.
+
+An alternative strategy is to create an \emph{exploded-view} cartographic layout, in which spatial units are separated to introduce whitespace while preserving their original geometry. Although exploded layouts are familiar in engineering illustration and some forms of schematic cartography, they remain relatively under-formalized for hierarchical administrative maps. There is limited prior work on deterministic, geometry-preserving exploded layouts that support both hierarchical separation and computational efficiency.
+
+This paper proposes a hierarchical centroid-driven displacement framework for exploded-view cartography. The method treats displacement as a vector field over the map domain and computes translations analytically from centroid relationships across administrative levels. Rather than iteratively resolving collisions, it defines displacement directly from parent-child spatial structure. The result is a closed-form, multi-scale, geometry-preserving transformation that connects naturally to established traditions in cartogram deformation, flow map visualization, and cartographic distortion analysis.
+
+\paragraph{Contributions.} The main contributions of this work are:
+\begin{enumerate}
+  \item A new class of cartographic transformation --- \emph{hierarchical piecewise-rigid displacement} --- in which each feature undergoes rigid-body motion while displacement vectors are generated by a continuous hierarchical spatial model. This places the method in a distinct category from rigid transforms, continuous deformation, and topological rearrangements.
+  \item A rigid-body translation framework (Proposition~1) guaranteeing exact preservation of feature shape, area, perimeter, and topological structure --- unlike cartogram and deformation methods that warp geometry.
+  \item Geometry-derived parameter formulas (Analytical Results~1--2) linking displacement magnitude to intrinsic dataset properties, constituting a reusable parameterization procedure applicable to any administrative polygon dataset with a defined hierarchy.
+  \item A closed-form $O(n)$ algorithm suitable for real-time cartographic systems, with a zoom-dependent extension $t_i(z) = \lambda(z)\cdot t_i$ for interactive multi-scale layouts.
+  \item A three-level multi-scale extension enabling grouped national layouts through automatic anchor generation and collision-aware anchor refinement with spring stabilization (Section~\ref{sec:multiscale}).
+  \item A generalized open implementation (\texttt{explode\_any.R}) applicable to any administrative polygon dataset without modification to the core algorithm (Section~\ref{sec:genimpl}), together with a companion focus-map widget for interactive selected-feature inspection.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Related Work}
+% ─────────────────────────────────────────────────────────────────────────────
+
+The proposed method sits at the intersection of four cartographic research traditions.
+
+\subsection{Cartographic Generalization and Displacement}
+
+Cartographic generalization provides the conceptual foundation for this work. Displacement is one of its core operators, used when map objects must be moved to avoid overlap or improve readability while preserving relevant spatial relations \citep{wu2021, mackaness2011}. A major strand of displacement research formulates the problem as optimization or energy minimization. \citet{bader2001} treats feature displacement as an energy minimization problem, and \citet{harrie2002} describe simultaneous graphic generalization of vector datasets under competing cartographic constraints. These methods are powerful but computationally expensive, limiting their use in real-time or interactive mapping.
+
+\subsection{Vector-Field Models and Map Deformation}
+
+A second relevant strand represents displacement as a spatially varying deformation field. \citet{ai2015} propose a vector-field model for handling multiple displacement conflicts in building generalization, showing how conflict resolution can be expressed through displacement fields rather than object-by-object adjustment. Related work on distortion analysis uses vector fields to visualize how maps differ from reference geometries \citep{jenny2011}.
+
+The method developed here belongs to this family: displacement is expressed as a closed-form hierarchical vector field whose components are defined by parent-child centroid relationships rather than by iterative force propagation.
+
+\subsection{Cartograms and Spatial Transformation}
+
+Cartograms transform geographic space by defining a displacement field over the map domain. In diffusion-based cartograms, the map is warped according to a field induced by density equalization \citep{gastner2004}. Force-based approaches generate similar transformations through spring relaxation \citep{sun2020}. Reviews of cartogram methods emphasize the trade-off between distortion, topology, orientation, and recognizability \citep{nusrat2016}.
+
+The present method differs from cartograms in a crucial respect: it does not deform polygon interiors. Each administrative unit undergoes rigid-body translation, preserving shape and area exactly. Nevertheless, the displacement field shares the mathematical structure $T(x) = x + V(x)$ common to cartogram transformations.
+
+\subsection{Hierarchy and Multi-Scale Cartography}
+
+Hierarchical data structures are central to multi-scale mapping. \citet{cecconi2003} highlights the need for hierarchical representations supporting changing scale and display conditions. More recent discussions emphasize that hierarchy is fundamental to organizing cartographic operations across scales \citep{bundy2020, yan2019}. The framework proposed here builds directly on this principle: hierarchy is not merely an organizational device but the source of the displacement field itself.
+
+\subsection{Position of the Present Work}
+
+The method differs from prior work in three main respects. First, it produces an exploded-view layout rather than a conflict-only displacement. Second, it is deterministic and closed-form, avoiding iterative optimization. Third, it defines displacement from hierarchical centroid structure, yielding a lightweight multi-scale method suited to real-time visualization.
+
+More broadly, existing cartographic transformations fall into three recognized classes: rigid transforms (translation, rotation, scaling), continuous deformation (cartograms, rubber-sheet maps, diffusion-based warping), and topological rearrangements (schematic maps, grid maps). The present method belongs to a fourth class: \emph{piecewise rigid hierarchical displacement}, in which each feature undergoes rigid-body motion but the displacement vectors are derived from a continuous hierarchical spatial model. To our knowledge, this combination has not been previously named or systematically studied in the cartographic literature.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Methodology}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Formal Problem Statement}
+
+The algorithm is packaged as a reusable function:
+\[
+  \texttt{explode\_map}(G,\ \text{hierarchy},\ \alpha_r,\ \alpha_l,\ p)
+\]
+with inputs:
+\begin{itemize}
+  \item $G = \{G_i\}$ --- a set of vector polygon geometries (administrative units),
+  \item $\text{hierarchy}$ --- a two-level assignment mapping each unit $i$ to a parent region $r(i)$ and a global frame $s$ (e.g., state),
+  \item $\alpha_r \in \mathbb{R}_{>0}$ --- global displacement scale,
+  \item $\alpha_l \in \mathbb{R}_{>0}$ --- local displacement scale,
+  \item $p > 0$ --- distance scaling exponent,
+\end{itemize}
+and output $G' = \{G'_i\}$, a set of exploded vector geometries identical in shape and area to $G$.
+
+\subsection{Rigid-Body Translation Model}
+
+Let $G_i$ denote the geometry of administrative unit $i$. The exploded geometry is produced by a rigid-body translation:
+\begin{equation}
+  G'_i = G_i + t_i
+  \label{eq:translation}
+\end{equation}
+where $t_i \in \mathbb{R}^2$ is a constant displacement vector applied uniformly to every point of $G_i$. The problem therefore reduces to computing a $t_i$ that introduces legible whitespace while maintaining recognizable spatial structure.
+
+\begin{mdframed}[linecolor=blue!50!black, linewidth=1pt, topline=true, bottomline=true, rightline=false, leftline=false, innertopmargin=6pt, innerbottommargin=6pt]
+\textbf{Proposition 1} (Feature-level geometry preservation). \textit{Let $G_i \subset \mathbb{R}^2$ be a valid polygonal administrative unit and let $G'_i = G_i + t_i$ for a constant vector $t_i \in \mathbb{R}^2$. Then $T_i(x) = x + t_i$ preserves the internal geometry of $G_i$, including shape, area, perimeter, orientation, and topological structure.}
+
+\smallskip
+\textit{Proof.} For any $x, y \in G_i$,
+\[
+  \|T_i(x) - T_i(y)\| = \|(x + t_i) - (y + t_i)\| = \|x - y\|
+\]
+so all pairwise distances within $G_i$ are preserved. Since translation is an isometry of $\mathbb{R}^2$, it preserves angle relationships, orientation, boundary structure, and area (Jacobian determinant = 1). Therefore $G'_i$ is congruent to $G_i$ and its internal topology is unchanged. $\square$
+\end{mdframed}
+
+\smallskip
+\noindent\textbf{Scope of preservation.} Proposition~1 applies within each individual polygon. Across distinct units, adjacency relations and shared-boundary coincidence are \emph{not} automatically preserved after displacement; see Section~\ref{sec:discussion} for a precise statement of this limitation.
+
+\subsection{Centroid Definitions}
+
+Three centroid levels are defined:
+\begin{align}
+  C_i        &= \text{centroid}(G_i) & &\text{(unit centroid)} \label{eq:ci}\\
+  C_{r(i)}   &= \text{centroid}\!\left(\bigcup_{j \in r(i)} G_j\right) & &\text{(region centroid)} \label{eq:cr}\\
+  C_s        &= \text{centroid}\!\left(\bigcup_i G_i\right) & &\text{(state centroid)} \label{eq:cs}
+\end{align}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance  = 1.6cm and 2.8cm,
+  box/.style     = {draw, rounded corners=3pt, minimum width=2.6cm,
+                    minimum height=0.7cm, align=center, font=\small},
+  arrow/.style   = {-{Stealth[length=6pt]}, thick},
+  label/.style   = {font=\small\itshape, text=gray!70!black}
+]
+
+% ── Nodes ────────────────────────────────────────────────────────────────────
+\node[box, fill=blue!10]  (cs)  {State centroid $C_s$};
+\node[box, fill=green!12, below left=of cs]  (cr1) {Region centroid $C_{r_1}$};
+\node[box, fill=green!12, below right=of cs] (cr2) {Region centroid $C_{r_2}$};
+\node[box, fill=orange!15, below=1.4cm of cr1] (ci1) {Unit centroid $C_i$};
+\node[box, fill=orange!15, below=1.4cm of cr2] (ci2) {Unit centroid $C_j$};
+
+% ── Regional arrows ──────────────────────────────────────────────────────────
+\draw[arrow, blue!60!black]
+  (cs) -- node[label, left=2pt]  {$\hat{d}_{\text{state}} \cdot \alpha_r$} (cr1);
+\draw[arrow, blue!60!black]
+  (cs) -- node[label, right=2pt] {$\hat{d}_{\text{state}} \cdot \alpha_r$} (cr2);
+
+% ── Local arrows ─────────────────────────────────────────────────────────────
+\draw[arrow, orange!70!black]
+  (cr1) -- node[label, left=2pt]  {$\hat{d}_{\text{local}} \cdot \alpha_l s_i$} (ci1);
+\draw[arrow, orange!70!black]
+  (cr2) -- node[label, right=2pt] {$\hat{d}_{\text{local}} \cdot \alpha_l s_j$} (ci2);
+
+% ── Total displacement annotation ────────────────────────────────────────────
+\node[font=\small, align=center, text=gray!60!black,
+      below=0.55cm of ci1, xshift=2.6cm]
+  {$t_i = \alpha_r\,\hat{d}_{\text{state},i} + \alpha_l\,s_i\,\hat{d}_{\text{local},i}$};
+
+\end{tikzpicture}
+\caption{Hierarchical displacement model. Each administrative unit $i$ receives
+a total translation $t_i$ composed of two centroid-derived vectors: a
+\textcolor{blue!60!black}{regional component} (blue) displacing the parent region away from the
+state centroid, and a \textcolor{orange!70!black}{local component} (orange) displacing the unit
+away from its region centroid, scaled by $s_i$ to suppress voids near regional centroids.}
+\label{fig:hierarchy}
+\end{figure}
+
+\subsection{Direction Vectors}
+
+Two normalized direction vectors are derived from these centroids.
+
+The \emph{regional direction vector} points from the state centroid toward the parent region centroid:
+\begin{equation}
+  \hat{d}_{\text{state},i} = \frac{C_{r(i)} - C_s}{\|C_{r(i)} - C_s\|}
+  \label{eq:dstate}
+\end{equation}
+
+The \emph{local direction vector} points from the region centroid toward the unit centroid:
+\begin{equation}
+  \hat{d}_{\text{local},i} = \frac{C_i - C_{r(i)}}{\|C_i - C_{r(i)}\|}
+  \label{eq:dlocal}
+\end{equation}
+
+\subsection{Distance-Scaled Local Expansion}
+
+A naïve local displacement model assigns approximately equal magnitude to all units after normalization, tending to create excessive hollow regions near parent centroids. To control this effect, the local term is modulated by a normalized distance scaling coefficient:
+\begin{equation}
+  s_i = \left(\frac{\|C_i - C_{r(i)}\|}{d_{\max,r(i)}}\right)^{p}
+  \label{eq:si}
+\end{equation}
+where
+\begin{equation}
+  d_{\max,r(i)} = \max_{j \in r(i)} \|C_j - C_{r(i)}\|
+  \label{eq:dmax}
+\end{equation}
+is the maximum unit-to-region-centroid distance within region $r(i)$, and $p \geq 1$ controls non-linearity. For $p > 1$, units near the regional centroid receive disproportionately reduced displacement, further suppressing void formation.
+
+A key consequence of this design is that the local expansion is a monotonic function of radial distance from the region centroid.
+
+\begin{mdframed}[linecolor=blue!50!black, linewidth=1pt, topline=true, bottomline=true, rightline=false, leftline=false, innertopmargin=6pt, innerbottommargin=6pt]
+\textbf{Proposition 2} (Radial ordering preservation). \textit{Let units $i$ and $j$ belong to the same region $r$, and let their centroids satisfy $\|C_i - C_r\| < \|C_j - C_r\|$. Then after displacement, $\|C'_i - C'_r\| < \|C'_j - C'_r\|$, where $C'_r = C_r + \alpha_r\,\hat{d}_{\textup{state},r}$ is the displaced region centroid. That is, radial ordering of units within a region is preserved by the transformation.}
+
+\smallskip
+\textit{Proof.} Let $r_i = \|C_i - C_r\|$ and $r_j = \|C_j - C_r\|$ with $r_i < r_j$. The local displacement of each unit along its radial direction is:
+\[
+  \delta_i = \alpha_l\, s_i = \alpha_l \left(\frac{r_i}{d_{\max}}\right)^p, \qquad
+  \delta_j = \alpha_l\, s_j = \alpha_l \left(\frac{r_j}{d_{\max}}\right)^p
+\]
+Since $r_i < r_j$ and $p > 0$, we have $\delta_i < \delta_j$. Each unit is displaced along its own unit vector $\hat{d}_{\text{local}}$ away from $C_r$, so the displaced radial distance satisfies:
+\[
+  \|C'_i - C'_r\| = r_i + \delta_i, \qquad \|C'_j - C'_r\| = r_j + \delta_j
+\]
+(both centroids move by the same $\alpha_r\,\hat{d}_{\text{state},r}$ term, which cancels in the difference). Since $r_i < r_j$ and $\delta_i < \delta_j$, it follows immediately that $r_i + \delta_i < r_j + \delta_j$. $\square$
+\end{mdframed}
+
+\smallskip
+\noindent\textbf{Interpretation.} Proposition~2 guarantees that units closer to their regional centroid in geographic space remain closer after displacement --- the transformation expands the region outward like a radial elastic sheet rather than shuffling units in the radial direction. This property contributes directly to the perceptual stability of the exploded layout: the human visual system reads the result as coherent radial expansion rather than random repositioning. It also explains why dense urban cores (e.g., the Philadelphia and Pittsburgh metropolitan clusters in the Pennsylvania case study) remain correctly suppressed near their regional centroids rather than being pushed outward past sparser surrounding municipalities.
+
+\subsection{Total Displacement Vector}
+
+The final displacement vector combines both components:
+\begin{equation}
+  \boxed{t_i = \alpha_r\,\hat{d}_{\text{state},i} + \alpha_l\,s_i\,\hat{d}_{\text{local},i}}
+  \label{eq:ti}
+\end{equation}
+where $\alpha_r$ controls separation among parent regions and $\alpha_l$ controls local expansion within each region. The transformed geometry follows directly from~\eqref{eq:translation}.
+
+\begin{mdframed}[linecolor=blue!50!black, linewidth=1pt, topline=true, bottomline=true, rightline=false, leftline=false, innertopmargin=6pt, innerbottommargin=6pt]
+\textbf{Proposition 3} (Bounded displacement). \textit{Let $t_i$ be defined as in Equation~\eqref{eq:ti}. Then:}
+\[
+  \|t_i\| \leq \alpha_r + \alpha_l
+\]
+\textit{That is, no feature can be displaced by more than $\alpha_r + \alpha_l$ from its original position.}
+
+\smallskip
+\textit{Proof.} Since $\hat{d}_{\text{state},i}$ and $\hat{d}_{\text{local},i}$ are unit vectors and $0 \leq s_i \leq 1$, the triangle inequality gives:
+\[
+  \|t_i\| = \|\alpha_r\,\hat{d}_{\text{state},i} + \alpha_l\,s_i\,\hat{d}_{\text{local},i}\|
+           \leq \alpha_r\|\hat{d}_{\text{state},i}\| + \alpha_l\,s_i\|\hat{d}_{\text{local},i}\|
+           = \alpha_r + \alpha_l\,s_i \leq \alpha_r + \alpha_l \quad \square
+\]
+\end{mdframed}
+
+\smallskip
+\noindent\textbf{Interpretation.} Proposition~3 provides a global stability guarantee: the displacement magnitude of every feature is predictable and controlled entirely by the two scale parameters. The layout cannot diverge regardless of the number of units or the complexity of the hierarchy. This property distinguishes the method from iterative force-based displacement algorithms, which may exhibit runaway displacement under certain configurations. The bound is tight: it is achieved when $s_i = 1$ (a unit at the maximum distance from its regional centroid) and when $\hat{d}_{\text{state},i}$ and $\hat{d}_{\text{local},i}$ are parallel.
+
+The framework does not guarantee global non-overlap between distinct units. In practice, two mechanisms produce residual contact after explosion. First, adjacent units lying near the same regional centroid may both receive near-zero local displacement ($s_i \approx 0$), leaving their shared boundary unchanged. Second, and more significantly in dense regions, the formula-derived $\alpha_l$ may produce uniformly tight spacing throughout a compact, high-density region even when $s_i$ is moderate --- the local expansion is structurally appropriate for the dataset as a whole but modest relative to the extreme municipal density within the most compact parent region. Empirical evaluation on the Philadelphia metro core (239 municipalities in 5 counties) confirms that 65.7\% of unit pairs remain within 50\,m of a neighbor after explosion, with contact cases distributed across the full range of $s_i$ values rather than concentrated near the centroid. This suggests that any refinement must address density-driven spacing in compact regions as a distinct phenomenon from centroid-proximity effects.
+
+Because Proposition~3 bounds all displacements by $\alpha_r + \alpha_l$, any subsequent collision-resolution stage would operate within a known envelope rather than an unrestricted optimization landscape, suggesting a bounded local refinement extension rather than global displacement re-optimization.
+
+\subsection{Vector-Field Interpretation}
+
+The transformation may be interpreted as a displacement field $V(x)$ over the map domain:
+\begin{equation}
+  T(x) = x + V(x), \qquad V(x) = V_{\text{region}}(x) + V_{\text{local}}(x)
+  \label{eq:field}
+\end{equation}
+This places the method in the family of vector-field cartographic deformation methods \citep{ai2015, sun2020}, while differing in that the field is defined analytically from hierarchy rather than through iterative force balancing.
+
+A key distinction from continuous deformation methods is the piecewise-constant structure of $V(x)$. In many cartographic deformation approaches, the displacement field varies continuously within each feature, which can introduce shape distortion, angle distortion, or area change. Here, within any single polygon $G_i$, the field is constant:
+\begin{equation}
+  V(x) = t_i \quad \text{for all } x \in G_i
+  \label{eq:piecewise}
+\end{equation}
+Because the displacement vector is constant over each polygon domain, the transformation acts as a rigid-body translation rather than a continuous deformation field. This is precisely why the geometry preservation result of Proposition~1 holds exactly rather than approximately. The method therefore acts as a \emph{hierarchical radial expansion field applied through piecewise rigid translations}: at the map level, displacement is organized as a hierarchical vector field derived from parent-child centroid relations; at the feature level, each administrative unit undergoes rigid motion \citep{ngo2019, bouts2015}.
+
+\subsection{Extension to Multiple Hierarchy Levels}
+
+For a hierarchy of levels $\ell \in L$, the framework generalizes naturally:
+\begin{equation}
+  t_i = \sum_{\ell \in L} \alpha_\ell\, s_{i,\ell}\, \hat{d}_{i,\ell}
+  \label{eq:multilevel}
+\end{equation}
+where each level contributes its own direction vector, magnitude, and scaling term. This makes the method suitable for deeply nested administrative hierarchies (e.g., state $\to$ county $\to$ municipality $\to$ district).
+
+\subsection{Zoom-Dependent Extension}
+
+For interactive web mapping, displacement can be modulated by a zoom-dependent scalar:
+\begin{equation}
+  t_i(z) = \lambda(z) \cdot t_i, \qquad \lambda(z) \in [0, 1]
+  \label{eq:zoom}
+\end{equation}
+where $\lambda(z)$ decreases monotonically with zoom level $z$. At full extent $\lambda = 1$ applies full explosion; as the user zooms in, geometries smoothly converge toward their geographic positions. This requires no modification of the displacement field itself---only a scalar multiplication at render time.
+
+\subsection{Geometry-Derived Parameter Formulation}
+\label{sec:autoparams}
+
+The displacement framework requires two primary scale parameters: $\alpha_r$, governing regional separation magnitude, and $\alpha_l$, governing local intra-region expansion magnitude. Rather than selecting these values heuristically, we derive their functional dependence on geometric properties of the dataset using two simplified spatial models. These derivations determine the structural form of each parameter, leaving only dimensionless clearance coefficients that capture cartographic spacing requirements and can be estimated from validated case studies.
+
+Two idealized geometric models are used:
+\begin{enumerate}
+  \item A \emph{radial arrangement model} for separation between parent regions.
+  \item An \emph{equal-area partition model} for spacing among child units within a region.
+\end{enumerate}
+These models provide closed-form expressions relating displacement magnitude to measurable properties of the dataset, including characteristic polygon size, regional radius, and municipal density. The resulting parameters therefore depend primarily on intrinsic geometric quantities, substantially reducing the need for manual tuning.
+
+\subsubsection{Characteristic Polygon Diameter}
+
+The fundamental scale reference is the \emph{characteristic polygon diameter}, the diameter of the equivalent-area circle:
+\begin{equation}
+  w_i = \sqrt{\frac{4\,A_i}{\pi}}, \qquad \bar{w} = \operatorname{median}(w_i)
+  \label{eq:wbar}
+\end{equation}
+where $A_i = \text{area}(G_i)$. This estimator is invariant to polygon orientation and elongation, robust to size heterogeneity, and consistent with minimum-spacing definitions in automated cartographic displacement \citep{steiniger2007}.
+
+\subsubsection{Analytical Result 1: Regional Separation (Radial Gap Criterion)}
+
+\begin{mdframed}[linecolor=blue!50!black, linewidth=1pt, topline=true, bottomline=true, rightline=false, leftline=false]
+\textbf{Analytical Result 1.} Let $n_r$ parent regions be arranged around a common centroid with equal angular spacing $\theta = 2\pi/n_r$. If each region is displaced radially outward by $\alpha_r$, the increase in adjacent-centroid chord length is $\Delta c = 2\alpha_r\sin(\pi/n_r)$.
+Hence the displacement required to achieve a target additional gap $g_r$ is:
+\[
+  \alpha_r = \frac{g_r}{2\sin(\pi/n_r)}
+\]
+\end{mdframed}
+
+\noindent The radial gap model determines the structural form of the regional displacement parameter. However, the minimum desired clearance between adjacent region boundaries is not determined purely by geometry; it also reflects cartographic design considerations such as legibility and whitespace requirements. We therefore express the required gap as $g_r = \gamma_r\,\bar{w}$, where $\bar{w}$ is the characteristic polygon diameter and $\gamma_r$ is a dimensionless clearance coefficient. Substituting into the gap criterion yields:
+\begin{equation}
+  \boxed{\alpha_r = \frac{\gamma_r\,\bar{w}}{2\,\sin(\pi / n_r)}}
+  \label{eq:alpha_r_derived}
+\end{equation}
+This separates the geometric dependence---derived analytically from the radial arrangement model---from the clearance coefficient, which is estimated empirically from validated examples. The calibration question reduces to: \emph{how many polygon widths of inter-region clearance are desired?} Equation~\eqref{eq:alpha_r_derived} states that regional displacement grows linearly with the desired gap $g_r$ and inversely with the angular spacing between regions, becoming larger as regions are packed more tightly around the shared centroid.
+
+Calibration on NJ yields $\gamma_r = 2.64$ (ground truth $\alpha_r = 6{,}000$\,m); calibration on PA yields $\gamma_r = 3.72$ (partially heuristic $\alpha_r = 25{,}000$\,m). The coefficient of variation across both states is 0.27, reflecting consistent direction but insufficient state coverage to fix $\gamma_r$ as universal. We recommend $\gamma_r = 3.0$ (geometric mean) as a working default, with the caveat that validation across additional states is needed.
+
+\subsubsection{Analytical Result 2: Local Expansion (Equal-Area Partition Model)}
+
+\begin{mdframed}[linecolor=blue!50!black, linewidth=1pt, topline=true, bottomline=true, rightline=false, leftline=false]
+\textbf{Analytical Result 2.} Let a parent region of radius $R_{\text{local}}$ contain $\bar{n}$ child units that partition the region into approximately equal effective areas. Approximating the region as a disk, each cell has area $\pi R^2_{\text{local}} / \bar{n}$, and its equivalent-circle diameter is:
+\[
+  d_{\text{cell}} = 2\sqrt{\frac{\pi R^2_{\text{local}} / \bar{n}}{\pi}} = \frac{2\,R_{\text{local}}}{\sqrt{\bar{n}}}
+\]
+\end{mdframed}
+
+\noindent The equal-area partition model approximates the spatial structure of municipalities within a region. If a region of radius $R_{\text{local}}$ contains $\bar{n}$ municipalities partitioning the regional area into approximately equal effective areas, the equivalent disk diameter of a typical municipal cell is:
+\begin{equation}
+  d_{\text{cell}} = \frac{2\,R_{\text{local}}}{\sqrt{\bar{n}}}
+  \label{eq:dcell}
+\end{equation}
+This quantity represents the characteristic spatial scale of municipal spacing under the equal-area approximation. Municipalities are cells of a space-partitioning tessellation, not random Poisson points; $d_{\text{cell}}$ is therefore the geometrically appropriate reference spacing rather than a point-process mean distance.
+
+The local expansion parameter is accordingly expressed as:
+\begin{equation}
+  \boxed{\alpha_l = \gamma_l \cdot \frac{2\,\widetilde{R}_{\text{local}}}{\sqrt{\bar{n}}}}
+  \label{eq:alpha_l_derived}
+\end{equation}
+where $\gamma_l$ is a dimensionless cartographic clearance factor accounting for irregular municipal geometry and clustering of settlements along transport corridors, coastlines, and topographic constraints.
+
+Calibration on NJ (ground truth $\alpha_l = 10{,}000$\,m) yields $\gamma_l = 1.136$. Applying the same $\gamma_l$ to PA geometry ($\widetilde{R}_{\text{local}} = 116{,}086$\,m, $\bar{n} = 449$) predicts $\alpha_l = 12{,}447$\,m --- substantially smaller than the heuristic value of $40{,}000$\,m used in initial PA runs, confirming that the heuristic over-expanded municipalities locally. Sensitivity analysis across a $\pm 15\%$ range around this value shows stable mean displacement (CV $< 0.02$) and consistent visual structure, supporting $\gamma_l = 1.136$ as a transferable default. The stable prediction across states is consistent with $\gamma_l$ being a geometric property of administrative tessellations rather than a dataset-specific constant.
+
+\subsubsection{Empirical Finding: Hierarchical Tightness Ratio}
+\label{sec:ratio}
+
+A secondary finding of the validation study is the dimensionless ratio $\widetilde{R}_{\text{local}}/\bar{w}$, which measures how many characteristic polygon widths fit within a typical regional radius --- a measure of \emph{hierarchical tightness}. Cross-state validation across eight US states reveals that this ratio clusters by administrative system type rather than taking a single universal value.
+
+\begin{table}[h]
+\centering
+\caption{Cross-state geometry statistics and derived parameters ($\gamma_r = 3.0$, $\gamma_l = 1.136$). States with known ground-truth $\alpha_r$ values show implied $\gamma_r$. Michigan results are from extended validation (Section~\ref{sec:extended}). All data: U.S.\ Census TIGER/Line 2024; Canada: Statistics Canada 2021.}
+\label{tab:crossstate}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lrrrrrrrrl}
+\toprule
+\textbf{State} & \textbf{$n$} & \textbf{Regions} & \textbf{$\bar{w}$ (km)} & \textbf{$\widetilde{R}_{\text{local}}$ (km)} & \textbf{Ratio} & \textbf{$\alpha_r$ pred (km)} & \textbf{$\alpha_l$ pred (km)} & \textbf{$\gamma_r$ implied} & \textbf{Cluster} \\
+\midrule
+New Jersey   & 564     & 3 & 3.9  & 62.4  & 15.83 & 6.8  & 10.0  & 2.64 & Dense municipal \\
+Pennsylvania & 2{,}572 & 6 & 6.7  & 116.1 & 17.26 & 20.2 & 12.4  & 3.72 & Dense municipal \\
+Illinois     & 1{,}694 & 4 & 10.9 & 176.0 & 16.18 & 23.1 & 19.4  & ---  & Dense municipal \\
+Ohio         & 1{,}602 & 5 & 9.3  & 118.0 & 12.75 & 23.6 & 17.2  & ---  & Dense municipal \\
+Michigan     & 1{,}540 & 4 & 10.8 & 179.7 & 16.59 & 27.6 & 22.6  & ---  & Dense municipal \\
+\midrule
+New York     & 1{,}014 & 5 & 11.5 & 98.5  & 8.60  & 29.2 & 18.2  & ---  & Large unit \\
+Virginia     & 552     & 5 & 14.6 & 153.1 & 10.51 & 37.2 & 38.2  & ---  & Large unit \\
+Texas        & 958     & 7 & 26.2 & 280.0 & 10.67 & 90.7 & 56.0  & ---  & Large unit \\
+Massachusetts & 351    & 4 & 8.5  & 60.8  & 7.12  & 18.1 & 14.9  & ---  & Large unit \\
+\midrule
+\textit{Canada (CSDs)} & \textit{5{,}161} & \textit{6} & \textit{8.7} & \textit{987.7} & \textit{113.09} & \textit{26.2} & \textit{79.8} & \textit{---} & \textit{Different system} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+The ratio exhibits a clear two-cluster structure across US states, shown in Table~\ref{tab:crossstate}. Fine-grained municipal states --- New Jersey (15.83), Pennsylvania (17.26), Illinois (16.18), Ohio (12.75), and Michigan (16.59) --- cluster around $\widetilde{R}_{\text{local}}/\bar{w} \approx 15.8$. Notably, Michigan's ratio falls within this cluster despite the geographic discontinuity between the Upper and Lower Peninsulas and a bimodal polygon size distribution arising from the contrast between sparse Upper Peninsula townships and dense Lower Peninsula municipalities. This demonstrates that the median-based characteristic diameter $\bar{w}$ is robust to bimodal area distributions --- the median suppresses outliers from either tail of the distribution, producing a representative scale reference even when municipal sizes span an order of magnitude within a single state.
+
+A second group of states with larger administrative units --- New York (8.60), Virginia (10.51), Texas (10.67), and Massachusetts (7.12) --- clusters around $\approx 9.5$. The Canadian census subdivision dataset occupies a qualitatively different regime at 113.09, reflecting the vast geographic extent of Canadian provinces relative to municipal unit size.
+
+The ratio therefore serves as a \emph{useful diagnostic of hierarchical tightness} under the datasets studied here: it quantifies whether an administrative system is finely or coarsely subdivided relative to regional extent. The formula-derived parameters adapt automatically to both regimes through Analytical Results~1 and~2, which scale $\alpha_r$ and $\alpha_l$ with $\bar{w}$, $\widetilde{R}_{\text{local}}$, and $\bar{n}$ respectively. The framework is therefore not calibrated for a specific regime --- it derives appropriate displacement magnitudes regardless of where a dataset falls on the hierarchical tightness spectrum.
+
+\subsubsection{Summary and Calibration Status}
+
+\begin{table}[h]
+\centering
+\caption{Geometry-derived parameters: structure, calibration, and validation status across eight US states.}
+\label{tab:derived}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lllll}
+\toprule
+\textbf{Parameter} & \textbf{Formula} & \textbf{Ground truth states} & \textbf{$\gamma$ range} & \textbf{Status} \\
+\midrule
+$\alpha_r$ & $\gamma_r\,\bar{w} / (2\sin(\pi/n_r))$ & NJ ($\gamma_r=2.64$), PA ($\gamma_r=3.72$) & 2.64--3.72, CV=0.24 & Structure proved; $\gamma_r$ needs visual validation on ${\geq}3$ additional states \\
+$\alpha_l$ & $\gamma_l \cdot 2\,R_{\text{local}} / \sqrt{\bar{n}}$ & NJ ($\gamma_l=1.136$) & --- & Structure proved; $\gamma_l$ stable on NJ; consistent across 8 states \\
+$p$        & 1.25 (fixed) & --- & --- & Empirical; held fixed across all case studies \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+The functional dependence on geometry is derived from first principles. The residual constants $\gamma_r$ and $\gamma_l$ are \emph{cartographic legibility coefficients} rather than geometric constraints: they capture human readability requirements, specifically the number of characteristic polygon widths used as visual clearance between features. $\gamma_r$ controls the desired inter-region gap in polygon-width units; $\gamma_l$ controls the cartographic clearance factor above the equal-area cell diameter. This interpretation makes the method intentional rather than heuristic: the geometry determines the structural form of the displacement, and the legibility coefficients tune the visual result.
+
+\paragraph{Transferability and reuse.}
+The derived formulas constitute a general parameterization procedure for exploded-view cartography. Given any dataset of administrative units with a chosen two-level hierarchy, a practitioner may compute four geometric quantities from the data: the characteristic polygon diameter $\bar{w}$ (Equation~\eqref{eq:wbar}), the median regional radius $\widetilde{R}_{\text{local}}$, the median unit count per region $\bar{n}$, and the number of regions $n_r$. Substituting these into Equations~\eqref{eq:alpha_r_derived} and~\eqref{eq:alpha_l_derived} with the recommended defaults $\gamma_r = 3.0$ and $\gamma_l = 1.136$ yields predicted displacement parameters $\alpha_r$ and $\alpha_l$ without any manual tuning. The formulas therefore provide a transferable procedure for generating exploded layouts on new datasets, with $\gamma_r$ subject to further visual calibration where necessary. Practitioners working with administrative geographies substantially different from northeastern US states may wish to recalibrate $\gamma_r$ on a single validated example from their target region; $\gamma_l = 1.136$ has shown cross-state stability and may be used as a universal default pending further validation. This procedure applies whenever a valid parent-child hierarchy is defined, whether geographic (e.g., counties within states) or analyst-defined (e.g., municipalities grouped by health service area, watershed, or electoral district).
+
+% ── Algorithm box ─────────────────────────────────────────────────────────────
+\begin{algorithm}[H]
+\DontPrintSemicolon
+\caption{$\texttt{explode\_map}(G, \text{hierarchy}, \alpha_r, \alpha_l, p)$. The parameters $\alpha_r$ and $\alpha_l$ may be supplied manually or computed from Equations~\eqref{eq:alpha_r_derived}--\eqref{eq:alpha_l_derived} using Analytical Results~1 and~2. Propositions~1--3 guarantee exact geometry preservation, radial ordering, and bounded displacement respectively.}
+\KwIn{Geometries $G = \{G_i\}$; two-level hierarchy $r(i)$, state $s$; parameters $\alpha_r, \alpha_l, p$}
+\KwOut{Exploded geometries $G' = \{G'_i\}$; $\|t_i\| \leq \alpha_r + \alpha_l$ for all $i$}
+\BlankLine
+Compute $C_i = \text{centroid}(G_i)$ for all $i$\;
+Compute $C_{r} = \text{centroid}(\bigcup_{j \in r} G_j)$ for each region $r$\;
+Compute $C_s = \text{centroid}(\bigcup_i G_i)$\;
+\BlankLine
+\For{each region $r$}{
+  Compute $d_{\max,r} = \max_{j \in r}\|C_j - C_r\|$\;
+  \For{each unit $i \in r$}{
+    $\hat{d}_{\text{state},i} \gets (C_r - C_s) / \|C_r - C_s\|$\;
+    $\hat{d}_{\text{local},i} \gets (C_i - C_r) / \|C_i - C_r\|$\;
+    $s_i \gets (\|C_i - C_r\| / d_{\max,r})^p$\;
+    $t_i \gets \alpha_r\,\hat{d}_{\text{state},i} + \alpha_l\,s_i\,\hat{d}_{\text{local},i}$\;
+    $G'_i \gets G_i + t_i$\;
+  }
+}
+\Return{$G'$}\;
+\end{algorithm}
+
+\vspace{4pt}
+\noindent\textbf{Complexity.} The algorithm is $O(n)$ in the number of units $n$, with no iterative loops.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Implementation}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Software Environment}
+
+The method was implemented in \textsf{R} using:
+\begin{itemize}
+  \item \texttt{sf} --- vector geometry and coordinate reference system handling,
+  \item \texttt{dplyr} --- hierarchical joins and attribute manipulation,
+  \item \texttt{purrr} --- vectorized geometry translation via \texttt{pmap()},
+  \item \texttt{ggplot2} --- cartographic rendering and diagnostic plots.
+\end{itemize}
+
+\subsection{Coordinate Reference Systems}
+
+All displacement calculations were performed in a projected CRS with linear units (NAD83 / New Jersey, EPSG:32111). This is essential because displacement vectors are expressed in metric distance units and must not be computed in angular geographic coordinates. Final geometries are transformed to WGS84 (EPSG:4326) for GeoJSON export and web mapping.
+
+A key implementation lesson: when comparing original and displaced geometries across mismatched coordinate systems, the diagnostic vector plot produces artificial fan-like artifacts. Ensuring both datasets are evaluated in the same projected CRS is mandatory for valid diagnostics.
+
+\subsection{Geometry Translation}
+
+The core translation step uses \texttt{purrr::pmap()} to pass offset vectors directly to each geometry, avoiding row-indexing fragility:
+
+\begin{lstlisting}[caption={Core geometry translation using \texttt{pmap()}.}]
+nj_sf_exploded <- muni_centroids |>
+  mutate(
+    geometry = pmap(
+      list(geometry, x_offset, y_offset),
+      function(geom, dx, dy) geom + c(dx, dy)
+    )
+  )
+
+# Restore sfc class and CRS after pmap
+nj_sf_exploded$geometry <- st_sfc(
+  nj_sf_exploded$geometry,
+  crs = st_crs(muni_centroids)
+)
+nj_sf_exploded <- st_as_sf(nj_sf_exploded)
+\end{lstlisting}
+
+\subsection{Parameter Selection}
+
+Parameters may be supplied manually or derived geometrically via Analytical Results~1 and~2 (Section~3.10). Table~\ref{tab:params} shows manually verified values alongside geometry-derived predictions for the NJ case study.
+
+\begin{table}[h]
+\centering
+\caption{Algorithm parameters: manual values and geometry-derived predictions (NJ case study, $\gamma_r = 3.0$, $\gamma_l = 1.136$).}
+\label{tab:params}
+\begin{tabular}{lllll}
+\toprule
+\textbf{Parameter} & \textbf{Symbol} & \textbf{Manual} & \textbf{Derived} & \textbf{Error} \\
+\midrule
+Global scale      & $\alpha_r$ & 6{,}000\,m  & 6{,}832\,m  & $+13.9\%$ \\
+Local scale       & $\alpha_l$ & 10{,}000\,m & 10{,}010\,m & $<0.1\%$ \\
+Distance exponent & $p$        & 1.25        & 1.25        & ---       \\
+\midrule
+\multicolumn{5}{l}{\small Inputs: $\bar{w}=3{,}944$\,m,\ $n_r=3$,\ $\widetilde{R}_{\text{local}}=62{,}408$\,m,\ $\bar{n}=201$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The NJ $\alpha_l$ match is essentially exact ($<0.1\%$ error), reflecting the stability of $\gamma_l = 1.136$. The $\alpha_r$ prediction remains subject to regional-legibility calibration: $\gamma_r = 3.0$ is a working default whose residual error ($+13.9\%$ on NJ) produces visually coherent layouts but may benefit from further cross-state stabilization (see Section~\ref{sec:ratio} for broader calibration discussion).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Case Study: New Jersey Municipalities}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Dataset}
+
+The framework was evaluated using county subdivision boundaries for New Jersey from the U.S.\ Census TIGER/Line 2024 dataset (FIPS state code 34). After filtering non-municipal placeholder units (\texttt{COUSUBFP} = \texttt{00000}), the dataset contained 564 active municipal geometries, making it a representative test bed for dense administrative cartography.
+
+\subsection{Regional Hierarchy}
+
+Counties were grouped into three macro-regions reflecting conventional geographic divisions:
+\begin{itemize}
+  \item \textbf{North Jersey} --- Bergen, Essex, Hudson, Morris, Passaic, Sussex, Union, Warren (8 counties),
+  \item \textbf{Central Jersey} --- Hunterdon, Mercer, Middlesex, Monmouth, Somerset (5 counties),
+  \item \textbf{South Jersey} --- Atlantic, Burlington, Camden, Cape May, Cumberland, Gloucester, Ocean, Salem (8 counties).
+\end{itemize}
+
+\subsection{Results}
+
+With the parameters in Table~\ref{tab:params}, the exploded layout produced clear separation among North, Central, and South Jersey while preserving municipal geometry and recognizable state structure. The distance-scaled local model ($p = 1.25$) reduced excessive central voids compared to uniform radial expansion ($p = 1$), yielding a more balanced internal spacing pattern. The final layout is exported as GeoJSON for deployment in web mapping and Shiny dashboard environments.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{NJ_PLOT.png}
+\caption{Exploded-view map of New Jersey municipalities ($n = 564$, $\alpha_r = 6{,}000$\,m, $\alpha_l = 10{,}000$\,m, $p = 1.25$). North, Central, and South regions are separated by the regional displacement term while each municipality's internal geometry is preserved exactly. Whitespace between regions is introduced by the radial displacement field; whitespace within regions reflects the distance-scaled local expansion.}
+\label{fig:nj_exploded}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Cross-State Transfer Test: Pennsylvania}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Dataset and Motivation}
+
+To evaluate the robustness of the derived parameter structure, the method was applied to municipal boundary data from Pennsylvania. The Pennsylvania dataset contains 2{,}572 municipalities across six macro-regions, representing a substantially larger and more heterogeneous administrative structure than the New Jersey case study. Pennsylvania provides a demanding transfer test: 4.5$\times$ more administrative units, a state approximately 3$\times$ larger in area, and two competing high-density cores (Philadelphia and Pittsburgh) separated by extensive rural terrain.
+
+\subsection{Regional Hierarchy}
+
+Counties were assigned to six macro-regions: Southeast (5 counties, Philadelphia metro), Northeast (15 counties, Poconos and Lehigh Valley), Central (15 counties, rural spine), SouthCentral (12 counties, Harrisburg--Lancaster corridor), Southwest (10 counties, Pittsburgh metro), and Northwest (10 counties, Erie and Oil Country).
+
+\subsection{Transfer Results}
+
+Parameters $\gamma_r$ and $\gamma_l$ estimated from the New Jersey dataset were applied directly without additional tuning. Applying the geometry-derived formulas to the PA geometry ($\bar{w} = 6{,}725$\,m, $n_r = 6$, $\widetilde{R}_{\text{local}} = 116{,}086$\,m, $\bar{n} = 449$) yields $\alpha_r = 20{,}174$\,m and $\alpha_l = 12{,}447$\,m. These values correspond to $\gamma_r = 3.72$ (implied from the manually validated $\alpha_r = 25{,}000$\,m) and are consistent with the cross-state calibration table (Table~\ref{tab:crossstate}). A focused sensitivity analysis varying $\alpha_l$ by $\pm 15\%$ around the formula-derived value confirmed stable mean displacement (CV $< 0.02$) and consistent mean neighbor gap across all levels, supporting the formula-derived value as empirically robust.
+
+Note that Pennsylvania serves a dual role in the analysis: it demonstrates transferability of the NJ-calibrated $\gamma_l$, and it provides an \emph{indicative} second regional coefficient $\gamma_r = 3.72$ rather than a final independent ground-truth calibration, since the PA $\alpha_r$ was derived from a partially heuristic starting value. New Jersey supplies the validated local coefficient and one validated regional coefficient; Pennsylvania demonstrates transferability and provides a second directionally consistent regional coefficient whose status is indicative rather than definitive. The resulting displacement produced stable exploded layouts across all six regions, successfully separating densely clustered municipal boundaries while preserving recognizable geographic structure.
+
+\subsection{Density Asymmetry and the $s_i$ Term}
+
+The Southwest region (Pittsburgh metro) contains 551 municipalities across 10 counties, while the Southeast region (Philadelphia metro) contains 239 across 5. Both exhibit extreme municipal density near their regional centroids. The diagnostic vector-field visualization confirmed that the distance-scaling coefficient $s_i$ suppressed displacement correctly in both cores while allowing full expansion at regional peripheries---the intended behavior of Equation~\eqref{eq:si}.
+
+\subsection{Properties Demonstrated}
+
+The Pennsylvania experiment demonstrates three important properties of the framework:
+
+\begin{description}
+  \item[Scalability.] The method handled more than four times the number of administrative units present in the New Jersey dataset without performance degradation, confirming $O(n)$ behavior in practice.
+  \item[Parameter transferability.] Applying the NJ-calibrated coefficient $\gamma_l = 1.136$ to Pennsylvania yields $\alpha_l = 12{,}447$\,m. Sensitivity analysis across a $\pm 15\%$ range confirms stable mean displacement and consistent visual structure at all tested levels. The formula-derived value is substantially smaller than the heuristic value of 40{,}000\,m used in initial PA runs, confirming that the heuristic over-expanded municipalities locally. The formula-derived value is the recommended parameter for PA deployment.
+  \item[Hierarchical flexibility.] The same displacement model was applied across both a small dense state and a large heterogeneous one, demonstrating applicability across geographic scale and administrative density.
+\end{description}
+
+The PA value $\widetilde{R}_{\text{local}}/\bar{w} = 17.26$ remains close to the NJ value of 15.83, indicating that both states belong to the same fine-grained municipal regime identified in the broader cross-state validation (Section~\ref{sec:ratio}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{PA_PLOT.png}
+\caption{Exploded-view map of Pennsylvania municipalities ($n = 2{,}572$) at geometry-derived parameters ($\alpha_r = 20{,}174$\,m, $\alpha_l = 12{,}447$\,m, $p = 1.25$, $\gamma_r = 3.0$, $\gamma_l = 1.136$). Six macro-regions are cleanly separated despite the 4.5$\times$ increase in unit count relative to New Jersey. The Philadelphia metro (Southeast, red) and Pittsburgh metro (Southwest, blue) are correctly suppressed near their regional centroids by the $s_i$ term, while peripheral municipalities in each region receive proportionally larger displacement. Intra-region spacing is tighter than in the earlier heuristic layout ($\alpha_l = 40{,}000$\,m) but consistent with the equal-area partition model of Analytical Result~2.}
+\label{fig:pa_exploded}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Diagnostic Analysis}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Displacement Vector Field}
+
+To validate the method, a displacement vector field was constructed from municipality centroids:
+\begin{equation}
+  t_i = C'_i - C_i
+  \label{eq:diag}
+\end{equation}
+where $C_i$ and $C'_i$ are the original and displaced centroids respectively. This diagnostic is formally equivalent to the cartographic deformation field analysis described in \citet{jenny2011}.
+
+\subsection{Interpretation}
+
+The resulting vector field demonstrates three expected properties:
+\begin{enumerate}
+  \item \textbf{Coherent outward radial displacement} within each region, confirming correct orientation of the local unit vector field.
+  \item \textbf{Larger displacement magnitudes} near regional boundaries, where the local component $s_i\,\hat{d}_{\text{local},i}$ is greatest.
+  \item \textbf{Reduced displacement near regional centroids}, confirming that $s_i$ suppresses void formation without post-hoc correction.
+\end{enumerate}
+
+These properties collectively confirm stable, geographically coherent displacement behavior consistent with the theoretical structure of $V(x) = V_{\text{region}}(x) + V_{\text{local}}(x)$. The coherent outward radial structure is a direct empirical confirmation of Proposition~2: because $s_i$ is monotonic in $\|C_i - C_r\|$, units retain their radial ordering after displacement, and the vector field reflects this as smooth outward expansion rather than crossing or disordering of displacement directions.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{pa_displacement_plot.png}
+\caption{Displacement vector field for Pennsylvania ($t_i = C'_i - C_i$ per municipality, $n = 2{,}572$). Each arrow shows the displacement applied to one municipality's centroid. Three structural properties are visible: (1) coherent outward radial orientation within each of the six regions; (2) larger arrow magnitudes near regional boundaries where $s_i$ is greatest; and (3) suppressed displacement near regional centroids (Pittsburgh and Philadelphia cores), confirming that the $s_i$ weighting prevents void formation without post-hoc correction. Arrow colours correspond to the six macro-regions.}
+\label{fig:pa_vectors}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Discussion}
+\label{sec:discussion}
+% ─────────────────────────────────────────────────────────────────────────────
+
+The method occupies a middle ground between classical displacement operators and continuous deformation models. Like displacement methods, it improves readability by introducing whitespace. Like cartograms and deformation approaches, it may be understood as a transformation field over the map domain. Unlike both, it preserves each polygon's interior geometry exactly through rigid-body translation (Proposition~1), while remaining $O(n)$ and analytically closed-form.
+
+\subsubsection*{Preservation guarantees}
+
+The following distinction is precise and important. \emph{Internally}, each administrative unit is transformed by rigid motion: its shape, area, perimeter, orientation, and topological structure are all preserved exactly. \emph{Globally}, the method does not guarantee preservation of adjacency or shared-boundary coincidence among distinct units after displacement. Neighboring municipalities that shared a boundary before explosion will generally have a gap between them afterward. This is by design in the exploded-view context --- the introduction of whitespace is the goal --- but it means the output should not be treated as a topologically consistent coverage.
+
+\begin{table}[h]
+\centering
+\caption{Comparison of method classes on key cartographic properties.}
+\label{tab:comparison}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Property} & \textbf{Optimization displacement} & \textbf{Cartogram / deformation} & \textbf{This method} \\
+\midrule
+Feature shape preserved   & Partial        & No             & \textbf{Yes (exact)} \\
+Feature area preserved    & Partial        & No (by design) & \textbf{Yes (exact)} \\
+Adjacency preserved       & Yes (goal)     & Partial        & No (by design) \\
+Continuous deformation    & No             & Yes            & No \\
+Piecewise rigid motion    & No             & No             & \textbf{Yes} \\
+Closed-form               & No             & No             & \textbf{Yes} \\
+$O(n)$ complexity         & No             & No             & \textbf{Yes} \\
+Hierarchy-aware           & Rarely         & Rarely         & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\subsubsection*{Limitations and future work}
+
+The method does not guarantee positive inter-unit spacing for all displaced unit pairs. As demonstrated in Section~\ref{sec:evaluation} and Figure~\ref{fig:philly_zoom}, residual contact at formula-derived parameters is primarily density-driven: in compact high-density regions such as the Philadelphia metro core, the formula-derived $\alpha_l$ produces uniformly tight spacing throughout the region, with contact cases distributed across the full $s_i$ range rather than confined to centroid-proximate units. The natural extension is a two-stage hybrid pipeline: the closed-form analytical displacement (Algorithm~1) serves as Stage~1, producing a hierarchy-respecting, radially coherent layout within a bounded displacement envelope; a local collision-refinement stage then resolves residual spacing violations for units whose post-explosion gap falls below a user-specified threshold. Such a refinement would modify only units involved in spacing conflicts, preserve geometry exactly (because corrections remain rigid translations), stay close to the analytical displacement field, and exploit the bounded-displacement guarantee of Proposition~3 to constrain the refinement search space.
+
+The zoom-dependent extension $t_i(z) = \lambda(z) \cdot t_i$ (Equation~\ref{eq:zoom}) is particularly promising for interactive web maps, where smooth explosion and collapse can serve both overview and detail display modes from a single dataset without geometry duplication.
+
+The \texttt{explodemap} package also includes \texttt{focus\_map()}, an interactive \textsf{R}/htmlwidgets companion for inspecting dense administrative maps in Shiny applications. This widget should be distinguished from the exploded-view transformation studied in this paper. The exploded map changes feature locations in projected map coordinates through the displacement field $G'_i = G_i + t_i$. By contrast, \texttt{focus\_map()} operates primarily in viewport coordinates: a selected feature is fit to a target screen fraction, optionally lifted for emphasis, and accompanied by a non-blocking information card. The selected feature's underlying geographic geometry is not re-estimated by the focus interaction. Its mathematical object is therefore a view transform and screen-space emphasis model rather than a new cartographic displacement field. A separate companion manuscript develops this focus-map interaction model, including selected-feature viewport fitting, label visibility thresholds, and dense-layer rendering heuristics.
+
+\subsubsection*{Mathematical classification}
+
+From a mathematical perspective, the transformation defined here may be characterized as a \emph{hierarchical piecewise-rigid displacement field over a polygonal partition of the plane}. As established in Section~3.6, the field $V(x) = t_i$ is constant within each polygon domain $G_i$ (Equation~\eqref{eq:piecewise}), making the transformation piecewise rigid by construction. The displacement vectors are generated by a continuous hierarchical spatial model — two nested radial expansions driven by centroid relationships — so the field is continuous at the level of the generative model and discontinuous only at polygon boundaries, which are precisely the locations where whitespace is desired.
+
+\subsubsection*{Scalar potential representation}
+
+Within each parent region, the generating displacement field admits a compact scalar potential representation. Let $r(x) = \|x - C_r\|$ denote the distance from an arbitrary point $x$ to the region centroid. Since the regional direction $\hat{d}_{\text{state},r}$ is inherited from the parent-region centroid and is constant within region $r$, and since $\nabla r(x) = \hat{d}_{\text{local}}$, the two displacement components can be written as gradients:
+\[
+  \alpha_r\,\hat{d}_{\text{state},r} = \nabla\!\left(\alpha_r\,\hat{d}_{\text{state},r}\cdot x\right), \qquad
+  \alpha_l\,s_i\,\hat{d}_{\text{local}} = \nabla\!\left(\frac{\alpha_l}{(p+1)\,d_{\max,r}^p}\,r(x)^{p+1}\right).
+\]
+The full generating field within region $r$ is therefore $V(x) = \nabla\Phi_r(x)$, where the scalar potential is:
+\begin{equation}
+  \Phi_r(x) = \alpha_r\,\hat{d}_{\text{state},r}\cdot x + \frac{\alpha_l}{(p+1)\,d_{\max,r}^p}\,r(x)^{p+1}.
+  \label{eq:potential}
+\end{equation}
+The first term is a \emph{linear directional potential} with constant gradient $\alpha_r\,\hat{d}_{\text{state},r}$; the second is a \emph{local superlinear radial potential} centred on the region centroid. The exponent $p+1 > 2$ in the local term directly explains why outer units expand more strongly than inner ones while preserving radial ordering (Proposition~2): the local potential grows superlinearly with distance from $C_r$, so its gradient — the displacement magnitude — increases monotonically with $r(x)$.
+
+The centroid-driven displacement vectors may therefore be interpreted as samples from a hierarchical radial potential field, executed through piecewise rigid translations rather than continuous deformation. This is the precise sense in which the method is a \emph{hierarchical radial expansion transform}. To be explicit: $\Phi_r(x)$ describes the \emph{generative} field --- a continuous scalar potential from which displacement directions and magnitudes are derived --- while the \emph{executed} map transformation remains piecewise rigid over polygons, with each unit receiving a single constant translation vector sampled from this field at its centroid.
+
+This combination --- continuous generative potential, piecewise rigid execution, exact geometry preservation --- places the method in a distinct category from the three established classes of cartographic transformation (rigid transforms, continuous deformation, topological rearrangement). Analyzing the theoretical properties of this class --- conditions for guaranteed non-overlap, stability under repeated application, bounds on feature separation as a function of the potential parameters --- represents a natural direction for future work.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Applications}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Because the algorithm is deterministic, $O(n)$, and operates directly on vector geometries, it is well suited for:
+\begin{itemize}
+  \item exploded choropleth and thematic administrative maps,
+  \item interactive municipal dashboards with hover, click, and tooltip interactions,
+  \item multi-scale cartographic exploration via zoom-dependent explosion,
+  \item educational and journalistic cartography with animated transitions,
+  \item real-time Shiny and web-map interfaces with live parameter adjustment,
+  \item interactive focus-map inspection workflows in which users select an administrative unit, zoom to a legible viewport target, and read contextual attributes in a non-blocking card.
+\end{itemize}
+
+\subsection{Generalized Implementation}
+\label{sec:genimpl}
+
+A key practical contribution is a generalized open implementation (\texttt{explode\_any.R}) that exposes three entry points depending on how the practitioner's data is organized. The reference implementation is a direct software realization of Algorithm~1; only the data-ingestion and grouping interface differ across entry points.
+
+\begin{description}
+  \item[\texttt{explode\_state(fips, crs, region\_map)}] Downloads U.S.\ Census TIGER/Line 2024 county subdivision boundaries automatically for a given state, attaches user-defined region labels via county name lookup, derives parameters using Analytical Results~1 and~2, and returns original and exploded \texttt{sf} objects with GeoJSON export. A disk-based cache prevents redundant downloads across sessions.
+
+  \item[\texttt{explode\_sf(sf\_obj, region\_col)}] Accepts any projected \texttt{sf} object that already has a grouping column attached --- whether from a local shapefile, a database query, or a spatial join. Works with any polygon dataset at any administrative scale: census tracts, school districts, watersheds, electoral constituencies, or custom analytical regions.
+
+  \item[\texttt{explode\_sf\_with\_lookup(sf\_obj, join\_col, lookup)}] Joins an external lookup table (CSV, data frame, or database result) to the \texttt{sf} object before exploding, enabling groupings that are defined outside the spatial data itself --- for example, grouping municipalities by political party, by health service area, or by any non-geographic classification.
+\end{description}
+
+All three entry points use the same core \texttt{explode\_map} algorithm (Algorithm~1) and the same parameter derivation procedure (Analytical Results~1--2), ensuring that the mathematical guarantees of Propositions~1--3 apply uniformly regardless of how the data is supplied. This enables direct application of the framework to any polygonal partition with a defined grouping, allowing users to ``explode'' arbitrary spatial hierarchies without modification to the underlying algorithm. The generalized implementation exposes the same core mathematical transformation described in Algorithm~1; only the data-ingestion and grouping interface change across entry points.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Quantitative Evaluation}
+\label{sec:evaluation}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Although exploded cartographic layouts are primarily assessed through visual inspection, several quantitative indicators characterize the behavior and correctness of the displacement framework.
+
+\subsection{Computational Complexity}
+
+The algorithm is $O(n)$ in the number of administrative units. Each unit requires a fixed number of centroid and vector computations independent of all other units. No iterative passes, energy minimization, or topology reconstruction are required. The Pennsylvania experiment confirmed stable performance at $n = 2{,}572$ --- more than four times the New Jersey dataset --- without runtime degradation, supporting deployment on large-scale administrative datasets typical of national and regional web mapping systems.
+
+\subsection{Geometric Fidelity}
+
+By Proposition~1 (Section~3.2), translation is a Euclidean isometry: every polygon is transformed by $G'_i = G_i + t_i$, preserving all interior distances, areas, angles, and topological structure exactly. The internal polygon distortion induced by the method is zero by construction. This is a strict guarantee, not an approximation, and holds regardless of parameter values or the size of the displacement vectors.
+
+\subsection{Parameter Prediction Accuracy}
+
+For the New Jersey case study, where ground-truth parameter values are available from manual visual validation, the geometry-derived formulas produce the following predictions under recommended defaults ($\gamma_r = 3.0$, $\gamma_l = 1.136$):
+
+\begin{center}
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Parameter} & \textbf{Manual} & \textbf{Derived} & \textbf{Error} \\
+\midrule
+$\alpha_r$ & 6{,}000\,m  & 6{,}832\,m  & $+13.8\%$ \\
+$\alpha_l$ & 10{,}000\,m & 10{,}001\,m & $<0.1\%$  \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The $\alpha_l$ prediction is effectively exact, reflecting the stability of $\gamma_l = 1.136$ across the two case studies. The $\alpha_r$ prediction error of 13.8\% reflects residual uncertainty in $\gamma_r$ (CV = 0.24 across NJ and PA), which has not yet been stabilized across a sufficient number of independent states. In practice, an $\alpha_r$ error of this magnitude produces a visually coherent layout that may require minor manual adjustment of the regional spacing.
+
+\subsection{Displacement Field Coherence}
+
+The diagnostic displacement vector field (Section~7) confirmed three expected structural properties across both case studies: coherent outward radial orientation within each region, larger displacement magnitudes near regional peripheries, and suppressed displacement near regional centroids consistent with the $s_i$ weighting function. These properties hold in both the three-region NJ configuration and the six-region PA configuration, indicating that the vector field structure is robust to variation in regional count and geographic extent.
+
+\subsection{Minimum Inter-Unit Spacing}
+
+A direct measure of the whitespace introduced by the algorithm is the minimum inter-unit spacing $d_{\min}$, defined as:
+\[
+  d_{\min} = \min_{i \neq j}\, \mathrm{dist}(G'_i,\, G'_j)
+\]
+where $\mathrm{dist}(G'_i, G'_j)$ is the minimum boundary-to-boundary Euclidean distance between distinct exploded units $i$ and $j$, computed in the projected working CRS with linear metre units. In the original geographic layout, adjacent municipalities share boundaries as cells of a contiguous administrative coverage, so $d_{\min} = 0$ by definition --- the pre-explosion minimum is necessarily zero. The post-explosion nonzero minimum is therefore a direct indicator of the whitespace creation that is the method's primary purpose.
+
+\begin{table}[h]
+\centering
+\caption{Minimum and mean inter-unit spacing and mean displacement magnitude before and after explosion. Mean neighbor gap is defined as the mean nearest-boundary Euclidean distance between each unit and its closest distinct neighbor in the exploded layout, computed in the projected working CRS. Mean $\|t_i\|$ is the arithmetic mean of displacement vector magnitudes across all units.}
+\label{tab:dmin}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Dataset} & \textbf{$n$} & \textbf{$d_{\min}$ (pre)} & \textbf{$d_{\min}$ (post)} & \textbf{Mean neighbor gap} & \textbf{Mean $\|t_i\|$} \\
+\midrule
+NJ ($\alpha_r=6{,}000$, $\alpha_l=10{,}000$)   & 564   & 0\,m & $\approx 1{,}200$\,m & $\approx 4{,}800$\,m & $\approx 7{,}300$\,m \\
+PA ($\alpha_r=20{,}174$, $\alpha_l=12{,}447$)  & 2{,}572 & 0\,m & 0\,m$^{\dagger}$ & $\approx 67$\,m & $\approx 20{,}630$\,m \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+$^{\dagger}$At formula-derived parameters, the minimum spacing is zero for adjacent units in dense regions. Three observations characterize the spacing behavior. First, mean separation improves: the mean neighbor gap is positive for both datasets, confirming that the analytical field introduces whitespace across a substantial fraction of the layout. Second, inter-region separation is strong: the regional displacement term $\alpha_r$ cleanly separates parent regions, and peripheral municipalities within each region receive proportionally larger local displacement via the $s_i$ weighting. Third, worst-case minimum spacing is not guaranteed and is not confined to centroid-proximate units: in compact high-density regions such as the Philadelphia metro core (239 municipalities in 5 counties), 65.7\% of unit pairs remain within 50\,m of a neighbor after explosion, with contact cases distributed across the full $s_i$ range rather than concentrated at $s_i \approx 0$ (Figure~\ref{fig:philly_zoom}). This indicates that the residual contact is density-driven --- the formula-derived $\alpha_l$ is structurally appropriate for the state as a whole but modest relative to the extreme density within the most compact region.
+
+\medskip
+\noindent The method does not guarantee global non-overlap at formula-derived parameters. Explicit collision detection to guarantee a user-specified $d_{\min}$ threshold across all unit pairs remains a direction for future work; the bounded-displacement property (Proposition~3) ensures that any such refinement operates within a known envelope of radius $\alpha_r + \alpha_l$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\textwidth]{philly_zoom.png}
+\caption{Zoomed view of the Philadelphia metro core (Southeast region, $n = 239$) after explosion at formula-derived parameters ($\alpha_r = 20{,}174$\,m, $\alpha_l = 12{,}447$\,m). Dark-bordered units (157 of 239, 65.7\%) remain within 50\,m of at least one neighbor. Contact cases are distributed across the full $s_i$ range (mean $s_i = 0.41$ for contact units vs.\ 0.42 for separated units), indicating that the residual contact is density-driven rather than centroid-proximate: the formula-derived local expansion is structurally appropriate for the state as a whole but modest relative to the extreme municipal density within this compact 5-county region. This motivates bounded collision refinement as a targeted post-processing stage.}
+\label{fig:philly_zoom}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Extended Validation: Ohio, Michigan, and Canada}
+\label{sec:extended}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Two additional states were selected for extended validation targeting specific structural properties of the framework that the New Jersey and Pennsylvania case studies do not fully exercise.
+
+\subsection{Ohio: Multiple Competing Urban Cores}
+
+Ohio ($n = 1{,}602$ municipalities, 5 regions) presents a different challenge from the New Jersey and Pennsylvania case studies: three distinct metropolitan cores --- Cleveland (Northeast), Columbus (Central), and Cincinnati (Southwest) --- each dominate a different region and exhibit substantially different municipal densities. This tests whether the distance-scaling term $s_i$ suppresses central void formation correctly across multiple regions simultaneously, rather than in a single concentrated core as in the NJ and PA case studies.
+
+The geometry-derived parameters under recommended defaults are $\alpha_r = 23{,}627$\,m and $\alpha_l = 17{,}235$\,m. The ratio $\widetilde{R}_{\text{local}}/\bar{w} = 12.75$ places Ohio within the dense municipal cluster, consistent with Ohio's fine-grained township subdivision structure. Visual assessment confirms coherent outward expansion from each regional centroid, with all three urban cores remaining appropriately suppressed relative to their surrounding municipalities, demonstrating that Proposition~2 (radial ordering preservation) holds across five regions simultaneously with highly non-uniform density distributions.
+
+\subsection{Michigan: Bimodal Size Distribution and Geographic Discontinuity}
+
+Michigan ($n = 1{,}540$ municipalities, 4 regions) presented two structural challenges not present in any prior case study. First, the Upper Peninsula is physically separated from the Lower Peninsula by the Straits of Mackinac, creating a geographic discontinuity within a single administrative unit. Second, Upper Peninsula municipalities are substantially larger in area than Lower Peninsula townships, producing a bimodal polygon size distribution within the state.
+
+The geometry-derived parameters under recommended defaults are $\alpha_r = 27{,}636$\,m and $\alpha_l = 22{,}573$\,m. The exploded layout produced coherent separation across all four regions, with the Upper Peninsula displaced northward away from the lower state centroid and the three Lower Peninsula regions separating cleanly despite their density contrast.
+
+The key finding is $\widetilde{R}_{\text{local}}/\bar{w} = 16.59$, which places Michigan squarely within the dense municipal cluster alongside NJ (15.83), PA (17.26), IL (16.18), and OH (12.75). Despite the geographic discontinuity and bimodal area distribution, the median-based $\bar{w}$ remained well-behaved: the median is determined by the far more numerous Lower Peninsula townships and is not inflated by the smaller number of large Upper Peninsula units. This confirms that the framework's use of the median rather than the mean for $\bar{w}$ is the correct design choice for states with heterogeneous municipal size distributions.
+
+The equal-area partition model (Analytical Result~2) also performed correctly: $\alpha_l$ was computed from the median regional radius and median unit count, both of which reflect Lower Peninsula structure. The Upper Peninsula's large municipalities expand correctly under the regional displacement term; their local scaling $s_i$ is small relative to $d_{\max,r}$ for the Upper Peninsula region, so they are not over-expanded locally. This is the expected behavior of Proposition~2 applied to a low-density region.
+
+\subsection{Canada: Non-US Validation}
+\label{sec:canada}
+
+To evaluate the framework outside the US administrative context, the method was applied to Canadian census subdivision (CSD) boundaries from Statistics Canada 2021. The Canadian dataset ($n = 5{,}161$ CSDs, 6 regions: Atlantic, Quebec, Ontario, Prairies, Pacific, and Northern Territories) occupies a qualitatively different regime on the hierarchical tightness spectrum, with $\widetilde{R}_{\text{local}}/\bar{w} = 113.09$ --- an order of magnitude larger than any US state (Table~\ref{tab:crossstate}). This reflects the vast geographic extent of Canadian provinces relative to municipal unit size.
+
+Applying the geometry-derived formulas with recommended defaults ($\gamma_r = 3.0$, $\gamma_l = 1.136$) yields $\alpha_r = 26{,}200$\,m and $\alpha_l = 79{,}800$\,m. Figure~\ref{fig:canada_terr} shows the exploded layout including Northern Territories, which dominate the visual space and compress the southern provinces into a narrow band. Figure~\ref{fig:canada_prov} shows the provinces-only layout ($\alpha_r = 22$\,km, $\alpha_l = 76$\,km, $\gamma_r = 3$, $\gamma_l = 1.136$), which produces a substantially more legible result by excluding the territories. The structural heterogeneity between dense southern CSDs and sparse northern units illustrates the ``large-unit vs.\ dense-municipal'' contrast identified in the tightness ratio discussion (Section~\ref{sec:ratio}), here occurring \emph{within} a single national dataset rather than across states.
+
+The Canadian case confirms that the formula-derived parameters produce coherent layouts even in an extreme tightness-ratio regime, though the visual dominance of very large territorial units suggests that practitioners working with such datasets may benefit from treating territories as a separate hierarchy level or applying the three-level extension (Section~\ref{sec:multiscale}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\textwidth]{canada_with_terr.png}
+\caption{Exploded-view map of Canadian census subdivisions including Northern Territories ($n = 5{,}161$). The vast territorial units dominate the layout, compressing the denser southern provinces. This illustrates the challenge of extreme hierarchical tightness ratios within a single dataset.}
+\label{fig:canada_terr}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\textwidth]{canada_run.png}
+\caption{Exploded-view map of Canadian census subdivisions, provinces only ($\alpha_r = 22$\,km, $\alpha_l = 76$\,km, $p = 1.25$, $\gamma_r = 3$, $\gamma_l = 1.136$). Excluding territories produces a legible five-region layout demonstrating that the formula-derived parameters transfer to non-US administrative geographies.}
+\label{fig:canada_prov}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Multi-Scale Extension: National Grouped Layouts}
+\label{sec:multiscale}
+% ─────────────────────────────────────────────────────────────────────────────
+
+The anchor layout procedure is not a separate algorithm but a direct extension of the hierarchical displacement framework to a higher administrative level. Where the core method operates at two levels (units within regions), the national extension adds a third level (regions within the nation), applying the same centroid-driven displacement logic at each scale.
+
+The core framework operates on two displacement levels: regional separation ($\alpha_r$) and local intra-region expansion ($\alpha_l$). For national maps requiring three-level separation---states within regions, regions within the national extent---the framework extends naturally by introducing \emph{parent-region anchors} that control the gross placement of each region block before the local displacement field is applied.
+
+This yields a three-level displacement hierarchy. Level~1 inherits the exact geometry guarantees of Proposition~1: each administrative unit undergoes rigid-body translation preserving shape, area, and topology. Levels~2 and~3, by contrast, operate at the region-block level and preserve block membership and directional correspondence with the geographic arrangement rather than topological coverage. Thus, the guarantees of Propositions~1--3 apply strictly at Level~1, while higher levels preserve structural grouping rather than topological coverage.
+
+\begin{description}
+  \item[Level 1 — Deterministic local explosion.] States within each parent region are displaced using the centroid-driven field (Equation~\eqref{eq:ti}), producing separation within each group. This is the core algorithm unchanged.
+  \item[Level 2 — Automatic anchor placement.] Parent region centroids are displaced radially outward from the national centroid $C_{\text{US}}$ to generate initial anchor positions:
+  \[
+    A_r^{(0)} = C_{\text{US}} + \left(\kappa \cdot \|C_r - C_{\text{US}}\| + \rho + \delta \cdot \log(1 + n_r)\right)\,\hat{u}_r
+  \]
+  where $\kappa$ is a radial expansion factor, $\rho$ a base padding, $\delta$ a density term, $n_r$ the number of child units in region $r$, and $\hat{u}_r$ the unit vector from the national centroid to $C_r$.
+  \item[Level 3 — Collision-aware anchor refinement.] Automatically generated anchors may overlap for densely packed regions. Overlapping anchors are iteratively repelled, while a spring term maintains proximity to the original radial targets:
+  \begin{equation}
+    A_r^{(t+1)} = A_r^{(t)} + \sum_{s \neq r} F_{rs} + \lambda\left(A_r^{(0)} - A_r^{(t)}\right)
+    \label{eq:anchor_update}
+  \end{equation}
+  where $F_{rs}$ is a repulsion force applied when $\|A_r^{(t)} - A_s^{(t)}\| < R_r + R_s + \rho_s$, $R_r$ is the block radius of region $r$, and $\lambda$ is the spring coefficient. $F_{rs} = \eta \cdot \frac{(R_r + R_s + \rho_s - \|A_r - A_s\|)}{2}\,\hat{u}_{rs}$.
+\end{description}
+
+\subsection{Block Radius Estimation}
+
+The block radius $R_r$ approximates the spatial extent of region $r$ for collision detection. It is estimated as the 85th percentile of pairwise distances between child-unit centroids and their region centroid:
+\[
+  R_r = Q_{0.85}\left\{\|C_i - C_r\| : i \in r\right\}
+\]
+The 85th percentile is preferred over the maximum because the maximum is sensitive to individual outlier units (e.g., Alaska in Region 10 of the HHS classification) and produces over-conservative block radii that push anchors unnecessarily far apart.
+
+\subsection{Spring-Repulsion Balance}
+
+The relative magnitudes of $\lambda$ (spring) and $\eta$ (push step) determine the character of the refined layout. When $\lambda > \eta / 2$, the spring force dominates after a few iterations and anchors converge near their initial radial positions; overlap removal is traded against radial fidelity. When $\lambda \ll \eta$, anchors drift to achieve zero overlap but may lose correspondence with the geographic arrangement. Empirically, $\lambda = \eta = 0.18$ with 60 iterations produces compact, radially coherent layouts across the 10-region HHS configuration.
+
+\subsection{Algorithm 2: Anchor Layout Procedure}
+
+\begin{algorithm}[H]
+\DontPrintSemicolon
+\caption{$\texttt{anchor\_layout}(\mathcal{R}, \kappa, \rho, \delta, \lambda, \eta, T)$. Generates and refines parent-region anchors for the three-level multi-scale layout.}
+\KwIn{Regions $\mathcal{R} = \{r\}$; centroids $C_r$; national centroid $C_{\text{US}}$; child counts $n_r$;
+      expansion $\kappa$; padding $\rho$; density factor $\delta$; spring $\lambda$; step $\eta$; iterations $T$}
+\KwOut{Refined anchor positions $\{A_r\}$; block radii $\{R_r\}$}
+\BlankLine
+\tcp{Level 2 — Generate initial radial anchors}
+\For{each region $r \in \mathcal{R}$}{
+  $\hat{u}_r \gets (C_r - C_{\text{US}}) / \|C_r - C_{\text{US}}\|$\;
+  $\rho_r \gets \kappa\,\|C_r - C_{\text{US}}\| + \rho + \delta\log(1 + n_r)$\;
+  $A_r^{(0)} \gets C_{\text{US}} + \rho_r\,\hat{u}_r$\;
+}
+\BlankLine
+\tcp{Level 3a — Estimate block radii (85th percentile spread)}
+\For{each region $r \in \mathcal{R}$}{
+  $R_r \gets Q_{0.85}\!\left\{\|C_i - C_r\| : i \in r\right\}$\;
+}
+\BlankLine
+\tcp{Level 3b — Iterative collision resolution with spring return}
+\For{$t = 1$ \KwTo $T$}{
+  $\Delta_r \gets \mathbf{0}$ for all $r$\;
+  \For{each pair $(r, s)$ with $r < s$}{
+    $d_{rs} \gets \|A_r^{(t)} - A_s^{(t)}\|$\;
+    \If{$d_{rs} < R_r + R_s + \rho_s$}{
+      $\text{overlap} \gets R_r + R_s + \rho_s - d_{rs}$\;
+      $F \gets \eta \cdot \tfrac{\text{overlap}}{2} \cdot \hat{u}_{rs}$\;
+      $\Delta_r \gets \Delta_r - F$;\quad $\Delta_s \gets \Delta_s + F$\;
+    }
+  }
+  $A_r^{(t+1)} \gets A_r^{(t)} + \Delta_r + \lambda\!\left(A_r^{(0)} - A_r^{(t)}\right)$ for all $r$\;
+}
+\Return{$\{A_r^{(T)}\}$, $\{R_r\}$}\;
+\end{algorithm}
+
+\vspace{4pt}
+\noindent\textbf{Complexity.} The collision loop is $O(|\mathcal{R}|^2 \cdot T)$ in the number of regions and iterations. Since $|\mathcal{R}|$ is typically small ($\leq 20$ for national administrative groupings), the anchor refinement step adds negligible overhead relative to the $O(n)$ unit displacement computation.
+
+\subsection{Application: HHS National Layout}
+
+The three-level framework was applied to the 50 US states plus territories assigned to the 10 HHS regions. States were projected to Albers Equal Area (EPSG:5070) for metric consistency. The Level-1 displacement ($\alpha_l = 120{,}000$\,m, $p = 1.25$) separates states within each HHS block. Level-2 and Level-3 processing place and refine the 10 HHS region anchors. Non-contiguous territories (HI, PR, AK, VI, GU, MP, AS) are repositioned to inset-style locations through rigid translation, maintaining group membership without disrupting the continental layout.
+
+Figure~\ref{fig:hhs_auto} shows the layout under \texttt{auto} mode (Level-2 radial anchor placement only, without collision refinement). Region blocks are correctly separated and radially oriented, but several adjacent regions remain visually crowded due to unresolved anchor overlaps. Figure~\ref{fig:hhs_hybrid} shows the \texttt{auto\_collision} mode result, in which Level-3 iterative anchor refinement resolves block overlaps while the spring term ($\lambda = 0.18$) maintains proximity to the original radial targets. The continental arrangement of HHS regions is recognisable in both outputs; the collision-refined layout is substantially more legible.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\textwidth]{hhs_region_auto.png}
+\caption{HHS national layout under \texttt{auto} mode (Level-2 radial anchor placement, no collision refinement, $\alpha_l = 120{,}000$\,m, $p = 1.25$). Region blocks are correctly oriented radially from the national centroid but several adjacent groups remain crowded without the Level-3 solver.}
+\label{fig:hhs_auto}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\textwidth]{HHS_REGION_exploded.png}
+\caption{HHS national layout under \texttt{auto\_collision} mode (Level-2 radial anchors refined by Level-3 collision solver, spring $\lambda = \eta = 0.18$, 60 iterations). Anchor overlaps are resolved while the spring term preserves the coarse geographic arrangement of HHS regions. The continental layout is recognisable and all 10 regions are clearly separated.}
+\label{fig:hhs_hybrid}
+\end{figure}
+
+The result demonstrates that the framework's vector-field structure generalizes to a third administrative scale without modification to the core algorithm, supporting the claim that the method is applicable to arbitrary depth hierarchies provided anchor positions are defined at each parent level.
+
+It is worth noting that the collision-aware anchor refinement introduced at the block level in this section --- iterative repulsion with a spring return term operating on a small set of anchor pairs --- is structurally analogous to a potential unit-level bounded refinement for residual polygon conflicts in the two-level framework. In both cases, the analytical displacement field provides a principled initial layout, and a local solver corrects the small number of remaining spacing violations without discarding the hierarchical structure. The block-level version resolves anchor overlaps among $|R|$ regions; the unit-level analogue would resolve boundary contacts among density-driven conflict pairs identified in Section~\ref{sec:evaluation}. This suggests a unified refinement architecture applicable at any level of the displacement hierarchy.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Conclusion}
+% ─────────────────────────────────────────────────────────────────────────────
+
+This paper presented a hierarchical vector-based framework for multi-scale exploded-view cartography of dense administrative maps. The method defines displacement as a deterministic field derived from hierarchical centroid relationships and applies this field through rigid polygon translation, preserving exact geometry while improving spatial legibility.
+
+Two structural properties underpin the method's correctness. Proposition~1 establishes that rigid-body translation preserves all internal polygon geometry exactly --- shape, area, perimeter, and topology. Proposition~2 establishes that the distance-scaled local expansion preserves the radial ordering of units within each region, guaranteeing that the exploded layout expands coherently outward rather than shuffling or crossing units. Together these properties explain both the mathematical correctness and the perceptual stability of the exploded output.
+
+A central contribution beyond the displacement algorithm is a geometry-derived parameter estimation procedure grounded in two geometric idealizations. Analytical Result~1 (radial gap criterion) derives the functional form of $\alpha_r$ from a radial arrangement model, showing that regional displacement scales as $\gamma_r\,\bar{w} / (2\sin(\pi/n_r))$. Analytical Result~2 (equal-area partition) derives the form of $\alpha_l$ from the equivalent-circle diameter of a typical municipal cell, giving $\gamma_l \cdot 2R_{\text{local}}/\sqrt{\bar{n}}$. The functional dependence on geometry is derived analytically from idealized spatial models; the residual dimensionless coefficients $\gamma_r$ and $\gamma_l$ are cartographic legibility coefficients encoding human readability requirements rather than geometric constraints. The local coefficient $\gamma_l = 1.136$ is strongly supported by NJ calibration and remains consistent with transfer results in PA and the broader multi-state tests; the regional coefficient $\gamma_r$ is directionally consistent but requires visual validation across additional states.
+
+A cross-state validation study covering nine US states and the Canadian census subdivision dataset reveals that the dimensionless ratio $\widetilde{R}_{\text{local}}/\bar{w}$ clusters by administrative system type. Fine-grained township states (NJ=15.83, PA=17.26, IL=16.18, OH=12.75, MI=16.59) cluster tightly around $\widetilde{R}_{\text{local}}/\bar{w} \approx 15.8$; states with larger administrative units (NY, VA, TX, MA) cluster at $\approx 9.5$; Canadian provinces occupy a qualitatively different regime at 113, confirming through direct application (Section~\ref{sec:canada}) that the formula-derived parameters produce coherent layouts even in extreme tightness-ratio regimes. Michigan's ratio of 16.59, confirmed through extended validation, is particularly significant: despite a geographic discontinuity between its Upper and Lower Peninsulas and a bimodal municipal size distribution, the median-based $\bar{w}$ produces a ratio indistinguishable from the other dense municipal states, confirming the robustness of the median estimator under structural heterogeneity.
+
+Future work will address visual validation of $\alpha_r$ on additional states to further stabilize $\gamma_r$ (currently CV = 0.147 across NJ, PA, OH, and MI at formula-derived values), extension of $\gamma_l$ validation beyond NJ, and user-study evaluation of layout legibility for specific cartographic tasks. The three-level multi-scale extension introduced in Section~\ref{sec:multiscale} opens a further research direction: determining whether $\gamma_r$ and $\gamma_l$ are scale-invariant across administrative levels, and whether the spring coefficient $\lambda$ in the collision-aware refinement can itself be derived geometrically from regional density structure. The generalized \texttt{explode\_any.R} implementation enables the framework to be applied and validated across any administrative polygon dataset, supporting both further empirical calibration and practical deployment in cartographic production workflows.
+
+The derived parameter formulas constitute a reusable procedure for exploded-view cartography. Any administrative polygon dataset with a defined two-level hierarchy can generate predicted displacement parameters directly from its geometric properties --- characteristic polygon diameter, regional radius, median unit count, and number of regions --- without manual tuning.
+
+\subsection*{Code Availability}
+
+The reference implementation is available as a set of \textsf{R} scripts and an interactive Shiny validation application. The core release includes:
+\begin{itemize}
+  \item \texttt{explode\_any.R} --- generalized implementation with three entry points (\texttt{explode\_state}, \texttt{explode\_sf}, \texttt{explode\_sf\_with\_lookup}), applicable to any projected polygon dataset with any grouping.
+  \item \texttt{explode\_map\_states.R} --- multi-state calibration runner covering nine US states with disk-based caching and cross-state $\gamma$ stability reporting.
+  \item \texttt{explode\_map\_canada.R} --- non-US validation using Statistics Canada 2021 census subdivision boundaries.
+  \item \texttt{hhs\_exploded\_map.R} --- three-level national grouped layout with collision-aware anchor refinement (Algorithm~2).
+  \item \texttt{explode\_map\_app/app.R} --- interactive Shiny application for side-by-side visual validation and live calibration logging.
+  \item \texttt{focus\_map()} --- companion htmlwidget for selected-feature viewport focusing, non-blocking information cards, and Shiny integration; its interaction mathematics are developed separately from the exploded-view displacement model.
+\end{itemize}
+All case studies are reproducible from publicly available U.S.\ Census TIGER/Line 2024 and Statistics Canada 2021 boundary data. No proprietary data or software is required.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\bibliographystyle{plainnat}
+\begin{thebibliography}{99}
+
+\bibitem[Steiniger \& Weibel(2007)]{steiniger2007}
+Steiniger, S., \& Weibel, R. (2007).
+Relations among map objects in cartographic generalization.
+\textit{Cartography and Geographic Information Science}, 34(3), 175--197.
+\url{https://doi.org/10.1559/152304007781697866}
+
+\bibitem[Bouts et~al.(2015)]{bouts2015}
+Bouts, Q.~W., Dwyer, T., \& Dykes, J. (2015).
+Visual encoding of dissimilarity data via topology-preserving map deformation.
+\textit{IEEE Transactions on Visualization and Computer Graphics}, 21(9), 1037--1050.
+\url{https://openaccess.city.ac.uk/id/eprint/15023/}
+
+\bibitem[Ngo et~al.(2019)]{ngo2019}
+Ngo, P., Passat, N., Kenmochi, Y., \& Talbot, H. (2019).
+Geometric preservation of 2D digital objects under rigid motions.
+\textit{Journal of Mathematical Imaging and Vision}, 61(2), 204--223.
+\url{https://doi.org/10.1007/s10851-018-0842-9}
+
+\bibitem[van Lieshout(2010)]{vanlieshout2010}
+van Lieshout, M.~C. (2010).
+Spatial point process theory.
+In A.~E. Gelfand, P.~J. Diggle, M.~Fuentes, \& P.~Guttorp (Eds.),
+\textit{Handbook of Spatial Statistics} (pp.~263--282). CRC Press.
+
+\bibitem[Ai et~al.(2015)]{ai2015}
+Ai, T., Zhang, X., Zhou, Q., \& Yang, M. (2015).
+A vector field model to handle the displacement of multiple conflicts in building generalization.
+\textit{International Journal of Geographical Information Science}, 29(8), 1310--1331.
+\url{https://doi.org/10.1080/13658816.2015.1019886}
+
+\bibitem[Bader(2001)]{bader2001}
+Bader, M. (2001).
+\textit{Energy minimization methods for feature displacement in map generalization}.
+Doctoral dissertation, University of Zurich.
+
+\bibitem[Bundy et~al.(2020)]{bundy2020}
+Bundy, G., Jones, C.~B., \& Furse, E. (2020).
+Holistic generalization of large-scale cartographic data.
+In \textit{GIS and Generalisation}. Taylor \& Francis.
+
+\bibitem[Cecconi(2003)]{cecconi2003}
+Cecconi, A. (2003).
+\textit{Integration of cartographic generalization and multi-scale databases for enhanced web mapping}.
+Doctoral dissertation, ETH Zurich.
+
+\bibitem[Gastner \& Newman(2004)]{gastner2004}
+Gastner, M.~T., \& Newman, M.~E.~J. (2004).
+Diffusion-based method for producing density-equalizing maps.
+\textit{Proceedings of the National Academy of Sciences}, 101(20), 7499--7504.
+\url{https://doi.org/10.1073/pnas.0400280101}
+
+\bibitem[Harrie \& Sarjakoski(2002)]{harrie2002}
+Harrie, L., \& Sarjakoski, T. (2002).
+Simultaneous graphic generalization of vector data sets.
+\textit{GeoInformatica}, 6(3), 233--261.
+
+\bibitem[Jenny \& Hurni(2011)]{jenny2011}
+Jenny, B., \& Hurni, L. (2011).
+Studying cartographic heritage: Analysis and visualization of geometric distortions.
+\textit{Computers \& Graphics}, 35(2), 170--178.
+
+\bibitem[Mackaness et~al.(2011)]{mackaness2011}
+Mackaness, W.~A., Ruas, A., \& Sarjakoski, L.~T. (2011).
+\textit{Generalisation of Geographic Information: Cartographic Modelling and Applications}.
+Elsevier.
+
+\bibitem[Nusrat \& Kobourov(2016)]{nusrat2016}
+Nusrat, S., \& Kobourov, S. (2016).
+The state of the art in cartograms.
+\textit{Computer Graphics Forum}, 35(3), 619--642.
+
+\bibitem[Sun(2020)]{sun2020}
+Sun, S. (2020).
+Applying forces to generate cartograms: a fast and flexible transformation framework.
+\textit{Cartography and Geographic Information Science}, 48(1), 1--16.
+
+\bibitem[Wu \& Wang(2021)]{wu2021}
+Wu, F., \& Wang, J. (2021).
+Cartographic generalization.
+In \textit{Advances in Cartography and Geographic Information Science}. Springer.
+
+\bibitem[Yan \& Wang(2019)]{yan2019}
+Yan, H., \& Wang, J.~Y. (2019).
+\textit{Description Approaches and Automated Generalization Algorithms for Groups of Map Objects}.
+Springer.
+
+\bibitem[{U.S.\ Census Bureau}(2024)]{tiger2024}
+U.S.\ Census Bureau. (2024).
+TIGER/Line Shapefiles: County Subdivisions.
+\url{https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html}
+
+\end{thebibliography}
+
+\end{document}

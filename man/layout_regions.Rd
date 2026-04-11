@@ -33,7 +33,7 @@ layout_regions(
 
 \item{padding}{Base padding in map units (default 50000)}
 
-\item{delta}{Density scaling factor (default 15000)}
+\item{delta}{Log-density scaling factor (default 15000)}
 
 \item{lambda}{Spring coefficient for collision solver (default 0.18)}
 

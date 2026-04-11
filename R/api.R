@@ -14,8 +14,20 @@
 #' @param gamma_r Regional clearance coefficient (default 3.0)
 #' @param gamma_l Local clearance coefficient (default 1.136)
 #' @param p Distance scaling exponent (default 1.25)
-#' @param alpha_r Manual override for regional separation (metres); skips derivation
-#' @param alpha_l Manual override for local expansion (metres); skips derivation
+#' @param alpha_r Optional manual override for regional separation (metres).
+#'   May be supplied independently of `alpha_l`.
+#' @param alpha_l Optional manual override for local expansion (metres).
+#'   May be supplied independently of `alpha_r`.
+#' @param refine If TRUE, apply a bounded collision-refinement pass after the
+#'   analytical displacement. Default is FALSE.
+#' @param refine_min_gap Optional minimum boundary-to-boundary gap in map units.
+#'   If NULL and `refine = TRUE`, uses 2% of the characteristic diameter.
+#' @param refine_max_shift Optional maximum correction per feature in map units.
+#'   If NULL and `refine = TRUE`, uses 10% of `alpha_r + alpha_l`.
+#' @param refine_max_iter Maximum refinement iterations.
+#' @param refine_step Fraction of each gap deficit corrected per iteration.
+#' @param refine_within Refine pairs within each `"region"` (default) or across
+#'   `"all"` features.
 #' @param allow_other If TRUE, permits units mapped to "Other"
 #' @param fix_invalid If TRUE, auto-repairs invalid geometries
 #' @param centroid_fun "centroid" (default) or "point_on_surface"
@@ -32,6 +44,12 @@ explode_state <- function(state_fips,
                           p            = 1.25,
                           alpha_r      = NULL,
                           alpha_l      = NULL,
+                          refine       = FALSE,
+                          refine_min_gap = NULL,
+                          refine_max_shift = NULL,
+                          refine_max_iter = 20,
+                          refine_step  = 0.5,
+                          refine_within = c("region", "all"),
                           allow_other  = FALSE,
                           fix_invalid  = TRUE,
                           centroid_fun = c("centroid", "point_on_surface"),
@@ -62,6 +80,8 @@ explode_state <- function(state_fips,
 
   .run_explode(sf_reg, sf_for_stats,
                gamma_r, gamma_l, p, alpha_r, alpha_l,
+               refine, refine_min_gap, refine_max_shift,
+               refine_max_iter, refine_step, match.arg(refine_within),
                plot, export, label, "region", match.arg(centroid_fun))
 }
 
@@ -73,8 +93,20 @@ explode_state <- function(state_fips,
 #' @param gamma_r Regional clearance coefficient (default 3.0)
 #' @param gamma_l Local clearance coefficient (default 1.136)
 #' @param p Distance scaling exponent (default 1.25)
-#' @param alpha_r Manual override (metres); skips derivation
-#' @param alpha_l Manual override (metres); skips derivation
+#' @param alpha_r Optional manual override for regional separation (metres).
+#'   May be supplied independently of `alpha_l`.
+#' @param alpha_l Optional manual override for local expansion (metres).
+#'   May be supplied independently of `alpha_r`.
+#' @param refine If TRUE, apply a bounded collision-refinement pass after the
+#'   analytical displacement. Default is FALSE.
+#' @param refine_min_gap Optional minimum boundary-to-boundary gap in map units.
+#'   If NULL and `refine = TRUE`, uses 2% of the characteristic diameter.
+#' @param refine_max_shift Optional maximum correction per feature in map units.
+#'   If NULL and `refine = TRUE`, uses 10% of `alpha_r + alpha_l`.
+#' @param refine_max_iter Maximum refinement iterations.
+#' @param refine_step Fraction of each gap deficit corrected per iteration.
+#' @param refine_within Refine pairs within each `"region"` (default) or across
+#'   `"all"` features.
 #' @param allow_other If TRUE, permits "Other" units
 #' @param fix_invalid If TRUE, auto-repairs invalid geometries
 #' @param centroid_fun "centroid" (default) or "point_on_surface"
@@ -90,6 +122,12 @@ explode_sf <- function(sf_obj,
                        p            = 1.25,
                        alpha_r      = NULL,
                        alpha_l      = NULL,
+                       refine       = FALSE,
+                       refine_min_gap = NULL,
+                       refine_max_shift = NULL,
+                       refine_max_iter = 20,
+                       refine_step  = 0.5,
+                       refine_within = c("region", "all"),
                        allow_other  = FALSE,
                        fix_invalid  = TRUE,
                        centroid_fun = c("centroid", "point_on_surface"),
@@ -104,6 +142,8 @@ explode_sf <- function(sf_obj,
 
   .run_explode(sf_obj, sf_for_stats,
                gamma_r, gamma_l, p, alpha_r, alpha_l,
+               refine, refine_min_gap, refine_max_shift,
+               refine_max_iter, refine_step, match.arg(refine_within),
                plot, export, label, region_col, match.arg(centroid_fun))
 }
 
@@ -155,24 +195,82 @@ explode_sf_with_lookup <- function(sf_obj,
 .run_explode <- function(sf_obj, sf_for_stats,
                          gamma_r, gamma_l, p,
                          alpha_r_override, alpha_l_override,
+                         refine, refine_min_gap, refine_max_shift,
+                         refine_max_iter, refine_step, refine_within,
                          plot, export, label,
                          region_col, centroid_fun = "centroid") {
 
-  stats <- compute_stats(sf_for_stats, region_col)
+  stats <- compute_stats(sf_for_stats, region_col, centroid_fun = centroid_fun)
+  stats$n_units_input <- nrow(sf_obj)
+  stats$n_units_stats <- nrow(sf_for_stats)
+  stats$n_units_excluded <- nrow(sf_obj) - nrow(sf_for_stats)
 
-  # Parameter source: manual override takes priority
-  if (!is.null(alpha_r_override) && !is.null(alpha_l_override)) {
-    params <- list(alpha_r = alpha_r_override, alpha_l = alpha_l_override,
-                   p = p, gamma_r = NA_real_, gamma_l = NA_real_)
-    message("Using manual alpha_r = ", alpha_r_override,
-            " m, alpha_l = ", alpha_l_override, " m")
-  } else {
-    params <- derive_params(stats, gamma_r, gamma_l, p)
+  params <- derive_params(stats, gamma_r, gamma_l, p)
+
+  # Manual overrides take priority, and may be supplied independently.
+  if (!is.null(alpha_r_override)) {
+    if (!is.numeric(alpha_r_override) || length(alpha_r_override) != 1 ||
+        is.na(alpha_r_override) || alpha_r_override < 0) {
+      stop("`alpha_r` must be a single non-negative number.", call. = FALSE)
+    }
+    params$alpha_r <- alpha_r_override
+    params$gamma_r <- NA_real_
+    message("Using manual alpha_r = ", alpha_r_override, " m")
+  }
+
+  if (!is.null(alpha_l_override)) {
+    if (!is.numeric(alpha_l_override) || length(alpha_l_override) != 1 ||
+        is.na(alpha_l_override) || alpha_l_override < 0) {
+      stop("`alpha_l` must be a single non-negative number.", call. = FALSE)
+    }
+    params$alpha_l <- alpha_l_override
+    params$gamma_l <- NA_real_
+    message("Using manual alpha_l = ", alpha_l_override, " m")
   }
 
   sf_exp     <- explode_sf_core(sf_obj, region_col,
                                 params$alpha_r, params$alpha_l, params$p,
                                 centroid_fun)
+
+  if (!is.logical(refine) || length(refine) != 1 || is.na(refine)) {
+    stop("`refine` must be TRUE or FALSE.", call. = FALSE)
+  }
+
+  refinement <- list(enabled = FALSE)
+  if (isTRUE(refine)) {
+    if (is.null(refine_min_gap)) {
+      refine_min_gap <- stats$w_bar * 0.02
+    }
+    if (is.null(refine_max_shift)) {
+      refine_max_shift <- (params$alpha_r + params$alpha_l) * 0.10
+    }
+
+    refined <- refine_collisions(
+      sf_exp,
+      region_col,
+      min_gap = refine_min_gap,
+      max_shift = refine_max_shift,
+      max_iter = refine_max_iter,
+      step = refine_step,
+      within = refine_within,
+      centroid_fun = centroid_fun
+    )
+    sf_exp <- refined$sf
+    refinement <- refined$diagnostics
+    message(
+      "Collision refinement: corrected ", refinement$corrected_pairs,
+      " pair-visits; max shift = ",
+      fmt_dist(refinement$max_shift_observed), "."
+    )
+  }
+
+  params$refine <- isTRUE(refine)
+  params$refine_min_gap <- if (isTRUE(refine)) refine_min_gap else NULL
+  params$refine_max_shift <- if (isTRUE(refine)) refine_max_shift else NULL
+  params$refine_max_iter <- if (isTRUE(refine)) as.integer(refine_max_iter) else NULL
+  params$refine_step <- if (isTRUE(refine)) refine_step else NULL
+  params$refine_within <- if (isTRUE(refine)) refine_within else NULL
+
   sf_exp_wgs <- sf::st_transform(sf_exp, 4326)
 
   plots <- .make_plots(sf_obj, sf_exp, region_col, label, params)
@@ -199,6 +297,7 @@ explode_sf_with_lookup <- function(sf_obj,
     gamma_r_implied = gamma_r_implied,
     gamma_l_implied = gamma_l_implied,
     plots           = plots,
+    refinement      = refinement,
     diagnostics     = list(
       label        = label,
       region_col   = region_col,

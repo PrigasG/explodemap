@@ -122,7 +122,7 @@ result <- explode_sf_with_lookup(
 ## Grouped layouts
 
 For larger layouts where region blocks need to be separated at an
-additional level, `use explode_grouped()`:
+additional level, use `explode_grouped()`:
 
 ``` r
 result <- explode_grouped(
@@ -203,8 +203,47 @@ Defaults: `gamma_r = 3.0`, `gamma_l = 1.136`, `p = 1.25`
 
 All quantities except `gamma_r` and `gamma_l` are computed from the
 dataset geometry. The gamma coefficients are dimensionless legibility
-constants calibrated on NJ and validated across multiple US states and
-Canada.
+constants calibrated from the paper examples and intended as practical
+defaults. You can override `alpha_r` and `alpha_l` independently when a
+particular map needs more or less visual separation.
+
+For very dense municipal cores, you can add a bounded collision-refinement
+pass after the analytical displacement:
+
+``` r
+refined <- explode_sf(
+  my_sf,
+  region_col = "district",
+  refine = TRUE,
+  refine_min_gap = 250,
+  refine_max_shift = 150
+)
+```
+
+This optional layer nudges close same-region neighbors apart while capping
+the extra correction per feature. Use `refine_within = "all"` if the
+remaining crowding crosses region boundaries.
+
+## Examples
+
+Small examples that run without external downloads are installed with
+the package:
+
+``` r
+source(system.file("examples/basic_explode_sf.R", package = "explodemap"))
+source(system.file("examples/collision_refinement.R", package = "explodemap"))
+source(system.file("examples/lookup_workflow.R", package = "explodemap"))
+source(system.file("examples/manual_parameter_tuning.R", package = "explodemap"))
+```
+
+Paper-scale examples that download public boundary data are also
+available:
+
+``` r
+source(system.file("examples/run_calibration.R", package = "explodemap"))
+source(system.file("examples/run_canada.R", package = "explodemap"))
+source(system.file("examples/run_hhs.R", package = "explodemap"))
+```
 
 ## Export
 

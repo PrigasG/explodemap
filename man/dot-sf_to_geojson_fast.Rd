@@ -4,7 +4,14 @@
 \alias{.sf_to_geojson_fast}
 \title{Fast bulk GeoJSON via a single sf::st_write call}
 \usage{
-.sf_to_geojson_fast(sf_obj, label_col, group_col = NULL)
+.sf_to_geojson_fast(
+  sf_obj,
+  label_col,
+  id_col = NULL,
+  group_col = NULL,
+  info_cols = NULL,
+  info_title = label_col
+)
 }
 \description{
 Writes the whole sf to a temp GeoJSON file and passes the raw JSON

@@ -124,7 +124,7 @@ estimate_block_radii <- function(sf_obj, region_col,
   ux <- dx / r0
   uy <- dy / r0
 
-  target_r <- kappa * r0 + padding + delta * sqrt(block_df$n_units)
+  target_r <- kappa * r0 + padding + delta * log1p(block_df$n_units)
 
   block_df$anchor_x <- nat_centroid[1] + ux * target_r
   block_df$anchor_y <- nat_centroid[2] + uy * target_r
@@ -173,7 +173,7 @@ estimate_block_radii <- function(sf_obj, region_col,
         min_sep <- block_df$block_radius[i] + block_df$block_radius[j] + padding_sep
 
         if (is.na(d) || d == 0) {
-          theta <- stats::runif(1, 0, 2 * pi)
+          theta <- ((i * 73856093 + j * 19349663) %% 360) * pi / 180
           dx <- cos(theta)
           dy <- sin(theta)
           d <- 1
@@ -223,7 +223,7 @@ estimate_block_radii <- function(sf_obj, region_col,
 #' @param anchors For mode = "manual": data.frame with columns (region_col, anchor_x, anchor_y)
 #' @param kappa Radial expansion factor (default 1.8)
 #' @param padding Base padding in map units (default 50000)
-#' @param delta Density scaling factor (default 15000)
+#' @param delta Log-density scaling factor (default 15000)
 #' @param lambda Spring coefficient for collision solver (default 0.18)
 #' @param eta Repulsion step size for collision solver (default 0.18)
 #' @param padding_sep Minimum separation between blocks (default 20000)
@@ -255,6 +255,9 @@ layout_regions <- function(sf_obj, region_col,
       stop("`anchors` must contain columns: ", region_col, ", anchor_x, anchor_y",
            call. = FALSE)
     }
+    if (anyDuplicated(anchors[[region_col]]) > 0) {
+      stop("`anchors` must contain at most one row per region.", call. = FALSE)
+    }
 
     block_df <- estimate_block_radii(sf_obj, region_col, quantile_p, centroid_fun)
 
@@ -264,6 +267,15 @@ layout_regions <- function(sf_obj, region_col,
           dplyr::select(dplyr::all_of(c(region_col, "anchor_x", "anchor_y"))),
         by = region_col
       )
+
+    missing_anchor <- is.na(result$anchor_x) | is.na(result$anchor_y)
+    if (any(missing_anchor)) {
+      stop(
+        "Missing manual anchors for region(s): ",
+        paste(result[[region_col]][missing_anchor], collapse = ", "),
+        call. = FALSE
+      )
+    }
 
     return(result)
   }
@@ -318,7 +330,7 @@ layout_regions <- function(sf_obj, region_col,
 #' @param gamma_l Local clearance coefficient (default 1.136); used if alpha_l is NULL
 #' @param kappa Radial expansion factor (default 1.8)
 #' @param padding Base padding (default 50000)
-#' @param delta Density scaling (default 15000)
+#' @param delta Log-density scaling (default 15000)
 #' @param lambda Spring coefficient (default 0.18)
 #' @param eta Repulsion step (default 0.18)
 #' @param padding_sep Minimum block separation (default 20000)

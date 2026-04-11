@@ -12,7 +12,12 @@ print.exploded_map <- function(x, ...) {
   diag   <- x$diagnostics
 
   cat("\n-- ", diag$label, " ", paste(rep("-", 40), collapse = ""), "\n", sep = "")
-  cat("  n units   : ", format(stats$n_units, big.mark = ","), "\n")
+  n_units_display <- if (!is.null(stats$n_units_input)) stats$n_units_input else stats$n_units
+  cat("  n units   : ", format(n_units_display, big.mark = ","), "\n")
+  if (!is.null(stats$n_units_excluded) && stats$n_units_excluded > 0) {
+    cat("  stats from: ", format(stats$n_units_stats, big.mark = ","),
+        " units (excluded ", stats$n_units_excluded, " 'Other')\n", sep = "")
+  }
   cat("  n regions : ", stats$n_regions, "\n")
   cat("  w_bar     : ", fmt_dist(stats$w_bar), "\n")
   cat("  R_local   : ", fmt_dist(stats$R_local), "\n")
@@ -23,6 +28,12 @@ print.exploded_map <- function(x, ...) {
   cat("  p         : ", params$p, "\n")
   cat("  max ||t|| : ", fmt_dist(params$alpha_r + params$alpha_l),
       "  (Proposition 3 bound)\n")
+  if (!is.null(x$refinement) && isTRUE(x$refinement$enabled)) {
+    cat("  refine    : ", x$refinement$within,
+        " pairs, gap ", fmt_dist(x$refinement$min_gap),
+        ", max shift ", fmt_dist(x$refinement$max_shift_observed),
+        " / ", fmt_dist(x$refinement$max_shift), "\n", sep = "")
+  }
   invisible(x)
 }
 
@@ -49,7 +60,12 @@ summary.exploded_map <- function(object, ...) {
   cat("\nExploded Map Summary\n")
   cat("====================\n")
   cat("Dataset:     ", object$diagnostics$label, "\n")
-  cat("Units:       ", format(stats$n_units, big.mark = ","), "\n")
+  n_units_display <- if (!is.null(stats$n_units_input)) stats$n_units_input else stats$n_units
+  cat("Units:       ", format(n_units_display, big.mark = ","), "\n")
+  if (!is.null(stats$n_units_excluded) && stats$n_units_excluded > 0) {
+    cat("Stats from:  ", format(stats$n_units_stats, big.mark = ","),
+        " units (excluded ", stats$n_units_excluded, " 'Other')\n", sep = "")
+  }
   cat("Regions:     ", stats$n_regions, "\n")
   cat("Grouped by:  ", object$diagnostics$region_col, "\n\n")
   cat("Geometry Statistics\n")
@@ -61,6 +77,15 @@ summary.exploded_map <- function(object, ...) {
   cat("  alpha_r: ", fmt_dist(params$alpha_r), "  (regional separation)\n")
   cat("  alpha_l: ", fmt_dist(params$alpha_l), "  (local expansion)\n")
   cat("  p:       ", params$p, "\n\n")
+  if (!is.null(object$refinement) && isTRUE(object$refinement$enabled)) {
+    cat("Collision Refinement\n")
+    cat("  within:          ", object$refinement$within, "\n")
+    cat("  min_gap:         ", fmt_dist(object$refinement$min_gap), "\n")
+    cat("  max_shift cap:   ", fmt_dist(object$refinement$max_shift), "\n")
+    cat("  max_shift used:  ", fmt_dist(object$refinement$max_shift_observed), "\n")
+    cat("  iterations:      ", object$refinement$iterations, "\n")
+    cat("  corrected pairs: ", object$refinement$corrected_pairs, "\n\n")
+  }
   cat("Implied Gamma Coefficients\n")
   cat("  gamma_r: ", round(object$gamma_r_implied, 4), "\n")
   cat("  gamma_l: ", round(object$gamma_l_implied, 4), "\n")

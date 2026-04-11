@@ -1,0 +1,317 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[ruled, vlined, linesnumbered]{algorithm2e}
+
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = blue!60!black,
+  citecolor  = blue!60!black,
+  urlcolor   = blue!60!black,
+  pdftitle   = {Focus Maps for Dense Administrative Boundaries},
+  pdfauthor  = {George Arthur}
+}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{\thesubsubsection}{0.6em}{}
+
+\lstdefinestyle{Rstyle}{
+  language        = R,
+  basicstyle      = \ttfamily\small,
+  keywordstyle    = \color{blue!70!black}\bfseries,
+  commentstyle    = \color{gray},
+  stringstyle     = \color{orange!80!black},
+  numbers         = left,
+  numberstyle     = \tiny\color{gray},
+  numbersep       = 8pt,
+  breaklines      = true,
+  frame           = single,
+  framerule       = 0.4pt,
+  rulecolor       = \color{gray!40},
+  backgroundcolor = \color{gray!5},
+  captionpos      = b,
+  showstringspaces= false,
+  tabsize         = 2
+}
+\lstset{style=Rstyle}
+
+\numberwithin{equation}{section}
+\setlength{\parskip}{6pt}
+\onehalfspacing
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+\newcommand{\bbox}{\operatorname{bbox}}
+\newcommand{\width}{\operatorname{width}}
+\newcommand{\height}{\operatorname{height}}
+\newcommand{\centroid}{\operatorname{centroid}}
+\newcommand{\screen}{\operatorname{screen}}
+\newcommand{\clip}{\operatorname{clip}}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\LARGE\bfseries Focus Maps for Dense Administrative Boundaries\par}
+  \vspace{0.8cm}
+  {\large\itshape Screen-Space Selected-Area Inspection for Shiny and Web Mapping\par}
+  \vspace{1.2cm}
+  {\large George Arthur\par}
+  \vspace{1cm}
+  {\small
+  \textbf{Keywords:} focus+context maps; administrative boundaries; Shiny; htmlwidgets;\\
+  viewport transformation; interactive cartography; dense municipal maps\par}
+  \vfill
+  {\small Working draft. Companion to the \texttt{explodemap} paper.}
+\end{titlepage}
+
+\begin{abstract}
+\noindent
+Dense administrative maps are difficult to inspect interactively because small polygons compete for limited screen area, labels collide, hover events become visually noisy, and selection often requires repeated manual panning and zooming. This paper introduces a focus-map interaction model for dense administrative boundaries, implemented in the \texttt{focus\_map()} widget in the \texttt{explodemap} \textsf{R} package. Unlike exploded-view cartography, which modifies feature positions in projected map coordinates, focus maps operate in viewport space: a selected feature is fit to a target screen fraction, visually lifted for emphasis, and paired with a non-blocking information card.
+
+We formalize the interaction as a bounded camera transform driven by the selected feature's projected bounding box. Given a viewport of size $(W,H)$ and selected feature screen-space extent $(w_i,h_i)$, the model computes a scale factor that fits the selection within a target viewport fraction while respecting padding and maximum zoom constraints. We additionally define screen-space label visibility thresholds and an information-card placement model that preserves map interaction by avoiding blocking modal overlays. The resulting design supports municipal- and county-level Shiny workflows where users need fast selected-area inspection without losing map context.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+Interactive administrative maps often fail at the moment users need detail. A county-scale map may be readable at first glance, but municipal boundaries in dense metropolitan cores require repeated zooming, panning, tooltip hunting, and label management. In Shiny applications, this creates a practical problem: the map is not only a picture but a control surface. Users click or hover to retrieve attributes, compare units, and navigate the geography. When small features occupy only a few screen pixels, the interface becomes fragile.
+
+The \texttt{explodemap} method addresses one version of this problem by transforming the map geometry: polygons are translated in projected coordinates to introduce whitespace while preserving feature shapes. The \texttt{focus\_map()} widget addresses a different version of the problem. It keeps the map as an interactive object and changes the view around the user's current selection. Its goal is not to create a new static layout, but to provide a smooth selected-area inspection pattern for Shiny and web maps.
+
+The central idea is simple: when a user selects an administrative unit, the widget computes the selected feature's screen-space extent, pans the camera to it, chooses a scale that makes the feature legible but not oversized, optionally lifts the feature for visual emphasis, and displays selected attributes in a non-blocking card. This creates a focus+context interaction: the selected polygon becomes readable while the surrounding map remains available for orientation and further interaction.
+
+\paragraph{Contributions.} This draft develops:
+\begin{enumerate}
+  \item A screen-space mathematical model for selected-feature viewport fitting in dense polygon maps.
+  \item A bounded focus transform with tunable target size, padding, maximum zoom, and lifted-feature scale.
+  \item A label visibility model based on projected screen area and minimum screen dimensions.
+  \item A non-blocking information-card model for selected-area attributes in Shiny applications.
+  \item An \textsf{R}/htmlwidgets implementation exposed through \texttt{focus\_map()}, \texttt{focusmapOutput()}, and \texttt{renderFocusmap()}.
+\end{enumerate}
+
+\section{Relationship to Exploded-View Cartography}
+
+The focus-map interaction is related to, but mathematically distinct from, the exploded-view displacement model. In the explodemap paper, each feature $G_i$ is transformed in projected map coordinates by
+\begin{equation}
+  G'_i = G_i + t_i,
+\end{equation}
+where $t_i \in \R^2$ is a rigid translation vector derived from hierarchical centroid structure. The result is a new geometry layer.
+
+In a focus map, the selected feature geometry remains $G_i$ in the source map layer. The interaction applies a viewport transform
+\begin{equation}
+  V_i = (c_i, z_i)
+\end{equation}
+where $c_i$ is the camera center and $z_i$ is the camera zoom or scale chosen for the selected feature. The mathematical object is therefore a view state, not a new geographic dataset. This distinction is important for claims about geometry preservation: focus maps preserve source geometry because they do not rewrite it; explodemaps preserve individual feature geometry because they translate it rigidly.
+
+\section{Notation}
+
+Let $\mathcal{G} = \{G_1,\ldots,G_n\}$ be a collection of polygonal administrative units in a map coordinate system. Let $P_z: \R^2 \to \R^2$ denote the map projection and camera transformation from map coordinates to screen coordinates at zoom level $z$. For a feature $G_i$, define its screen-space geometry at zoom $z$ as
+\begin{equation}
+  S_i(z) = P_z(G_i).
+\end{equation}
+
+Let
+\begin{equation}
+  B_i(z) = \bbox(S_i(z)) = [x_i^-, x_i^+] \times [y_i^-, y_i^+]
+\end{equation}
+be the screen-space bounding box of the selected feature. Its width and height are
+\begin{align}
+  w_i(z) &= x_i^+ - x_i^-, \\
+  h_i(z) &= y_i^+ - y_i^-.
+\end{align}
+
+Let the viewport have pixel dimensions $(W,H)$. Let $q \in (0,1)$ denote the target fraction of the viewport that the selected feature may occupy, and let $p_{\mathrm{pad}} \geq 0$ denote screen-space padding in pixels.
+
+\section{Selected-Feature Viewport Fitting}
+
+When the user selects feature $i$, the focus map computes a target camera state that places $G_i$ near the center of the viewport and scales it to a legible size. The selected feature must fit within a padded rectangle of effective width and height
+\begin{align}
+  W_{\mathrm{eff}} &= qW - 2p_{\mathrm{pad}}, \\
+  H_{\mathrm{eff}} &= qH - 2p_{\mathrm{pad}}.
+\end{align}
+The effective dimensions must be positive; in implementation they are clamped to a small positive value when the viewport is tiny.
+
+Given the feature's current screen-space size $(w_i,h_i)$, the scale required to fit the feature within the target rectangle is
+\begin{equation}
+  \sigma_i =
+  \min\left(
+    \frac{W_{\mathrm{eff}}}{w_i},
+    \frac{H_{\mathrm{eff}}}{h_i}
+  \right).
+  \label{eq:fit-scale}
+\end{equation}
+If the map engine uses zoom levels rather than a continuous scale factor, the equivalent zoom update is
+\begin{equation}
+  z_i^\star = z_0 + \log_2(\sigma_i),
+  \label{eq:zoom-update}
+\end{equation}
+where $z_0$ is the current zoom level. The final zoom is bounded:
+\begin{equation}
+  z_i = \min(z_{\max}, \max(z_{\min}, z_i^\star)).
+  \label{eq:bounded-zoom}
+\end{equation}
+
+The target camera center is the selected feature centroid or point-on-surface:
+\begin{equation}
+  c_i = \centroid(G_i),
+\end{equation}
+with point-on-surface preferred for irregular or multipart polygons when the centroid may fall outside the visible feature.
+
+\begin{algorithm}[H]
+\caption{Selected-feature focus transform}
+\KwIn{Selected feature $G_i$, current zoom $z_0$, viewport $(W,H)$, target fraction $q$, padding $p_{\mathrm{pad}}$, maximum zoom $z_{\max}$}
+\KwOut{Camera state $(c_i,z_i)$}
+Project $G_i$ to screen coordinates at $z_0$\;
+Compute bounding box size $(w_i,h_i)$\;
+$W_{\mathrm{eff}} \leftarrow qW - 2p_{\mathrm{pad}}$\;
+$H_{\mathrm{eff}} \leftarrow qH - 2p_{\mathrm{pad}}$\;
+$\sigma_i \leftarrow \min(W_{\mathrm{eff}}/w_i,\ H_{\mathrm{eff}}/h_i)$\;
+$z_i^\star \leftarrow z_0 + \log_2(\sigma_i)$\;
+$z_i \leftarrow \min(z_{\max}, \max(z_{\min}, z_i^\star))$\;
+$c_i \leftarrow \centroid(G_i)$ or point-on-surface\;
+\Return $(c_i,z_i)$\;
+\end{algorithm}
+
+\section{Lifted-Feature Emphasis}
+
+Viewport fitting makes the selected feature legible, but dense maps also benefit from a short-lived visual emphasis. Let $\ell > 0$ be the lift scale. For display only, the selected feature can be rendered as
+\begin{equation}
+  \widetilde{S}_i = a_i + \ell \left(S_i - a_i\right),
+  \label{eq:lift}
+\end{equation}
+where $a_i$ is a screen-space anchor, typically the feature's screen-space centroid or point-on-surface. This transform scales the selected feature around its own anchor in screen space. It is not written back to the underlying geographic object.
+
+The implementation exposes this through \texttt{lift\_scale}. Values slightly above $1$ enlarge the focused feature while preserving context; very large values can hide boundaries outside the viewport and should be paired with larger \texttt{focus\_padding} or a smaller \texttt{focus\_size}.
+
+\section{Label Visibility}
+
+Labels in dense maps should appear when they can be read and disappear when they would produce clutter. The focus-map widget uses screen-space thresholds rather than map-unit thresholds because readability depends on pixels, not metres.
+
+Let $A_i^{\screen}$ be the screen-space area of the selected or hovered feature, and let $w_i^{\screen}$ and $h_i^{\screen}$ be its screen-space bounding-box dimensions. A label is eligible when
+\begin{equation}
+  A_i^{\screen} \geq A_{\min}, \qquad
+  w_i^{\screen} \geq w_{\min}, \qquad
+  h_i^{\screen} \geq h_{\min}.
+  \label{eq:label-threshold}
+\end{equation}
+The package exposes these thresholds as \texttt{area\_min}, \texttt{width\_min}, and \texttt{height\_min}. This rule is intentionally simple: it is easy to explain, fast to evaluate, and predictable in Shiny applications where feature counts can be large.
+
+\section{Non-Blocking Information Cards}
+
+Hover tooltips are useful for quick identification but become insufficient when selected areas need multiple attributes. Modal dialogs provide more room but block map interaction. The focus-map model therefore uses a non-blocking information card anchored to a viewport corner.
+
+Let $C$ be a rectangular card of width $w_C$ and height $h_C$, with scale parameter $\rho > 0$. If $(w_C^0,h_C^0)$ is the base card size, then
+\begin{equation}
+  (w_C,h_C) = \rho (w_C^0,h_C^0).
+\end{equation}
+For a top-right placement with margin $m$, the card origin is
+\begin{equation}
+  o_C = (W - w_C - m,\ m).
+\end{equation}
+Analogous formulas define top-left, bottom-right, and bottom-left placements.
+
+The card displays fields selected by the user:
+\begin{equation}
+  I_i = \{(k, x_{ik}) : k \in K\},
+\end{equation}
+where $K$ is the set of columns supplied through \texttt{info\_cols}. Optional display names are supplied through \texttt{info\_labels}. The card title is selected from \texttt{info\_title} or falls back to the feature label column.
+
+\section{Implementation in R and Shiny}
+
+The user-facing \textsf{R} API is:
+\begin{lstlisting}
+focus_map(
+  x,
+  label_col = "NAME",
+  group_col = "region",
+  info_cols = c("population", "area"),
+  focus_size = 0.76,
+  focus_padding = 40,
+  lift_scale = 1.16,
+  info_card_scale = 1
+)
+\end{lstlisting}
+
+The widget accepts an \textsf{sf} object, an \texttt{exploded\_map} object, or a \texttt{grouped\_exploded\_map} object. In Shiny, it is used through:
+\begin{lstlisting}
+ui <- fluidPage(
+  focusmapOutput("map", height = "700px")
+)
+
+server <- function(input, output, session) {
+  output$map <- renderFocusmap({
+    focus_map(munis, label_col = "NAME", info_cols = c("county", "pop"))
+  })
+}
+\end{lstlisting}
+
+The htmlwidget maintains feature selection, camera state, hover labels, and information-card state on the client side, while Shiny integration exposes selected-feature events back to the server. This division is important for performance: the first focus transition should not require a round trip through the Shiny server.
+
+\section{Dense-Layer Performance}
+
+For municipal layers with thousands of polygons, interaction quality depends on the first selection and reset transitions. The widget uses three performance principles:
+\begin{enumerate}
+  \item Keep focus transitions client-side once the data layer is loaded.
+  \item Reduce camera transition duration and label work for dense layers.
+  \item Simplify rendering geometry when the user requests performance-oriented display.
+\end{enumerate}
+
+The \texttt{performance\_mode} argument enables these heuristics explicitly, while \texttt{NULL} allows the widget to choose density-aware defaults. The appropriate threshold is partly empirical and should be evaluated across county, municipal, and national examples.
+
+\section{Research Questions}
+
+This paper is currently a methodological draft. The next empirical stage should evaluate:
+\begin{enumerate}
+  \item Whether target viewport fraction $q$ improves selected-feature recognition time compared with ordinary map zoom.
+  \item Whether non-blocking cards improve attribute lookup compared with hover-only tooltips and modal dialogs.
+  \item How lift scale $\ell$ affects boundary readability and spatial-context retention.
+  \item Whether dense-layer performance mode reduces first-selection latency for large municipal datasets without reducing interpretability.
+\end{enumerate}
+
+\section{Conclusion}
+
+Focus maps provide an interaction layer for dense administrative boundaries in \textsf{R} and Shiny. The method is deliberately modest: it does not claim to solve cartographic generalization or change geographic geometry. Instead, it formalizes a useful selected-area inspection pattern in screen space. By fitting selected features to a target viewport fraction, bounding zoom, using label visibility thresholds, and presenting non-blocking attribute cards, \texttt{focus\_map()} turns dense maps into more useful interactive controls for applied mapping workflows.
+
+\bibliographystyle{plainnat}
+\begin{thebibliography}{99}
+
+\bibitem[Furnas(1986)]{furnas1986}
+Furnas, G. W. (1986).
+Generalized fisheye views.
+\textit{Proceedings of the SIGCHI Conference on Human Factors in Computing Systems}, 16--23.
+
+\bibitem[Roth(2013)]{roth2013}
+Roth, R. E. (2013).
+Interactive maps: What we know and what we need to know.
+\textit{Journal of Spatial Information Science}, 6, 59--115.
+
+\bibitem[Heer and Shneiderman(2012)]{heer2012}
+Heer, J. and Shneiderman, B. (2012).
+Interactive dynamics for visual analysis.
+\textit{Communications of the ACM}, 55(4), 45--54.
+
+\bibitem[Arthur(2026)]{arthur2026}
+Arthur, G. (2026).
+A hierarchical vector-based framework for multi-scale exploded-view cartography.
+Working manuscript.
+
+\end{thebibliography}
+
+\end{document}
