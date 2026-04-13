@@ -181,7 +181,7 @@ The two-level algorithm is the clean paper model. For dense municipal
 cores, you can add a bounded refinement pass that nudges close
 same-region neighbors apart after the analytical displacement:
 
-```{r refine}
+```{r refine-example, eval=FALSE}
 refined <- explode_sf(
   x,
   region_col = "region",
@@ -192,6 +192,25 @@ refined <- explode_sf(
 )
 
 refined$refinement
+```
+
+```{r refine, echo=FALSE}
+has_refinement <- "refine" %in% names(formals(explode_sf))
+
+if (has_refinement) {
+  refined <- explode_sf(
+    x,
+    region_col = "region",
+    refine = TRUE,
+    refine_min_gap = 0.15,
+    refine_max_shift = 0.10,
+    plot = FALSE
+  )
+
+  refined$refinement
+} else {
+  message("This installed explodemap build does not include refinement yet.")
+}
 ```
 
 `refine_max_shift` caps the extra correction per feature, so the

@@ -284,39 +284,40 @@ refined <- explode_sf(
   refine_max_shift = 0.10,
   plot = FALSE
 )
-#> Collision refinement: corrected 0 pair-visits; max shift = 0.0 m.
 
 refined$refinement
-#> $enabled
-#> [1] TRUE
-#> 
-#> $min_gap
-#> [1] 0.15
-#> 
-#> $max_shift
-#> [1] 0.1
-#> 
-#> $max_iter
-#> [1] 20
-#> 
-#> $step
-#> [1] 0.5
-#> 
-#> $within
-#> [1] "region"
-#> 
-#> $iterations
-#> [1] 1
-#> 
-#> $corrected_pairs
-#> [1] 0
-#> 
-#> $active_pairs_last
-#> [1] 0
-#> 
-#> $max_shift_observed
-#> [1] 0
 ```
+
+    #> Collision refinement: corrected 0 pair-visits; max shift = 0.0 m.
+    #> $enabled
+    #> [1] TRUE
+    #> 
+    #> $min_gap
+    #> [1] 0.15
+    #> 
+    #> $max_shift
+    #> [1] 0.1
+    #> 
+    #> $max_iter
+    #> [1] 20
+    #> 
+    #> $step
+    #> [1] 0.5
+    #> 
+    #> $within
+    #> [1] "region"
+    #> 
+    #> $iterations
+    #> [1] 1
+    #> 
+    #> $corrected_pairs
+    #> [1] 0
+    #> 
+    #> $active_pairs_last
+    #> [1] 0
+    #> 
+    #> $max_shift_observed
+    #> [1] 0
 
 `refine_max_shift` caps the extra correction per feature, so the
 refinement remains a small display adjustment rather than a replacement

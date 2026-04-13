@@ -333,9 +333,9 @@ same-region neighbors apart after the analytical displacement:</p>
 <span>  refine_max_shift <span class="op">=</span> <span class="fl">0.10</span>,</span>
 <span>  plot <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Collision refinement: corrected 0 pair-visits; max shift = 0.0 m.</span></span>
 <span></span>
-<span><span class="va">refined</span><span class="op">$</span><span class="va">refinement</span></span>
+<span><span class="va">refined</span><span class="op">$</span><span class="va">refinement</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; Collision refinement: corrected 0 pair-visits; max shift = 0.0 m.</span></span>
 <span><span class="co">#&gt; $enabled</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -364,7 +364,7 @@ same-region neighbors apart after the analytical displacement:</p>
 <span><span class="co">#&gt; [1] 0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $max_shift_observed</span></span>
-<span><span class="co">#&gt; [1] 0</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0</span></span></code></pre>
 <p><code>refine_max_shift</code> caps the extra correction per feature,
 so the refinement remains a small display adjustment rather than a
 replacement for the displacement model. Use
@@ -376,7 +376,7 @@ region boundaries.</p>
 </h2>
 <p>For irregular or multipart polygons, <code>"point_on_surface"</code>
 may be preferable to the default geometric centroid:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pos</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/explode_sf.html">explode_sf</a></span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  region_col <span class="op">=</span> <span class="st">"region"</span>,</span>
@@ -390,7 +390,7 @@ may be preferable to the default geometric centroid:</p>
 <p><code><a href="../reference/explode_state.html">explode_state()</a></code> downloads U.S. Census TIGER/Line
 boundaries automatically and groups municipalities by a county-to-region
 mapping:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/explode_state.html">explode_state</a></span><span class="op">(</span></span>
 <span>  state_fips <span class="op">=</span> <span class="st">"34"</span>, crs <span class="op">=</span> <span class="fl">32118</span>,</span>
 <span>  region_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -410,7 +410,7 @@ mapping:</p>
 </h2>
 <p><code><a href="../reference/explode_sf_with_lookup.html">explode_sf_with_lookup()</a></code> joins an external lookup table
 to your sf object before exploding:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"region_assignments.csv"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/explode_sf_with_lookup.html">explode_sf_with_lookup</a></span><span class="op">(</span></span>
@@ -435,7 +435,7 @@ units using <code>allow_other</code>.</p>
 <code>TRUE</code>: auto-named GeoJSON file</li>
 <li>A file path string: explicit output location</li>
 </ul>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/explode_sf.html">explode_sf</a></span><span class="op">(</span></span>
 <span>  <span class="va">my_sf</span>,</span>
 <span>  region_col <span class="op">=</span> <span class="st">"region"</span>,</span>

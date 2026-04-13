@@ -6,6 +6,8 @@ Internal package declarations for NSE checks.
 
 Useful links:
 
+- <https://prigasg.github.io/explodemap/>
+
 - <https://github.com/PrigasG/explodemap>
 
 - Report bugs at <https://github.com/PrigasG/explodemap/issues>
