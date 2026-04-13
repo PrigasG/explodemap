@@ -1,7 +1,11 @@
 ^.*\.Rproj$
+^_pkgdown\.yml$
 ^\.Rproj\.user$
 ^\.claude$
 ^LICENSE\.md$
 ^doc$
+^docs$
 ^Meta$
 ^paper$
+^cheatsheet$
+^pkgdown$

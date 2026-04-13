@@ -35,17 +35,25 @@ install.packages("explodemap_0.2.0.tar.gz", repos = NULL, type = "source")
 
 ## What the package does
 
-`explodemap` supports three main workflows:
+`explodemap` supports four main workflows:
 
 -   explode any projected sf polygon dataset using a grouping column
 -   explode U.S. municipal or county subdivision data directly from
-    TIGER/Line via explode_state()
+    TIGER/Line via `explode_state()`
 -   generate three-level grouped layouts for national or multi-region
-    displays using explode_grouped()
+    displays using `explode_grouped()`
+-   add interactive selected-area focus, labels, and information cards
+    using `focus_map()` in htmlwidgets or Shiny
 
 The package also includes analytical parameter derivation, cross-dataset
-calibration helpers, and optional TopoJSON export for downstream tools
-such as Power BI.
+calibration helpers, optional bounded collision refinement for dense
+municipal cores, and optional TopoJSON export for downstream tools such
+as Power BI.
+
+For a compact overview, see the
+[cheatsheet](https://prigasg.github.io/explodemap/cheatsheet/explodemap-cheatsheet.pdf)
+and the
+[workflow guide](https://prigasg.github.io/explodemap/articles/workflow-guide.html).
 
 ## Quick start
 
@@ -243,6 +251,13 @@ available:
 source(system.file("examples/run_calibration.R", package = "explodemap"))
 source(system.file("examples/run_canada.R", package = "explodemap"))
 source(system.file("examples/run_hhs.R", package = "explodemap"))
+```
+
+Interactive focus-map examples are installed as app scripts:
+
+``` r
+shiny::runApp(system.file("examples/focusmap_munis_app.R", package = "explodemap"))
+shiny::runApp(system.file("examples/focusmap_counties_app.R", package = "explodemap"))
 ```
 
 ## Export

@@ -135,7 +135,7 @@ This paper proposes a hierarchical centroid-driven displacement framework for ex
   \item Geometry-derived parameter formulas (Analytical Results~1--2) linking displacement magnitude to intrinsic dataset properties, constituting a reusable parameterization procedure applicable to any administrative polygon dataset with a defined hierarchy.
   \item A closed-form $O(n)$ algorithm suitable for real-time cartographic systems, with a zoom-dependent extension $t_i(z) = \lambda(z)\cdot t_i$ for interactive multi-scale layouts.
   \item A three-level multi-scale extension enabling grouped national layouts through automatic anchor generation and collision-aware anchor refinement with spring stabilization (Section~\ref{sec:multiscale}).
-  \item A generalized open implementation (\texttt{explode\_any.R}) applicable to any administrative polygon dataset without modification to the core algorithm (Section~\ref{sec:genimpl}), together with a companion focus-map widget for interactive selected-feature inspection.
+  \item A generalized open \textsf{R} package implementation exposing \texttt{explode\_sf()}, \texttt{explode\_state()}, and \texttt{explode\_sf\_with\_lookup()} for administrative polygon datasets without modification to the core algorithm (Section~\ref{sec:genimpl}), together with a companion focus-map widget for interactive selected-feature inspection.
 \end{enumerate}
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -779,7 +779,7 @@ Because the algorithm is deterministic, $O(n)$, and operates directly on vector 
 \subsection{Generalized Implementation}
 \label{sec:genimpl}
 
-A key practical contribution is a generalized open implementation (\texttt{explode\_any.R}) that exposes three entry points depending on how the practitioner's data is organized. The reference implementation is a direct software realization of Algorithm~1; only the data-ingestion and grouping interface differ across entry points.
+A key practical contribution is a generalized open implementation in the \texttt{explodemap} \textsf{R} package. The package exposes three entry points depending on how the practitioner's data is organized. The reference implementation is a direct software realization of Algorithm~1; only the data-ingestion and grouping interface differ across entry points.
 
 \begin{description}
   \item[\texttt{explode\_state(fips, crs, region\_map)}] Downloads U.S.\ Census TIGER/Line 2024 county subdivision boundaries automatically for a given state, attaches user-defined region labels via county name lookup, derives parameters using Analytical Results~1 and~2, and returns original and exploded \texttt{sf} objects with GeoJSON export. A disk-based cache prevents redundant downloads across sessions.
@@ -1023,7 +1023,7 @@ A central contribution beyond the displacement algorithm is a geometry-derived p
 
 A cross-state validation study covering nine US states and the Canadian census subdivision dataset reveals that the dimensionless ratio $\widetilde{R}_{\text{local}}/\bar{w}$ clusters by administrative system type. Fine-grained township states (NJ=15.83, PA=17.26, IL=16.18, OH=12.75, MI=16.59) cluster tightly around $\widetilde{R}_{\text{local}}/\bar{w} \approx 15.8$; states with larger administrative units (NY, VA, TX, MA) cluster at $\approx 9.5$; Canadian provinces occupy a qualitatively different regime at 113, confirming through direct application (Section~\ref{sec:canada}) that the formula-derived parameters produce coherent layouts even in extreme tightness-ratio regimes. Michigan's ratio of 16.59, confirmed through extended validation, is particularly significant: despite a geographic discontinuity between its Upper and Lower Peninsulas and a bimodal municipal size distribution, the median-based $\bar{w}$ produces a ratio indistinguishable from the other dense municipal states, confirming the robustness of the median estimator under structural heterogeneity.
 
-Future work will address visual validation of $\alpha_r$ on additional states to further stabilize $\gamma_r$ (currently CV = 0.147 across NJ, PA, OH, and MI at formula-derived values), extension of $\gamma_l$ validation beyond NJ, and user-study evaluation of layout legibility for specific cartographic tasks. The three-level multi-scale extension introduced in Section~\ref{sec:multiscale} opens a further research direction: determining whether $\gamma_r$ and $\gamma_l$ are scale-invariant across administrative levels, and whether the spring coefficient $\lambda$ in the collision-aware refinement can itself be derived geometrically from regional density structure. The generalized \texttt{explode\_any.R} implementation enables the framework to be applied and validated across any administrative polygon dataset, supporting both further empirical calibration and practical deployment in cartographic production workflows.
+Future work will address visual validation of $\alpha_r$ on additional states to further stabilize $\gamma_r$ (currently CV = 0.147 across NJ, PA, OH, and MI at formula-derived values), extension of $\gamma_l$ validation beyond NJ, and user-study evaluation of layout legibility for specific cartographic tasks. The three-level multi-scale extension introduced in Section~\ref{sec:multiscale} opens a further research direction: determining whether $\gamma_r$ and $\gamma_l$ are scale-invariant across administrative levels, and whether the spring coefficient $\lambda$ in the collision-aware refinement can itself be derived geometrically from regional density structure. The generalized \texttt{explodemap} package implementation enables the framework to be applied and validated across any administrative polygon dataset, supporting both further empirical calibration and practical deployment in cartographic production workflows.
 
 The derived parameter formulas constitute a reusable procedure for exploded-view cartography. Any administrative polygon dataset with a defined two-level hierarchy can generate predicted displacement parameters directly from its geometric properties --- characteristic polygon diameter, regional radius, median unit count, and number of regions --- without manual tuning.
 
@@ -1031,11 +1031,10 @@ The derived parameter formulas constitute a reusable procedure for exploded-view
 
 The reference implementation is available as a set of \textsf{R} scripts and an interactive Shiny validation application. The core release includes:
 \begin{itemize}
-  \item \texttt{explode\_any.R} --- generalized implementation with three entry points (\texttt{explode\_state}, \texttt{explode\_sf}, \texttt{explode\_sf\_with\_lookup}), applicable to any projected polygon dataset with any grouping.
-  \item \texttt{explode\_map\_states.R} --- multi-state calibration runner covering nine US states with disk-based caching and cross-state $\gamma$ stability reporting.
-  \item \texttt{explode\_map\_canada.R} --- non-US validation using Statistics Canada 2021 census subdivision boundaries.
-  \item \texttt{hhs\_exploded\_map.R} --- three-level national grouped layout with collision-aware anchor refinement (Algorithm~2).
-  \item \texttt{explode\_map\_app/app.R} --- interactive Shiny application for side-by-side visual validation and live calibration logging.
+  \item \texttt{explode\_sf()}, \texttt{explode\_state()}, and \texttt{explode\_sf\_with\_lookup()} --- generalized entry points applicable to projected polygon datasets with arbitrary grouping columns, lookup tables, or U.S.\ state TIGER/Line inputs.
+  \item \texttt{explode\_grouped()} --- three-level national and multi-region grouped layouts with collision-aware anchor refinement (Algorithm~2).
+  \item Installed example scripts in \texttt{inst/examples/} --- reproducible calibration, Canada, HHS, lookup-table, manual-tuning, collision-refinement, and focus-map workflows.
+  \item Shiny focus-map examples --- interactive selected-feature inspection with \texttt{focusmapOutput()} and \texttt{renderFocusmap()}.
   \item \texttt{focus\_map()} --- companion htmlwidget for selected-feature viewport focusing, non-blocking information cards, and Shiny integration; its interaction mathematics are developed separately from the exploded-view displacement model.
 \end{itemize}
 All case studies are reproducible from publicly available U.S.\ Census TIGER/Line 2024 and Statistics Canada 2021 boundary data. No proprietary data or software is required.

@@ -28,7 +28,7 @@ figures:
 
 navbar:
   structure:
-    left: [intro, reference, articles, news]
+    left: [intro, reference, articles, cheatsheet, news]
     right: [search, github]
   components:
     intro:
@@ -42,11 +42,16 @@ navbar:
       menu:
         - text: "Getting started"
           href: articles/getting-started.html
+        - text: "Choosing a workflow"
+          href: articles/workflow-guide.html
         - text: "Grouped layouts and anchor placement"
           href: articles/grouped-layouts.html
         - text: "---"
         - text: "Reproducing the paper examples"
           href: articles/reproducing-paper-examples.html
+    cheatsheet:
+      text: Cheatsheet
+      href: cheatsheet/explodemap-cheatsheet.pdf
     news:
       text: News
       href: news/index.html
@@ -64,6 +69,15 @@ reference:
       - explode_sf
       - explode_sf_with_lookup
       - explode_state
+
+  - title: "Interactive focus maps"
+    desc: >
+      htmlwidgets and Shiny helpers for selected-feature focus, labels,
+      and non-blocking information cards.
+    contents:
+      - focus_map
+      - focusmapOutput
+      - renderFocusmap
 
   - title: "Grouped layouts"
     desc: >
@@ -108,6 +122,10 @@ articles:
     navbar: ~
     contents:
       - getting-started
+
+  - title: "Choosing a workflow"
+    contents:
+      - workflow-guide
 
   - title: "Grouped layouts"
     contents:

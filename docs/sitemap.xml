@@ -4,6 +4,7 @@
 <url><loc>https://prigasg.github.io/explodemap/articles/grouped-layouts.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/articles/index.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/articles/reproducing-paper-examples.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/articles/workflow-guide.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/authors.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/index.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/LICENSE-text.html</loc></url>
@@ -26,6 +27,7 @@
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-make_grouped_plots.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-make_plots.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-refine_anchors.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/dot-sf_to_geojson_fast.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/estimate_block_radii.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explodemap-package.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_grouped.html</loc></url>
@@ -35,6 +37,7 @@
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_state.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/export_topojson.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/fmt_dist.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/focus_map.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/index.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/layout_regions.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/plot.exploded_map.html</loc></url>

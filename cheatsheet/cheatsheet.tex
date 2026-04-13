@@ -1,0 +1,303 @@
+\documentclass[9pt,landscape]{article}
+
+\usepackage[landscape,margin=0.7cm,top=0.8cm,bottom=0.6cm]{geometry}
+\usepackage{multicol}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{primary}{HTML}{2166AC}
+\definecolor{accent}{HTML}{D73027}
+\definecolor{green}{HTML}{1A9850}
+\definecolor{darkbg}{HTML}{1A365D}
+\definecolor{lightbg}{HTML}{EEF2F7}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1.2pt}
+\setlength{\columnsep}{0.8cm}
+\pagestyle{empty}
+
+\newcommand{\fn}[1]{\texttt{\footnotesize\bfseries\color{primary}#1}}
+\newcommand{\parg}[1]{\texttt{\footnotesize\color{accent}#1}}
+\newcommand{\val}[1]{\texttt{\footnotesize\color{green}#1}}
+\newcommand{\cd}[1]{\texttt{\footnotesize\color{darkbg}#1}}
+
+\newcommand{\shead}[1]{%
+  \vspace{4pt}%
+  \noindent\colorbox{lightbg}{\parbox{\dimexpr\columnwidth-2\fboxsep}{%
+    \strut\small\textbf{\color{primary}#1}\strut}}%
+  \vspace{1.2pt}%
+}
+\newcommand{\sshead}[1]{%
+  \vspace{2pt}%
+  {\footnotesize\bfseries\color{darkbg}#1}%
+  \vspace{0.3pt}\par%
+}
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries\color{darkbg} explodemap}\;\;
+{\normalsize\color{primary} Cheatsheet}\;\;
+{\footnotesize\color{gray} v0.2.0 \quad --- \quad Hierarchical exploded-view cartography}
+\end{center}
+\vspace{-3pt}
+\noindent{\color{primary}\rule{\textwidth}{1.2pt}}
+\vspace{2pt}
+
+\begin{multicols}{3}
+
+% ── COLUMN 1 ────────────────────────────────────────────────────────────────
+
+\shead{Use Cases}
+
+{\scriptsize
+\begin{tabular}{@{}ll@{}}
+Have region column      & \fn{explode\_sf} \\
+Have lookup table       & \fn{explode\_sf\_with\_lookup} \\
+Need TIGER/Line state   & \fn{explode\_state} \\
+Need grouped layout     & \fn{explode\_grouped} \\
+\end{tabular}
+}
+
+\shead{Core Workflow}
+
+\sshead{Any projected sf object}
+\fn{explode\_sf}(\parg{sf\_obj}, \parg{region\_col}, \parg{...})
+
+\sshead{US state via TIGER/Line}
+\fn{explode\_state}(\parg{state\_fips}, \parg{crs}, \parg{region\_map}, \parg{...})
+
+\sshead{Via lookup table}
+\fn{explode\_sf\_with\_lookup}(\parg{sf\_obj}, \parg{join\_col}, \parg{lookup}, \parg{lookup\_key}, \parg{region\_col}, \parg{...})
+
+{\scriptsize All three return \cd{exploded\_map}.}
+
+\shead{Quick Start}
+
+\cd{library(sf); library(explodemap)}\\
+\cd{result <- explode\_sf(my\_sf, region\_col = "district")}\\
+\cd{plot(result, "both")}
+
+\shead{Methods}
+
+{\scriptsize
+\begin{tabular}{@{}ll@{}}
+\fn{print}(x)            & Stats + parameters \\
+\fn{summary}(x)          & Full diagnostic \\
+\fn{plot}(x)             & Exploded map \\
+\fn{plot}(x, "both")     & Original + exploded \\
+\fn{calibration\_row}(x) & One-row summary \\
+\end{tabular}
+}
+
+\shead{Export}
+
+{\scriptsize
+\begin{tabular}{@{}ll@{}}
+\parg{export}=\val{NULL}            & No export \\
+\parg{export}=\val{TRUE}            & Auto GeoJSON \\
+\parg{export}=\val{"file.geojson"}  & Explicit path \\
+\end{tabular}
+}
+
+\sshead{TopoJSON}
+\fn{export\_topojson}(\parg{x}, \parg{file}, \parg{simplify}=NULL)\\
+{\scriptsize Requires \cd{mapshaper}: \cd{npm install -g mapshaper}}
+
+\shead{Input Requirements}
+
+\begin{itemize}[leftmargin=*, nosep, topsep=0pt, itemsep=0pt]
+  \item[\tiny$\bullet$] {\scriptsize Projected CRS (metres)}
+  \item[\tiny$\bullet$] {\scriptsize Grouping column with $\ge 2$ values}
+  \item[\tiny$\bullet$] {\scriptsize No empty geometries}
+  \item[\tiny$\bullet$] {\scriptsize Invalid geometries auto-repaired}
+\end{itemize}
+
+\shead{Centroid Options}
+
+\parg{centroid\_fun} = \val{"centroid"} {\scriptsize(default)}\\
+\parg{centroid\_fun} = \val{"point\_on\_surface"}
+
+\shead{Dense Cores}
+
+\parg{refine}=\val{TRUE} {\scriptsize Add bounded collision refinement}\\
+\parg{refine\_min\_gap} {\scriptsize Target polygon gap in map units}\\
+\parg{refine\_max\_shift} {\scriptsize Per-feature correction cap}\\
+\parg{refine\_within}=\val{"region"} {\scriptsize or \val{"all"}}
+
+% ── COLUMN 2 ────────────────────────────────────────────────────────────────
+
+\shead{Displacement Model}
+
+\vspace{-2pt}
+\[
+t_i = \alpha_r\,\hat{d}_{\text{state},i} + \alpha_l\,s_i\,\hat{d}_{\text{local},i}
+\]
+\vspace{-6pt}
+
+{\scriptsize
+\begin{tabular}{@{}ll@{}}
+$\hat{d}_{\text{state},i}$ & $C_s \rightarrow C_r$ (regional push) \\
+$\hat{d}_{\text{local},i}$ & $C_r \rightarrow C_i$ (local push) \\
+$s_i = (r_i / d_{\max})^p$ & 0 at center, 1 at edge \\
+\end{tabular}
+}
+
+\shead{Parameter Derivation}
+
+\sshead{Regional separation}
+\vspace{-3pt}
+\[
+\alpha_r = \frac{\gamma_r \bar{w}}{2\sin(\pi / n_r)}
+\]
+
+\sshead{Local expansion}
+\vspace{-6pt}
+\[
+\alpha_l = \gamma_l \frac{2\,\widetilde{R}_{\text{local}}}{\sqrt{\bar{n}}}
+\]
+\vspace{-6pt}
+
+{\scriptsize
+\begin{tabular}{@{}lll@{}}
+$\bar{w}$ & Median polygon diameter & \\
+$\widetilde{R}_{\text{local}}$ & Median regional radius & \\
+$\bar{n}$ & Median units/region & \\
+$n_r$ & Number of regions & \\
+$\gamma_r$ & Regional clearance & 3.0 \\
+$\gamma_l$ & Local clearance & 1.136 \\
+$p$ & Distance exponent & 1.25 \\
+\end{tabular}
+}
+
+\smallskip
+\fn{compute\_stats}(\parg{sf\_obj}, \parg{region\_col})\\
+\fn{derive\_params}(\parg{stats}, \parg{gamma\_r}, \parg{gamma\_l})
+
+\shead{Guarantees (2-Level Core)}
+
+\sshead{Proposition 1}
+Rigid translation: shape, area, perimeter, and topology preserved.
+
+\sshead{Proposition 2}
+Radial order within each region is preserved.
+
+\sshead{Proposition 3}
+\[
+\|t_i\| \le \alpha_r + \alpha_l
+\]
+
+\shead{Object Contents}
+
+{\scriptsize
+\begin{tabular}{@{}ll@{}}
+\cd{\$sf\_orig}     & Original geometries \\
+\cd{\$sf\_exp}      & Exploded geometries \\
+\cd{\$sf\_exp\_wgs} & WGS84 export version \\
+\cd{\$stats}        & Geometry statistics \\
+\cd{\$params}       & Parameters used \\
+\cd{\$plots}        & ggplot objects \\
+\cd{\$refinement}   & Optional collision diagnostics \\
+\cd{\$diagnostics}  & Metadata \\
+\end{tabular}
+}
+
+\shead{Interactive Focus Maps}
+
+\fn{focus\_map}(\parg{x}, \parg{label\_col}, \parg{group\_col}, \parg{info\_cols})
+
+{\scriptsize
+\begin{tabular}{@{}ll@{}}
+\parg{lift\_scale}       & Lifted shape size \\
+\parg{focus\_size}       & Viewport target size \\
+\parg{focus\_padding}    & Edge breathing room \\
+\parg{font\_size}        & Lifted label size \\
+\parg{info\_cols}        & Focus card fields \\
+\parg{info\_card\_scale} & Focus card size \\
+\parg{performance\_mode} & Dense-layer rendering \\
+\end{tabular}
+}
+
+\sshead{Shiny}
+\fn{focusmapOutput}(\parg{outputId}) \quad
+\fn{renderFocusmap}(\parg{expr})
+
+% ── COLUMN 3 ────────────────────────────────────────────────────────────────
+
+\shead{Grouped Layouts (3-Level)}
+
+\fn{explode\_grouped}(\parg{sf\_obj}, \parg{region\_col}, \parg{mode}, \parg{...})
+
+\smallskip
+{\scriptsize
+\begin{tabular}{@{}ll@{}}
+\val{"auto"}            & Radial anchors only \\
+\val{"auto\_collision"} & Radial + spring refinement \\
+\val{"manual"}          & User-supplied anchors \\
+\end{tabular}
+}
+
+{\scriptsize Returns \cd{grouped\_exploded\_map}. Use \fn{plot}(x, "all") to show all stages.}
+
+\sshead{Standalone anchors}
+\fn{layout\_regions}(\parg{sf\_obj}, \parg{region\_col}, \parg{mode})
+
+\sshead{Block radii}
+\fn{estimate\_block\_radii}(\parg{sf\_obj}, \parg{region\_col}, \parg{quantile\_p}=0.85)
+
+\shead{Anchor Parameters}
+
+{\scriptsize
+\begin{tabular}{@{}lrl@{}}
+\parg{kappa}        & 1.8   & Radial expansion \\
+\parg{padding}      & 50000 & Base padding (m) \\
+\parg{delta}        & 15000 & Density scaling \\
+\parg{lambda}       & 0.18  & Spring return \\
+\parg{eta}          & 0.18  & Repulsion step \\
+\parg{padding\_sep} & 20000 & Minimum block gap \\
+\end{tabular}
+}
+
+\shead{Grouped Object Extras}
+
+{\scriptsize
+\begin{tabular}{@{}ll@{}}
+\cd{\$sf\_local}        & Level 1 local explosion \\
+\cd{\$sf\_grouped}      & Final grouped layout \\
+\cd{\$sf\_grouped\_wgs} & WGS84 grouped layout \\
+\cd{\$anchors}          & Anchor table \\
+\end{tabular}
+}
+
+\shead{Cache Management}
+
+\fn{cache\_list}() {\scriptsize List cached downloads}\\
+\fn{cache\_clear}() {\scriptsize Clear all}\\
+\fn{cache\_clear}(\parg{"cousub\_34"}) {\scriptsize Clear one}
+
+\shead{Common Pitfalls}
+
+\begin{itemize}[leftmargin=*, nosep, topsep=0pt, itemsep=0pt]
+  \item[\tiny$\bullet$] {\scriptsize Transform lon/lat data before exploding}
+  \item[\tiny$\bullet$] {\scriptsize Check that \parg{region\_col} exists}
+  \item[\tiny$\bullet$] {\scriptsize Use \parg{allow\_other}=TRUE for incomplete lookups}
+  \item[\tiny$\bullet$] {\scriptsize Simplifying TopoJSON breaks exact geometry preservation}
+\end{itemize}
+
+\end{multicols}
+
+\vspace{0pt}
+\noindent{\color{primary}\rule{\textwidth}{0.4pt}}
+\begin{center}
+{\tiny\color{gray}
+explodemap \textperiodcentered{} George Arthur \textperiodcentered{}
+\url{https://prigasg.github.io/explodemap/} \textperiodcentered{}
+MIT License \textperiodcentered{}
+\cd{vignette("getting-started", package = "explodemap")}
+}
+\end{center}
+
+\end{document}

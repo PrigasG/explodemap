@@ -11,6 +11,7 @@ Internal package declarations for NSE checks.
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://prigasg.github.io/explodemap/}
   \item \url{https://github.com/PrigasG/explodemap}
   \item Report bugs at \url{https://github.com/PrigasG/explodemap/issues}
 }

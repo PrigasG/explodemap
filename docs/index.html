@@ -6,12 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>explodemap • explodemap</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" sizes="any" href="favicon.ico">
+<link rel="manifest" href="site.webmanifest">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -46,11 +45,13 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/getting-started.html">Getting started</a></li>
+    <li><a class="dropdown-item" href="articles/workflow-guide.html">Choosing a workflow</a></li>
     <li><a class="dropdown-item" href="articles/grouped-layouts.html">Grouped layouts and anchor placement</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="articles/reproducing-paper-examples.html">Reproducing the paper examples</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="cheatsheet/explodemap-cheatsheet.pdf">Cheatsheet</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -92,20 +93,24 @@
 <div class="section level2">
 <h2 id="what-the-package-does">What the package does<a class="anchor" aria-label="anchor" href="#what-the-package-does"></a>
 </h2>
-<p><code>explodemap</code> supports three main workflows:</p>
+<p><code>explodemap</code> supports four main workflows:</p>
 <ul>
 <li>explode any projected sf polygon dataset using a grouping column</li>
-<li>explode U.S. municipal or county subdivision data directly from TIGER/Line via explode_state()</li>
-<li>generate three-level grouped layouts for national or multi-region displays using explode_grouped()</li>
+<li>explode U.S. municipal or county subdivision data directly from TIGER/Line via <code><a href="reference/explode_state.html">explode_state()</a></code>
+</li>
+<li>generate three-level grouped layouts for national or multi-region displays using <code><a href="reference/explode_grouped.html">explode_grouped()</a></code>
+</li>
+<li>add interactive selected-area focus, labels, and information cards using <code><a href="reference/focus_map.html">focus_map()</a></code> in htmlwidgets or Shiny</li>
 </ul>
-<p>The package also includes analytical parameter derivation, cross-dataset calibration helpers, and optional TopoJSON export for downstream tools such as Power BI.</p>
+<p>The package also includes analytical parameter derivation, cross-dataset calibration helpers, optional bounded collision refinement for dense municipal cores, and optional TopoJSON export for downstream tools such as Power BI.</p>
+<p>For a compact overview, see the <a href="https://prigasg.github.io/explodemap/cheatsheet/explodemap-cheatsheet.pdf">cheatsheet</a> and the <a href="https://prigasg.github.io/explodemap/articles/workflow-guide.html">workflow guide</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">explodemap</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://prigasg.github.io/explodemap/">explodemap</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sq</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">xmin</span>, <span class="va">ymin</span>, <span class="va">size</span> <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st.html" class="external-link">st_polygon</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
@@ -177,7 +182,7 @@
 <div class="section level2">
 <h2 id="grouped-layouts">Grouped layouts<a class="anchor" aria-label="anchor" href="#grouped-layouts"></a>
 </h2>
-<p>For larger layouts where region blocks need to be separated at an additional level, <code>use explode_grouped()</code>:</p>
+<p>For larger layouts where region blocks need to be separated at an additional level, use <code><a href="reference/explode_grouped.html">explode_grouped()</a></code>:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explode_grouped.html">explode_grouped</a></span><span class="op">(</span></span>
 <span>  <span class="va">states_sf</span>, region_col <span class="op">=</span> <span class="st">"hhs_region"</span>,</span>
@@ -227,27 +232,27 @@
 <p>For the two-level core, the paper states three key properties:</p>
 <table class="table">
 <colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
+<col width="36%">
+<col width="38%">
+<col width="25%">
 </colgroup>
-<thead><tr class="header">
+<thead><tr>
 <th>Property</th>
 <th>Guarantee</th>
 <th>Scope</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Proposition 1</strong></td>
 <td>Internal geometry preserved exactly (rigid translation)</td>
 <td>Per feature</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Proposition 2</strong></td>
 <td>Radial ordering within regions preserved</td>
 <td>Per region</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Proposition 3</strong></td>
 <td>Max displacement bounded by α_r + α_l</td>
 <td>Global</td>
@@ -267,21 +272,50 @@
 <code>alpha_l = gamma_l * 2 * R_local / sqrt(n_bar)</code> — local expansion</li>
 </ul>
 <p>Defaults: <code>gamma_r = 3.0</code>, <code>gamma_l = 1.136</code>, <code>p = 1.25</code></p>
-<p>All quantities except <code>gamma_r</code> and <code>gamma_l</code> are computed from the dataset geometry. The gamma coefficients are dimensionless legibility constants calibrated on NJ and validated across multiple US states and Canada.</p>
+<p>All quantities except <code>gamma_r</code> and <code>gamma_l</code> are computed from the dataset geometry. The gamma coefficients are dimensionless legibility constants calibrated from the paper examples and intended as practical defaults. You can override <code>alpha_r</code> and <code>alpha_l</code> independently when a particular map needs more or less visual separation.</p>
+<p>For very dense municipal cores, you can add a bounded collision-refinement pass after the analytical displacement:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">refined</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explode_sf.html">explode_sf</a></span><span class="op">(</span></span>
+<span>  <span class="va">my_sf</span>,</span>
+<span>  region_col <span class="op">=</span> <span class="st">"district"</span>,</span>
+<span>  refine <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  refine_min_gap <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>  refine_max_shift <span class="op">=</span> <span class="fl">150</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>This optional layer nudges close same-region neighbors apart while capping the extra correction per feature. Use <code>refine_within = "all"</code> if the remaining crowding crosses region boundaries.</p>
+</div>
+<div class="section level2">
+<h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
+</h2>
+<p>Small examples that run without external downloads are installed with the package:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/basic_explode_sf.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/collision_refinement.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/lookup_workflow.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/manual_parameter_tuning.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Paper-scale examples that download public boundary data are also available:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/run_calibration.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/run_canada.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/run_hhs.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Interactive focus-map examples are installed as app scripts:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">shiny</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">runApp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/focusmap_munis_app.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">shiny</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">runApp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/focusmap_counties_app.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="export">Export<a class="anchor" aria-label="anchor" href="#export"></a>
 </h2>
 <p><code>explodemap</code> can optionally export <code>TopoJSON</code> through the external <code>mapshaper</code> command-line tool:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/export_topojson.html">export_topojson</a></span><span class="op">(</span><span class="va">result</span>, <span class="st">"exploded.topojson"</span><span class="op">)</span></span></code></pre></div>
 <p>This is useful for downstream tools such as Power BI. To use it, install mapshaper separately:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">npm</span> install <span class="at">-g</span> mapshaper</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="ex">npm</span> install <span class="at">-g</span> mapshaper</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="vignettes">Vignettes<a class="anchor" aria-label="anchor" href="#vignettes"></a>
 </h2>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"getting-started"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"grouped-layouts"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -322,7 +356,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

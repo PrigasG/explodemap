@@ -51,6 +51,8 @@
   replication.
 * Added small installed examples for the basic `sf` workflow, optional
   collision refinement, lookup-table grouping, and manual parameter tuning.
+* Added a workflow-selection vignette and a site-linked cheatsheet for
+  release-oriented user guidance.
 * Added an `inst/CITATION` entry for academic citation.
 * Added pkgdown site configuration and GitHub Pages support.
 

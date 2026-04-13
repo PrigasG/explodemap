@@ -9,11 +9,15 @@ Description: Tools for generating hierarchical exploded-view maps from
     field, preserving each feature's internal geometry while separating
     units within and across regions. Parameters can be derived
     analytically from dataset geometry using closed-form models for
-    regional separation and local expansion. It implements the methodology
-    described in "A Hierarchical Vector-Based Framework for Multi-Scale
-    Exploded-View Cartography".
+    regional separation and local expansion. The package also includes
+    grouped layouts, optional bounded collision refinement, and an
+    interactive focus-map widget for selected-area inspection in
+    htmlwidgets and Shiny. It implements the methodology described in "A
+    Hierarchical Vector-Based Framework for Multi-Scale Exploded-View
+    Cartography".
 License: MIT + file LICENSE
-URL: https://github.com/PrigasG/explodemap
+URL: https://prigasg.github.io/explodemap/,
+    https://github.com/PrigasG/explodemap
 BugReports: https://github.com/PrigasG/explodemap/issues
 Depends: 
     R (>= 4.1.0)
