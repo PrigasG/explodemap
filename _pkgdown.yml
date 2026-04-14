@@ -1,35 +1,38 @@
 url: https://prigasg.github.io/explodemap/
-
 development:
   mode: auto
-
 template:
   bootstrap: 5
   bootswatch: flatly
   bslib:
-    primary: "#2166ac"
+    primary: '#2166ac'
     border-radius: 0.25rem
     btn-border-radius: 0.25rem
-
 home:
-  title: "explodemap"
-  description: >
-    Tools for hierarchical exploded-view cartography of dense
-    administrative boundary data. The package supports deterministic
-    two-level exploded maps, grouped multi-region layouts, analytical
-    parameter derivation, and export workflows for downstream mapping.
+  title: explodemap
+  description: |
+    Tools for hierarchical exploded-view cartography of dense administrative boundary data. The package supports deterministic two-level exploded maps, grouped multi-region layouts, analytical parameter derivation, and export workflows for downstream mapping.
   sidebar:
-    structure: [links, license, community, dev]
-
+    structure:
+    - links
+    - license
+    - community
+    - dev
 figures:
   dev: ragg::agg_png
   dpi: 150
   fig.ext: png
-
 navbar:
   structure:
-    left: [intro, reference, articles, cheatsheet, news]
-    right: [search, github]
+    left:
+    - intro
+    - reference
+    - articles
+    - cheatsheet
+    - news
+    right:
+    - search
+    - github
   components:
     intro:
       text: Get started
@@ -40,15 +43,15 @@ navbar:
     articles:
       text: Articles
       menu:
-        - text: "Getting started"
-          href: articles/getting-started.html
-        - text: "Choosing a workflow"
-          href: articles/workflow-guide.html
-        - text: "Grouped layouts and anchor placement"
-          href: articles/grouped-layouts.html
-        - text: "---"
-        - text: "Reproducing the paper examples"
-          href: articles/reproducing-paper-examples.html
+      - text: Getting started
+        href: articles/getting-started.html
+      - text: Choosing a workflow
+        href: articles/workflow-guide.html
+      - text: Grouped layouts and anchor placement
+        href: articles/grouped-layouts.html
+      - text: '---'
+      - text: Reproducing the paper examples
+        href: articles/reproducing-paper-examples.html
     cheatsheet:
       text: Cheatsheet
       href: cheatsheet/explodemap-cheatsheet.pdf
@@ -59,83 +62,64 @@ navbar:
       icon: fab fa-github
       href: https://github.com/PrigasG/explodemap
       aria-label: GitHub
-
 reference:
-  - title: "Core workflow"
-    desc: >
-      Main entry points for generating two-level exploded-view maps from
-      projected sf data or state-level TIGER/Line inputs.
-    contents:
-      - explode_sf
-      - explode_sf_with_lookup
-      - explode_state
-
-  - title: "Interactive focus maps"
-    desc: >
-      htmlwidgets and Shiny helpers for selected-feature focus, labels,
-      and non-blocking information cards.
-    contents:
-      - focus_map
-      - focusmapOutput
-      - renderFocusmap
-
-  - title: "Grouped layouts"
-    desc: >
-      Functions for three-level grouped layouts with anchor placement and
-      optional collision-aware refinement.
-    contents:
-      - explode_grouped
-      - layout_regions
-      - estimate_block_radii
-
-  - title: "Statistics and calibration"
-    desc: >
-      Tools for computing geometry statistics, deriving parameters, and
-      building calibration summaries across datasets.
-    contents:
-      - compute_stats
-      - derive_params
-      - calibration_row
-
-  - title: "Export and cache helpers"
-    desc: >
-      Optional export helpers and cache management utilities.
-    contents:
-      - export_topojson
-      - cache_list
-      - cache_clear
-
-  - title: "Methods"
-    desc: >
-      S3 methods for printing, plotting, summarising, and extracting
-      tabular results from exploded map objects.
-    contents:
-      - print.exploded_map
-      - plot.exploded_map
-      - summary.exploded_map
-      - print.grouped_exploded_map
-      - plot.grouped_exploded_map
-      - summary.grouped_exploded_map
-
+- title: Core workflow
+  desc: |
+    Main entry points for generating two-level exploded-view maps from projected sf data or state-level TIGER/Line inputs.
+  contents:
+  - explode_sf
+  - explode_sf_with_lookup
+  - explode_state
+- title: Interactive focus maps
+  desc: |
+    htmlwidgets and Shiny helpers for selected-feature focus, labels, and non-blocking information cards.
+  contents:
+  - focus_map
+  - focusmapOutput
+  - renderFocusmap
+- title: Grouped layouts
+  desc: |
+    Functions for three-level grouped layouts with anchor placement and optional collision-aware refinement.
+  contents:
+  - explode_grouped
+  - layout_regions
+  - estimate_block_radii
+- title: Statistics and calibration
+  desc: |
+    Tools for computing geometry statistics, deriving parameters, and building calibration summaries across datasets.
+  contents:
+  - compute_stats
+  - derive_params
+  - calibration_row
+- title: Export and cache helpers
+  desc: |
+    Optional export helpers and cache management utilities.
+  contents:
+  - export_topojson
+  - cache_list
+  - cache_clear
+- title: Methods
+  desc: |
+    S3 methods for printing, plotting, summarising, and extracting tabular results from exploded map objects.
+  contents:
+  - print.exploded_map
+  - plot.exploded_map
+  - summary.exploded_map
+  - print.grouped_exploded_map
+  - plot.grouped_exploded_map
+  - summary.grouped_exploded_map
 articles:
-  - title: "Get started"
-    navbar: ~
-    contents:
-      - getting-started
-
-  - title: "Choosing a workflow"
-    contents:
-      - workflow-guide
-
-  - title: "Grouped layouts"
-    contents:
-      - grouped-layouts
-
-  - title: "Paper replication"
-    contents:
-      - reproducing-paper-examples
-
+- title: Get started
+  navbar: ~
+  contents: getting-started
+- title: Choosing a workflow
+  contents: workflow-guide
+- title: Grouped layouts
+  contents: grouped-layouts
+- title: Paper replication
+  contents: reproducing-paper-examples
 footer:
   structure:
     left: developed_by
     right: built_with
+
