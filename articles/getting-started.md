@@ -36,6 +36,7 @@ transformed before use. For U.S. work, a state plane, UTM, or
 Albers-type projected CRS is usually appropriate.
 
 ``` r
+
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 library(explodemap)
@@ -47,6 +48,7 @@ We create a small synthetic dataset with four square polygons in two
 regions.
 
 ``` r
+
 sq <- function(xmin, ymin, size = 1000) {
   st_polygon(list(matrix(
     c(xmin, ymin,
@@ -91,12 +93,14 @@ The simplest entry point is
 Pass your sf object and the name of the grouping column:
 
 ``` r
+
 result <- explode_sf(x, region_col = "region", plot = FALSE)
 ```
 
 The returned object is an S3 object of class `exploded_map`:
 
 ``` r
+
 class(result)
 #> [1] "exploded_map" "list"
 names(result)
@@ -114,6 +118,7 @@ version, derived statistics and parameters, plots, and diagnostics.
 and derived parameters:
 
 ``` r
+
 print(result)
 #> 
 #> -- Custom Dataset ----------------------------------------
@@ -133,6 +138,7 @@ print(result)
 coefficients that are useful for calibration work:
 
 ``` r
+
 summary(result)
 #> 
 #> Exploded Map Summary
@@ -161,6 +167,7 @@ summary(result)
 ## Plotting
 
 ``` r
+
 plot(result)
 ```
 
@@ -169,6 +176,7 @@ plot(result)
 You can also view both original and exploded layouts side by side:
 
 ``` r
+
 plot(result, "both")
 ```
 
@@ -181,6 +189,7 @@ returns a one-row data frame suitable for combining across datasets when
 building a cross-dataset calibration table:
 
 ``` r
+
 calibration_row(result)
 #>            label n_units n_regions w_bar_km R_local_km ratio alpha_r alpha_l
 #> 1 Custom Dataset       4         2     1.13        1.5  1.33    1693    2410
@@ -197,6 +206,7 @@ independently, so you can tune regional separation without changing
 local expansion, or vice versa:
 
 ``` r
+
 manual <- explode_sf(
   x,
   region_col = "region",
@@ -228,6 +238,7 @@ manual$params
 ```
 
 ``` r
+
 more_region_gap <- explode_sf(
   x,
   region_col = "region",
@@ -263,6 +274,7 @@ cores, you can add a bounded refinement pass that nudges close
 same-region neighbors apart after the analytical displacement:
 
 ``` r
+
 refined <- explode_sf(
   x,
   region_col = "region",
@@ -317,6 +329,7 @@ For irregular or multipart polygons, `"point_on_surface"` may be
 preferable to the default geometric centroid:
 
 ``` r
+
 pos <- explode_sf(
   x,
   region_col = "region",
@@ -332,6 +345,7 @@ downloads U.S. Census TIGER/Line boundaries automatically and groups
 municipalities by a county-to-region mapping:
 
 ``` r
+
 nj <- explode_state(
   state_fips = "34", crs = 32118,
   region_map = list(
@@ -354,6 +368,7 @@ Downloaded data is cached locally so subsequent runs are faster.
 joins an external lookup table to your sf object before exploding:
 
 ``` r
+
 groups <- read.csv("region_assignments.csv")
 
 result <- explode_sf_with_lookup(
@@ -378,6 +393,7 @@ The `export` parameter supports three modes:
 - A file path string: explicit output location
 
 ``` r
+
 result <- explode_sf(
   my_sf,
   region_col = "region",

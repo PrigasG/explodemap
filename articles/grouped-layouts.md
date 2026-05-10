@@ -29,6 +29,7 @@ correspondence rather than topological coverage. The formal geometric
 guarantees of Propositions 1–3 apply strictly at Level 1.
 
 ``` r
+
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 library(explodemap)
@@ -41,6 +42,7 @@ a wider spatial extent than the two-region example in
 [`vignette("getting-started")`](https://prigasg.github.io/explodemap/articles/getting-started.md).
 
 ``` r
+
 sq <- function(xmin, ymin, size = 1000) {
   st_polygon(list(matrix(
     c(xmin, ymin,
@@ -72,17 +74,18 @@ x <- st_sf(
 [`explode_grouped()`](https://prigasg.github.io/explodemap/reference/explode_grouped.md)
 supports three anchor placement modes:
 
-| Mode               | Description                                                    |
-|--------------------|----------------------------------------------------------------|
-| `"auto"`           | Level 2 only — radial placement without collision resolution   |
+| Mode | Description |
+|----|----|
+| `"auto"` | Level 2 only — radial placement without collision resolution |
 | `"auto_collision"` | Level 2 + Level 3 — radial placement with iterative refinement |
-| `"manual"`         | User-supplied anchor coordinates                               |
+| `"manual"` | User-supplied anchor coordinates |
 
 ## Automatic grouped layout
 
 The simplest call uses `mode = "auto"`:
 
 ``` r
+
 g_auto <- explode_grouped(
   x,
   region_col = "region",
@@ -111,6 +114,7 @@ The result is a `grouped_exploded_map` S3 object, which also inherits
 from `exploded_map`:
 
 ``` r
+
 names(g_auto)
 #> [1] "sf_orig"        "sf_local"       "sf_grouped"     "sf_grouped_wgs"
 #> [5] "stats"          "params"         "anchors"        "plots"         
@@ -120,6 +124,7 @@ names(g_auto)
 Plot the grouped layout:
 
 ``` r
+
 plot(g_auto)
 ```
 
@@ -132,6 +137,7 @@ blocks are iteratively repelled while a spring term pulls them back
 toward their radial targets:
 
 ``` r
+
 g_collide <- explode_grouped(
   x,
   region_col = "region",
@@ -151,6 +157,7 @@ plot(g_collide)
 The anchor table reports the resulting block radii and coordinates:
 
 ``` r
+
 g_collide$anchors[, c("region", "block_radius", "anchor_x", "anchor_y")]
 #> # A tibble: 3 × 4
 #>   region block_radius anchor_x anchor_y
@@ -166,6 +173,7 @@ g_collide$anchors[, c("region", "block_radius", "anchor_x", "anchor_y")]
 layouts side by side:
 
 ``` r
+
 plot(g_collide, "all")
 ```
 
@@ -178,6 +186,7 @@ computes anchor positions as a standalone step, which is useful for
 custom workflows or manual adjustment:
 
 ``` r
+
 anchors <- layout_regions(
   x,
   region_col = "region",
@@ -199,6 +208,7 @@ You can edit anchor positions and pass them back into
 [`explode_grouped()`](https://prigasg.github.io/explodemap/reference/explode_grouped.md):
 
 ``` r
+
 manual_anchors <- anchors
 manual_anchors$anchor_x <- manual_anchors$anchor_x + c(0, 500, 1000)
 manual_anchors$anchor_y <- manual_anchors$anchor_y + c(0, 250, 500)
@@ -248,6 +258,7 @@ to match your coordinate system and visual scale.
 ## Summary
 
 ``` r
+
 summary(g_collide)
 #> 
 #> Grouped Exploded Map Summary
@@ -280,17 +291,17 @@ summary(g_collide)
 
 ## What the grouped object stores
 
-| Field            | Contents                                                                                                      |
-|------------------|---------------------------------------------------------------------------------------------------------------|
-| `sf_orig`        | Original input geometries                                                                                     |
-| `sf_local`       | Geometries after Level 1 local explosion                                                                      |
-| `sf_grouped`     | Final geometries after anchor displacement                                                                    |
-| `sf_grouped_wgs` | Final geometries in WGS84 (EPSG:4326)                                                                         |
-| `stats`          | Geometry statistics from [`compute_stats()`](https://prigasg.github.io/explodemap/reference/compute_stats.md) |
-| `params`         | All parameters used                                                                                           |
-| `anchors`        | Anchor table with block radii and positions                                                                   |
-| `plots`          | ggplot objects for original, local, and grouped layouts                                                       |
-| `diagnostics`    | Label, region column, centroid mode, and anchor mode                                                          |
+| Field | Contents |
+|----|----|
+| `sf_orig` | Original input geometries |
+| `sf_local` | Geometries after Level 1 local explosion |
+| `sf_grouped` | Final geometries after anchor displacement |
+| `sf_grouped_wgs` | Final geometries in WGS84 (EPSG:4326) |
+| `stats` | Geometry statistics from [`compute_stats()`](https://prigasg.github.io/explodemap/reference/compute_stats.md) |
+| `params` | All parameters used |
+| `anchors` | Anchor table with block radii and positions |
+| `plots` | ggplot objects for original, local, and grouped layouts |
+| `diagnostics` | Label, region column, centroid mode, and anchor mode |
 
 ## Scope of guarantees
 

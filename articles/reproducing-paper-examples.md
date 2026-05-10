@@ -26,6 +26,7 @@ Externally downloaded datasets may introduce small differences if source
 files change over time.
 
 ``` r
+
 library(explodemap)
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
@@ -45,11 +46,12 @@ library(dplyr)
 ## 1. New Jersey — Ground-truth calibration (Section 5)
 
 New Jersey is the calibration dataset. The known-good parameters
-($\alpha_{r} = 6,000$ m, $\alpha_{l} = 10,000$ m) were established by
-visual validation and are used to derive the legibility coefficients
-$\gamma_{r}$ and $\gamma_{l}$.
+($`\alpha_r = 6{,}000`$ m, $`\alpha_l = 10{,}000`$ m) were established
+by visual validation and are used to derive the legibility coefficients
+$`\gamma_r`$ and $`\gamma_l`$.
 
 ``` r
+
 nj <- explode_state(
   state_fips = "34", crs = 32118,
   region_map = list(
@@ -81,7 +83,7 @@ summary(nj)
 | gamma_r implied (from known alpha_r = 6,000)  | 2.64     |
 | gamma_l implied (from known alpha_l = 10,000) | 1.136    |
 
-The implied $\gamma_{l} = 1.136$ from the New Jersey ground truth
+The implied $`\gamma_l = 1.136`$ from the New Jersey ground truth
 becomes the recommended default for transfer to other datasets.
 
 ------------------------------------------------------------------------
@@ -90,13 +92,14 @@ becomes the recommended default for transfer to other datasets.
 
 Pennsylvania tests whether New Jersey-calibrated coefficients transfer
 to a larger, denser dataset without retuning. The paper reports
-formula-derived parameters $\alpha_{r} = 20,174$ m and
-$\alpha_{l} = 12,447$ m.
+formula-derived parameters $`\alpha_r = 20{,}174`$ m and
+$`\alpha_l = 12{,}447`$ m.
 
 The region map is defined as a reusable object so that both the transfer
 run and the sensitivity analysis reference the same grouping:
 
 ``` r
+
 pa_region_map <- list(
   Southeast    = c("Philadelphia", "Delaware", "Chester",
                    "Montgomery", "Bucks"),
@@ -120,6 +123,7 @@ pa_region_map <- list(
 ```
 
 ``` r
+
 pa <- explode_state(
   state_fips = "42", crs = 26918,
   region_map = pa_region_map,
@@ -144,10 +148,11 @@ summary(pa)
 
 ### Sensitivity analysis
 
-The paper reports that $\alpha_{l}$ is stable under $\pm 15\%$
+The paper reports that $`\alpha_l`$ is stable under $`\pm 15\%`$
 perturbation:
 
 ``` r
+
 alpha_l_canonical <- 12447
 alpha_r_canonical <- 20174
 
@@ -185,8 +190,8 @@ print(sensitivity_df)
 | +10%      | 13,692  | ~20,749 m         |
 | +15%      | 14,314  | ~20,813 m         |
 
-Mean displacement CV across the $\pm 15\%$ range is $< 0.02$, confirming
-stability.
+Mean displacement CV across the $`\pm 15\%`$ range is $`< 0.02`$,
+confirming stability.
 
 ------------------------------------------------------------------------
 
@@ -197,6 +202,7 @@ Jersey, Pennsylvania, Ohio, and New York. The calibration runner
 processes all registered states and reports gamma stability.
 
 ``` r
+
 source(system.file("registries/state_registry.R", package = "explodemap"))
 
 calib_rows <- list()
@@ -235,8 +241,8 @@ print(calib_df)
 
 \* Implied from known ground-truth parameters.
 
-The key finding is that $\gamma_{l} = 1.136$ is stable across states,
-while $\gamma_{r}$ varies more, indicating that regional clearance still
+The key finding is that $`\gamma_l = 1.136`$ is stable across states,
+while $`\gamma_r`$ varies more, indicating that regional clearance still
 benefits from dataset-specific visual validation.
 
 ------------------------------------------------------------------------
@@ -247,6 +253,7 @@ Ohio provides a five-region test with three competing urban cores
 (Cleveland, Columbus, Cincinnati):
 
 ``` r
+
 oh <- explode_state(
   state_fips = "39", crs = 32617,
   region_map = list(
@@ -277,9 +284,9 @@ summary(oh)
 plot(oh, "both")
 ```
 
-**Expected output:** $R_{\text{local}}/\bar{w} = 12.75$, placing Ohio in
-the dense-municipal cluster. All three urban cores are correctly
-suppressed by the $s_{i}$ term.
+**Expected output:** $`R_{\text{local}}/\bar{w} = 12.75`$, placing Ohio
+in the dense-municipal cluster. All three urban cores are correctly
+suppressed by the $`s_i`$ term.
 
 ------------------------------------------------------------------------
 
@@ -290,6 +297,7 @@ US administrative system entirely. Data comes from Statistics Canada
 2021 Census Subdivisions.
 
 ``` r
+
 province_regions <- data.frame(
   PRUID  = c("10", "11", "12", "13", "24", "35",
              "46", "47", "48", "59", "60", "61", "62"),
@@ -301,6 +309,7 @@ province_regions <- data.frame(
 ```
 
 ``` r
+
 cache_file <- file.path(path.expand("~"), "explode_map_cache",
                         "canada_csds_2021.rds")
 
@@ -324,6 +333,7 @@ if (file.exists(cache_file)) {
 ```
 
 ``` r
+
 sf_proj <- sf_raw |>
   st_transform(3347) |>
   left_join(province_regions, by = "PRUID")
@@ -366,6 +376,7 @@ The three-level extension places US states into 10 HHS region blocks
 using anchor-based placement with collision refinement.
 
 ``` r
+
 hhs_lookup <- data.frame(
   STUSPS = c(
     "CT", "ME", "MA", "NH", "RI", "VT",
@@ -389,6 +400,7 @@ hhs_lookup <- data.frame(
 ```
 
 ``` r
+
 cache_file <- file.path(path.expand("~"), "explode_map_cache",
                         "us_states.rds")
 
@@ -409,6 +421,7 @@ if (file.exists(cache_file)) {
 ```
 
 ``` r
+
 states_proj <- states_sf |>
   st_transform(5070) |>
   left_join(hhs_lookup, by = "STUSPS")
@@ -447,19 +460,20 @@ reduces block overlaps in the densely packed Northeast corridor.
 
 After running all sections above, verify:
 
-New Jersey implied $\gamma_{l} \approx 1.136$ from known
-$\alpha_{l} = 10,000$ m
+New Jersey implied $`\gamma_l \approx 1.136`$ from known
+$`\alpha_l = 10{,}000`$ m
 
-Pennsylvania formula-derived $\alpha_{l} = 12,447$ m from
-$\gamma_{l} = 1.136$
+Pennsylvania formula-derived $`\alpha_l = 12{,}447`$ m from
+$`\gamma_l = 1.136`$
 
-Pennsylvania sensitivity CV $< 0.02$ for mean displacement across
-$\pm 15\%$
+Pennsylvania sensitivity CV $`< 0.02`$ for mean displacement across
+$`\pm 15\%`$
 
-Cross-state $R_{\text{local}}/\bar{w}$ clusters around dense-unit and
+Cross-state $`R_{\text{local}}/\bar{w}`$ clusters around dense-unit and
 large-unit regimes
 
-Canada layout remains coherent at $R_{\text{local}}/\bar{w} \approx 113$
+Canada layout remains coherent at
+$`R_{\text{local}}/\bar{w} \approx 113`$
 
 HHS anchor solver converges with all 10 regions separated
 
@@ -475,8 +489,9 @@ API.
 ## Session info
 
 ``` r
+
 sessionInfo()
-#> R version 4.5.3 (2026-03-11)
+#> R version 4.6.0 (2026-04-24)
 #> Platform: x86_64-pc-linux-gnu
 #> Running under: Ubuntu 24.04.4 LTS
 #> 
@@ -497,18 +512,18 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] dplyr_1.2.1      sf_1.1-0         explodemap_0.2.0
+#> [1] dplyr_1.2.1      sf_1.1-1         explodemap_0.2.0
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] jsonlite_2.0.0     compiler_4.5.3     tidyselect_1.2.1   Rcpp_1.1.1        
+#>  [1] jsonlite_2.0.0     compiler_4.6.0     tidyselect_1.2.1   Rcpp_1.1.1-1.1    
 #>  [5] jquerylib_0.1.4    systemfonts_1.3.2  textshaping_1.0.5  yaml_2.3.12       
 #>  [9] fastmap_1.2.0      R6_2.6.1           generics_0.1.4     classInt_0.4-11   
 #> [13] knitr_1.51         htmlwidgets_1.6.4  tibble_3.3.1       desc_1.4.3        
 #> [17] units_1.0-1        DBI_1.3.0          bslib_0.10.0       pillar_1.11.1     
-#> [21] rlang_1.2.0        cachem_1.1.0       xfun_0.57          fs_2.0.1          
+#> [21] rlang_1.2.0        cachem_1.1.0       xfun_0.57          fs_2.1.0          
 #> [25] sass_0.4.10        otel_0.2.0         cli_3.6.6          pkgdown_2.2.0     
-#> [29] magrittr_2.0.5     class_7.3-23       digest_0.6.39      grid_4.5.3        
+#> [29] magrittr_2.0.5     class_7.3-23       digest_0.6.39      grid_4.6.0        
 #> [33] lifecycle_1.0.5    vctrs_0.7.3        KernSmooth_2.23-26 proxy_0.4-29      
-#> [37] evaluate_1.0.5     glue_1.8.0         ragg_1.5.2         e1071_1.7-17      
-#> [41] rmarkdown_2.31     tools_4.5.3        pkgconfig_2.0.3    htmltools_0.5.9
+#> [37] evaluate_1.0.5     glue_1.8.1         ragg_1.5.2         e1071_1.7-17      
+#> [41] rmarkdown_2.31     tools_4.6.0        pkgconfig_2.0.3    htmltools_0.5.9
 ```

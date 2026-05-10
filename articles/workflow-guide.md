@@ -4,13 +4,13 @@
 
 `explodemap` has four main user-facing workflows:
 
-| Goal                                                               | Use                                                                                                    |
-|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| Explode a projected `sf` object that already has a grouping column | [`explode_sf()`](https://prigasg.github.io/explodemap/reference/explode_sf.md)                         |
-| Join a lookup table before exploding                               | [`explode_sf_with_lookup()`](https://prigasg.github.io/explodemap/reference/explode_sf_with_lookup.md) |
-| Download and explode U.S. county subdivisions by state             | [`explode_state()`](https://prigasg.github.io/explodemap/reference/explode_state.md)                   |
-| Separate larger region blocks for national or multi-region layouts | [`explode_grouped()`](https://prigasg.github.io/explodemap/reference/explode_grouped.md)               |
-| Add interactive selected-area zoom and information cards           | [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md)                           |
+| Goal | Use |
+|----|----|
+| Explode a projected `sf` object that already has a grouping column | [`explode_sf()`](https://prigasg.github.io/explodemap/reference/explode_sf.md) |
+| Join a lookup table before exploding | [`explode_sf_with_lookup()`](https://prigasg.github.io/explodemap/reference/explode_sf_with_lookup.md) |
+| Download and explode U.S. county subdivisions by state | [`explode_state()`](https://prigasg.github.io/explodemap/reference/explode_state.md) |
+| Separate larger region blocks for national or multi-region layouts | [`explode_grouped()`](https://prigasg.github.io/explodemap/reference/explode_grouped.md) |
+| Add interactive selected-area zoom and information cards | [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md) |
 
 The best default is usually
 [`explode_sf()`](https://prigasg.github.io/explodemap/reference/explode_sf.md):
@@ -24,6 +24,7 @@ Use
 when you already have polygon data and a grouping column:
 
 ``` r
+
 result <- explode_sf(
   my_sf,
   region_col = "region",
@@ -36,6 +37,7 @@ Use
 when group membership lives in a separate table:
 
 ``` r
+
 result <- explode_sf_with_lookup(
   my_sf,
   join_col = "GEOID",
@@ -52,6 +54,7 @@ when you want the package to download U.S. Census TIGER/Line county
 subdivision data for a state:
 
 ``` r
+
 result <- explode_state(
   state_fips = "34",
   crs = 32118,
@@ -70,6 +73,7 @@ analytical displacement. In that case, add the optional bounded
 refinement pass:
 
 ``` r
+
 result <- explode_sf(
   my_sf,
   region_col = "region",
@@ -97,6 +101,7 @@ when the map needs an additional layout level, such as a national map
 with multiple region blocks:
 
 ``` r
+
 grouped <- explode_grouped(
   my_sf,
   region_col = "hhs_region",
@@ -123,6 +128,7 @@ readable viewport target, and show contextual fields in a non-blocking
 information card:
 
 ``` r
+
 focus_map(
   result,
   group_col = "region",
@@ -137,6 +143,7 @@ focus_map(
 For Shiny:
 
 ``` r
+
 ui <- fluidPage(
   focusmapOutput("map", height = "700px")
 )
@@ -167,6 +174,7 @@ Before exploding or focusing:
 Small local examples:
 
 ``` r
+
 source(system.file("examples/basic_explode_sf.R", package = "explodemap"))
 source(system.file("examples/collision_refinement.R", package = "explodemap"))
 source(system.file("examples/lookup_workflow.R", package = "explodemap"))
@@ -176,6 +184,7 @@ source(system.file("examples/manual_parameter_tuning.R", package = "explodemap")
 Interactive examples that download public data:
 
 ``` r
+
 shiny::runApp(system.file("examples/focusmap_munis_app.R", package = "explodemap"))
 shiny::runApp(system.file("examples/focusmap_counties_app.R", package = "explodemap"))
 ```
