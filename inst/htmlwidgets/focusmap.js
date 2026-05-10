@@ -161,10 +161,11 @@ HTMLWidgets.widget({
       injectCSS();
     }
 
-    function onKey(e) {
-      if (e.key === "Escape" && el.contains(document.activeElement || document.body)) {
-        clearFocus();
-      }
+    // Called by the page-level __fm_key_registry dispatcher (see renderValue).
+    // Each widget only clears its own focus; no cross-widget interference.
+    function onKey() {
+      if (S.mode !== "focused") return;
+      clearFocus();
     }
 
     /* ── CSS injection (once per page) ─────────────────────── */
@@ -751,14 +752,25 @@ HTMLWidgets.widget({
         // Fix winding order before D3 touches the geometry
         rewindFeatures(features);
 
-        // Remove previous keydown listener before buildDOM creates a new scope
-        document.removeEventListener("keydown", onKey);
-
         buildDOM();
         buildColorScale();
 
-        // Add keydown listener once per render (clean, no stacking)
-        document.addEventListener("keydown", onKey);
+        // Page-level Escape-key registry: a single document listener is
+        // created once and dispatches to every registered focusmap instance.
+        // This prevents stacked listeners when multiple widgets share the same
+        // Shiny page (e.g. inside tabsetPanel or with removeUI/insertUI).
+        if (!window.__fm_key_registry) {
+          window.__fm_key_registry = {};
+          document.addEventListener("keydown", function (e) {
+            if (e.key !== "Escape") return;
+            var ids = Object.keys(window.__fm_key_registry);
+            for (var k = 0; k < ids.length; k++) {
+              window.__fm_key_registry[ids[k]]();
+            }
+          });
+        }
+        // Register (or re-register on re-render) this instance's handler.
+        window.__fm_key_registry[el.id] = onKey;
 
         // Double rAF ensures the browser has laid out the SVG container
         // before we measure it with getBoundingClientRect(). Without this,
@@ -782,8 +794,30 @@ HTMLWidgets.widget({
       resize: function (w, h) {
         width = w; height = h;
         if (!features || !features.length) return;
+
+        // Interrupt any running D3 transition before re-measuring the SVG.
+        svgEl.interrupt();
+
+        // When a resize fires mid-flight (e.g. Shiny sidebar collapse while a
+        // polygon is animating), the D3 transition is interrupted but S.mode
+        // stays "flying_to" / "flying_home". onCountyClick guards against
+        // those states, so the widget becomes permanently unresponsive until
+        // the page is refreshed. Reset to a clean idle state instead.
+        if (S.mode === "flying_to" || S.mode === "flying_home") {
+          S.mode            = "idle";
+          S.pendingFeature  = null;
+          S.selectedFeature = null;
+          setFlightRenderMode(false);
+          baseLayer.classed("fm-has-focus", false);
+          clearTargetFeature();
+          clearToast();
+          hideSocket();
+          hideFocusCard();
+        }
+
         fitProjection();
         renderPaths();
+
         if (S.mode === "focused" && S.selectedFeature) {
           rebuildFocus(S.selectedFeature);
         } else {

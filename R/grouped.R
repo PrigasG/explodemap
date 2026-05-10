@@ -230,6 +230,7 @@ estimate_block_radii <- function(sf_obj, region_col,
 #' @param max_iter Max iterations for collision solver (default 60)
 #' @param quantile_p Quantile for block radius estimation (default 0.85)
 #' @param centroid_fun "centroid" or "point_on_surface"
+#' @param quiet If `TRUE`, suppress `message()` output. Default `FALSE`.
 #' @return data.frame with region, anchor_x, anchor_y, block_radius, n_units
 #' @export
 layout_regions <- function(sf_obj, region_col,
@@ -243,7 +244,8 @@ layout_regions <- function(sf_obj, region_col,
                            padding_sep = 20000,
                            max_iter = 60,
                            quantile_p = 0.85,
-                           centroid_fun = c("centroid", "point_on_surface")) {
+                           centroid_fun = c("centroid", "point_on_surface"),
+                           quiet = FALSE) {
   mode <- match.arg(mode)
   centroid_fun <- match.arg(centroid_fun)
 
@@ -291,7 +293,7 @@ layout_regions <- function(sf_obj, region_col,
   if (mode == "auto_collision") {
     block_df <- .refine_anchors(block_df, lambda, eta, padding_sep, max_iter)
 
-    if (!is.null(block_df$.converged)) {
+    if (!quiet && !is.null(block_df$.converged)) {
       if (isTRUE(block_df$.converged[1])) {
         message("Anchor solver converged in ", block_df$.iterations[1], " iterations.")
       } else {
@@ -337,9 +339,11 @@ layout_regions <- function(sf_obj, region_col,
 #' @param max_iter Max collision iterations (default 60)
 #' @param fix_invalid Auto-repair invalid geometries (default TRUE)
 #' @param centroid_fun "centroid" or "point_on_surface"
-#' @param plot Print plots (default TRUE)
+#' @param plot Print plots (default TRUE). Automatically suppressed inside a
+#'   live Shiny session; use [plot.grouped_exploded_map()] inside `renderPlot()`.
 #' @param export NULL, TRUE, or file path
 #' @param label Title for plots
+#' @param quiet If `TRUE`, suppress `message()` output. Default `FALSE`.
 #' @return A `grouped_exploded_map` S3 object (inherits from `exploded_map`)
 #' @export
 explode_grouped <- function(sf_obj, region_col,
@@ -359,7 +363,8 @@ explode_grouped <- function(sf_obj, region_col,
                             centroid_fun = c("centroid", "point_on_surface"),
                             plot         = TRUE,
                             export       = NULL,
-                            label        = "Grouped Layout") {
+                            label        = "Grouped Layout",
+                            quiet        = FALSE) {
   mode <- match.arg(mode)
   centroid_fun <- match.arg(centroid_fun)
 
@@ -377,7 +382,8 @@ explode_grouped <- function(sf_obj, region_col,
     alpha_l <- gamma_l * 2 * stats$R_local / sqrt(stats$n_bar)
   }
 
-  message("Level 1: Applying local explosion (alpha_l = ", round(alpha_l), " m)...")
+  if (!quiet)
+    message("Level 1: Applying local explosion (alpha_l = ", round(alpha_l), " m)...")
   sf_local <- explode_sf_core(
     sf_obj,
     region_col,
@@ -387,10 +393,11 @@ explode_grouped <- function(sf_obj, region_col,
     centroid_fun = centroid_fun
   )
 
-  message(
-    "Level 2", if (mode == "auto_collision") "/3" else "",
-    ": Computing anchor positions (mode = ", mode, ")..."
-  )
+  if (!quiet)
+    message(
+      "Level 2", if (mode == "auto_collision") "/3" else "",
+      ": Computing anchor positions (mode = ", mode, ")..."
+    )
 
   anchor_df <- layout_regions(
     sf_local,
@@ -404,10 +411,11 @@ explode_grouped <- function(sf_obj, region_col,
     eta = eta,
     padding_sep = padding_sep,
     max_iter = max_iter,
-    centroid_fun = centroid_fun
+    centroid_fun = centroid_fun,
+    quiet = quiet
   )
 
-  message("Applying anchor displacement...")
+  if (!quiet) message("Applying anchor displacement...")
 
   reg_sf <- sf_local |>
     dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
@@ -475,8 +483,15 @@ explode_grouped <- function(sf_obj, region_col,
     params = params
   )
 
-  if (plot) {
-    print(plots$grouped)
+  if (isTRUE(plot)) {
+    if (.shiny_is_running()) {
+      message(
+        "explodemap: auto-plot suppressed inside Shiny. ",
+        "Use plot(result) inside renderPlot() to display the maps."
+      )
+    } else {
+      print(plots$grouped)
+    }
   }
 
   .handle_export(export, sf_grouped_wgs, label)

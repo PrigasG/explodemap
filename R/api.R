@@ -31,9 +31,14 @@
 #' @param allow_other If TRUE, permits units mapped to "Other"
 #' @param fix_invalid If TRUE, auto-repairs invalid geometries
 #' @param centroid_fun "centroid" (default) or "point_on_surface"
-#' @param plot Print plots on return (default TRUE)
+#' @param plot Print plots on return (default TRUE). Automatically suppressed
+#'   when called inside a live Shiny session; use [plot.exploded_map()] inside
+#'   `renderPlot()` instead.
 #' @param export NULL (no export), TRUE (auto-named GeoJSON), or a file path
 #' @param label Title for plots and print output
+#' @param quiet If `TRUE`, suppress all `message()` output (useful inside
+#'   Shiny `reactive()` and `observe()` where messages are invisible to users).
+#'   Default `FALSE`.
 #' @return An `exploded_map` S3 object
 #' @export
 explode_state <- function(state_fips,
@@ -55,13 +60,14 @@ explode_state <- function(state_fips,
                           centroid_fun = c("centroid", "point_on_surface"),
                           plot         = TRUE,
                           export       = NULL,
-                          label        = paste0("FIPS ", state_fips)) {
+                          label        = paste0("FIPS ", state_fips),
+                          quiet        = FALSE) {
 
-  message("Downloading TIGER/Line data (FIPS ", state_fips, ")...")
+  if (!quiet) message("Downloading TIGER/Line data (FIPS ", state_fips, ")...")
   sf_raw <- .download_cousub(state_fips, crs)
 
-  message("Assigning regions...")
-  sf_reg <- .attach_regions_tiger(sf_raw, state_fips, region_map)
+  if (!quiet) message("Assigning regions...")
+  sf_reg <- .attach_regions_tiger(sf_raw, state_fips, region_map, quiet = quiet)
 
   n_other   <- sum(sf_reg$region == "Other", na.rm = TRUE)
   n_regions <- dplyr::n_distinct(sf_reg$region[sf_reg$region != "Other"])
@@ -82,7 +88,8 @@ explode_state <- function(state_fips,
                gamma_r, gamma_l, p, alpha_r, alpha_l,
                refine, refine_min_gap, refine_max_shift,
                refine_max_iter, refine_step, match.arg(refine_within),
-               plot, export, label, "region", match.arg(centroid_fun))
+               plot, export, label, "region", match.arg(centroid_fun),
+               quiet = quiet)
 }
 
 
@@ -110,9 +117,12 @@ explode_state <- function(state_fips,
 #' @param allow_other If TRUE, permits "Other" units
 #' @param fix_invalid If TRUE, auto-repairs invalid geometries
 #' @param centroid_fun "centroid" (default) or "point_on_surface"
-#' @param plot Print plots on return
+#' @param plot Print plots on return. Automatically suppressed when called
+#'   inside a live Shiny session; use [plot.exploded_map()] inside
+#'   `renderPlot()` instead.
 #' @param export NULL, TRUE, or file path
 #' @param label Title for plots
+#' @param quiet If `TRUE`, suppress all `message()` output. Default `FALSE`.
 #' @return An `exploded_map` S3 object
 #' @export
 explode_sf <- function(sf_obj,
@@ -133,7 +143,8 @@ explode_sf <- function(sf_obj,
                        centroid_fun = c("centroid", "point_on_surface"),
                        plot         = TRUE,
                        export       = NULL,
-                       label        = "Custom Dataset") {
+                       label        = "Custom Dataset",
+                       quiet        = FALSE) {
 
   sf_obj <- validate_input(sf_obj, region_col, allow_other, fix_invalid)
 
@@ -144,7 +155,8 @@ explode_sf <- function(sf_obj,
                gamma_r, gamma_l, p, alpha_r, alpha_l,
                refine, refine_min_gap, refine_max_shift,
                refine_max_iter, refine_step, match.arg(refine_within),
-               plot, export, label, region_col, match.arg(centroid_fun))
+               plot, export, label, region_col, match.arg(centroid_fun),
+               quiet = quiet)
 }
 
 
@@ -158,6 +170,8 @@ explode_sf <- function(sf_obj,
 #' @param lookup data.frame with join key and region column
 #' @param lookup_key Column name in lookup matching join_col
 #' @param region_col Column name in lookup containing region labels
+#' @param quiet If `TRUE`, suppress `message()` output. Default `FALSE`.
+#'   Passed through to [explode_sf()].
 #' @param ... Passed to [explode_sf()]
 #' @return An `exploded_map` S3 object
 #' @export
@@ -166,6 +180,7 @@ explode_sf_with_lookup <- function(sf_obj,
                                    lookup,
                                    lookup_key = join_col,
                                    region_col = "region",
+                                   quiet      = FALSE,
                                    ...) {
   if (!join_col %in% names(sf_obj))
     stop("join_col '", join_col, "' not found in sf_obj.", call. = FALSE)
@@ -181,10 +196,11 @@ explode_sf_with_lookup <- function(sf_obj,
     )
 
   n_matched <- sum(!is.na(sf_joined[[region_col]]))
-  message("Lookup join: ", n_matched, " / ", nrow(sf_joined), " units matched.")
+  if (!quiet)
+    message("Lookup join: ", n_matched, " / ", nrow(sf_joined), " units matched.")
   sf_joined[[region_col]][is.na(sf_joined[[region_col]])] <- "Other"
 
-  explode_sf(sf_joined, region_col = region_col, ...)
+  explode_sf(sf_joined, region_col = region_col, quiet = quiet, ...)
 }
 
 
@@ -198,7 +214,8 @@ explode_sf_with_lookup <- function(sf_obj,
                          refine, refine_min_gap, refine_max_shift,
                          refine_max_iter, refine_step, refine_within,
                          plot, export, label,
-                         region_col, centroid_fun = "centroid") {
+                         region_col, centroid_fun = "centroid",
+                         quiet = FALSE) {
 
   stats <- compute_stats(sf_for_stats, region_col, centroid_fun = centroid_fun)
   stats$n_units_input <- nrow(sf_obj)
@@ -215,7 +232,7 @@ explode_sf_with_lookup <- function(sf_obj,
     }
     params$alpha_r <- alpha_r_override
     params$gamma_r <- NA_real_
-    message("Using manual alpha_r = ", alpha_r_override, " m")
+    if (!quiet) message("Using manual alpha_r = ", alpha_r_override, " m")
   }
 
   if (!is.null(alpha_l_override)) {
@@ -225,7 +242,7 @@ explode_sf_with_lookup <- function(sf_obj,
     }
     params$alpha_l <- alpha_l_override
     params$gamma_l <- NA_real_
-    message("Using manual alpha_l = ", alpha_l_override, " m")
+    if (!quiet) message("Using manual alpha_l = ", alpha_l_override, " m")
   }
 
   sf_exp     <- explode_sf_core(sf_obj, region_col,
@@ -257,11 +274,12 @@ explode_sf_with_lookup <- function(sf_obj,
     )
     sf_exp <- refined$sf
     refinement <- refined$diagnostics
-    message(
-      "Collision refinement: corrected ", refinement$corrected_pairs,
-      " pair-visits; max shift = ",
-      fmt_dist(refinement$max_shift_observed), "."
-    )
+    if (!quiet)
+      message(
+        "Collision refinement: corrected ", refinement$corrected_pairs,
+        " pair-visits; max shift = ",
+        fmt_dist(refinement$max_shift_observed), "."
+      )
   }
 
   params$refine <- isTRUE(refine)
@@ -274,9 +292,19 @@ explode_sf_with_lookup <- function(sf_obj,
   sf_exp_wgs <- sf::st_transform(sf_exp, 4326)
 
   plots <- .make_plots(sf_obj, sf_exp, region_col, label, params)
-  if (plot) {
-    print(plots$orig)
-    print(plots$exp)
+  if (isTRUE(plot)) {
+    if (.shiny_is_running()) {
+      # Printing ggplot objects inside a Shiny reactive has no visible effect
+      # and may open a rogue graphics device on some servers. Use
+      # plot(result) inside renderPlot() to display the stored plots.
+      message(
+        "explodemap: auto-plot suppressed inside Shiny. ",
+        "Use plot(result) inside renderPlot() to display the maps."
+      )
+    } else {
+      print(plots$orig)
+      print(plots$exp)
+    }
   }
 
   # Handle export: NULL = none, TRUE = auto-name, character = explicit path

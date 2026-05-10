@@ -179,6 +179,18 @@ export_topojson <- function(x, file, simplify = NULL, overwrite = FALSE) {
     )
   }
 
+  if (.shiny_is_running()) {
+    warning(
+      "export_topojson() calls system2() which blocks the R process synchronously. ",
+      "In Shiny this freezes the session (and all other sessions on a ",
+      "single-process server) until mapshaper finishes. ",
+      "Consider running exports inside a downloadHandler() or outside of ",
+      "reactive contexts. On shinyapps.io, mapshaper is not installed and ",
+      "this function will error immediately.",
+      call. = FALSE
+    )
+  }
+
   sf_obj <- .as_export_sf(x)
   exe <- .find_mapshaper()
 

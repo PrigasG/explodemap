@@ -445,3 +445,20 @@ fmt_dist <- function(x_m) {
   if (x_km >= 0.01)  return(sprintf("%.3f km", x_km))
   return(sprintf("%.1f m", x_m))
 }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SHINY DETECTION
+# ─────────────────────────────────────────────────────────────────────────────
+
+#' Detect whether code is executing inside a live Shiny session
+#'
+#' Uses `shiny::isRunning()` when the shiny package is available.
+#' Returns FALSE in all other contexts (scripts, knitr, testthat, etc.).
+#'
+#' @return Logical scalar
+#' @keywords internal
+.shiny_is_running <- function() {
+  requireNamespace("shiny", quietly = TRUE) &&
+    isTRUE(tryCatch(shiny::isRunning(), error = function(e) FALSE))
+}

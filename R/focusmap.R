@@ -45,7 +45,8 @@
 #'   default is used.
 #' @param font_size Label font size in px. Default \code{14}.
 #' @param show_labels Show labels on lifted shapes? Default \code{TRUE}.
-#' @param show_sidebar Show control sidebar? Default \code{TRUE}.
+#' @param show_sidebar Deprecated and has no effect. Will be removed in a
+#'   future version.
 #' @param performance_mode Logical or \code{NULL}. If \code{NULL}, dense
 #'   layers automatically use shorter camera transitions and lighter
 #'   in-flight rendering. Set \code{TRUE} to force it or \code{FALSE} to
@@ -107,6 +108,14 @@ focus_map <- function(x,
                       height       = "600px",
                       elementId    = NULL) {
 
+  if (!missing(show_sidebar)) {
+    warning(
+      "`show_sidebar` in focus_map() is not implemented and has no effect. ",
+      "It will be removed in a future version of explodemap.",
+      call. = FALSE
+    )
+  }
+
   sf_obj <- .as_viewer_sf(x)
   info_position <- match.arg(info_position)
 
@@ -129,7 +138,12 @@ focus_map <- function(x,
 
   if (!is.null(id_col)) {
     if (!id_col %in% names(sf_obj)) {
-      warning("id_col '", id_col, "' not found; using row order.", call. = FALSE)
+      warning(
+        "id_col '", id_col, "' not found in the data; falling back to row order. ",
+        "In Shiny, input$<outputId>_selected$id will contain sequential integers ",
+        "instead of the expected geographic identifiers.",
+        call. = FALSE
+      )
       id_col <- NULL
     }
   }
@@ -246,7 +260,6 @@ focus_map <- function(x,
       maxZoom      = max_zoom,
       fontSize     = font_size,
       showLabels   = show_labels,
-      showSidebar  = show_sidebar,
       performanceMode = performance_mode,
       showInfoCard = !is.null(info_cols) && length(info_cols) > 0,
       infoPosition = info_position,
@@ -353,8 +366,11 @@ renderFocusmap <- function(expr, env = parent.frame(), quoted = FALSE) {
                delete_dsn = TRUE,
                layer_options = c("RFC7946=YES", "WRITE_BBOX=NO"))
 
-  # Return raw JSON string — JS will parse it, not R
-  paste(readLines(tmp, warn = FALSE), collapse = "\n")
+  # Return raw JSON string — JS will parse it, not R.
+  # encoding = "UTF-8" is required: sf::st_write produces UTF-8 GeoJSON but
+  # readLines() defaults to the system locale on Windows, which silently
+  # mojibakes non-ASCII feature names (accented characters, CJK, etc.).
+  paste(readLines(tmp, encoding = "UTF-8", warn = FALSE), collapse = "\n")
 }
 
 #' @keywords internal

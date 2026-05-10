@@ -3,15 +3,50 @@
 # =============================================================================
 
 # Cache setup
+#
+# Directory resolution order:
+#   1. getOption("explodemap.cache_dir")  — set this in Shiny server() to a
+#      writable path on the server, e.g. options(explodemap.cache_dir = "/tmp/em")
+#   2. tools::R_user_dir("explodemap", "cache")  — XDG-compliant user cache
+#      (~/.cache/explodemap on Linux, ~/Library/Caches/explodemap on macOS,
+#       %LOCALAPPDATA%/explodemap on Windows).
+#
+# Both dir creation and file writes are wrapped in tryCatch so a read-only
+# or ephemeral filesystem (shinyapps.io, Posit Cloud) degrades gracefully:
+# the download still works, just without caching.
 .cache_dir <- function() {
-  d <- file.path(path.expand("~"), "explode_map_cache")
-  dir.create(d, showWarnings = FALSE, recursive = TRUE)
+  d <- getOption(
+    "explodemap.cache_dir",
+    tools::R_user_dir("explodemap", which = "cache")
+  )
+  tryCatch(
+    dir.create(d, showWarnings = FALSE, recursive = TRUE),
+    error = function(e) NULL
+  )
   d
 }
 .cache_path   <- function(key) file.path(.cache_dir(), paste0(key, ".rds"))
 .cache_exists <- function(key) file.exists(.cache_path(key))
 .cache_load   <- function(key) readRDS(.cache_path(key))
-.cache_save   <- function(key, obj) { saveRDS(obj, .cache_path(key)); obj }
+.cache_save   <- function(key, obj) {
+  # withCallingHandlers muffles the "cannot open compressed file" warning that
+  # gzfile emits on Windows when the target path is unwritable. The subsequent
+  # write error is still caught by the outer tryCatch so the caller always
+  # gets obj back without a crash.
+  tryCatch(
+    withCallingHandlers(
+      { saveRDS(obj, .cache_path(key)); obj },
+      warning = function(w) invokeRestart("muffleWarning")
+    ),
+    error = function(e) {
+      message(
+        "explodemap: cache write failed (", conditionMessage(e),
+        "); proceeding without caching."
+      )
+      obj
+    }
+  )
+}
 
 
 #' Download TIGER/Line county subdivision boundaries
@@ -63,7 +98,7 @@
 
 #' Attach region labels to TIGER/Line data via county names
 #' @keywords internal
-.attach_regions_tiger <- function(sf_obj, fips, region_map) {
+.attach_regions_tiger <- function(sf_obj, fips, region_map, quiet = FALSE) {
   region_df <- dplyr::bind_rows(lapply(names(region_map), function(r)
     data.frame(county_name = region_map[[r]], region = r,
                stringsAsFactors = FALSE)))
@@ -80,10 +115,11 @@
                      by = "COUNTYFP")
 
   n_matched <- sum(!is.na(sf_result$region))
-  message("Region assignment: ", n_matched, " / ", nrow(sf_result), " units matched.")
+  if (!quiet)
+    message("Region assignment: ", n_matched, " / ", nrow(sf_result), " units matched.")
 
   unmatched <- counties$NAME[!counties$NAME %in% region_df$county_name]
-  if (length(unmatched) > 0)
+  if (!quiet && length(unmatched) > 0)
     message("Unmatched counties: ",
             paste(utils::head(unmatched, 8), collapse = ", "),
             if (length(unmatched) > 8) paste0("... +", length(unmatched) - 8, " more"))
