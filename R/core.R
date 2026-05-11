@@ -458,6 +458,7 @@ fmt_dist <- function(x_m) {
 #'
 #' @return Logical scalar
 #' @keywords internal
+#' @noRd
 .shiny_is_running <- function() {
   requireNamespace("shiny", quietly = TRUE) &&
     isTRUE(tryCatch(shiny::isRunning(), error = function(e) FALSE))

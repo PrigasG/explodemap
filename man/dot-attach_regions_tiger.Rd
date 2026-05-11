@@ -4,7 +4,7 @@
 \alias{.attach_regions_tiger}
 \title{Attach region labels to TIGER/Line data via county names}
 \usage{
-.attach_regions_tiger(sf_obj, fips, region_map)
+.attach_regions_tiger(sf_obj, fips, region_map, quiet = FALSE)
 }
 \description{
 Attach region labels to TIGER/Line data via county names

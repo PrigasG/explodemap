@@ -11,6 +11,14 @@ focus_map(
   label_col = NULL,
   id_col = NULL,
   group_col = NULL,
+  group_palette = NULL,
+  context_col = NULL,
+  context_values = "context",
+  context_mode = c("fade", "hide", "show"),
+  context_fill = "#cfd9df",
+  context_opacity = 0.18,
+  context_clickable = FALSE,
+  focus_preset = c("none", "municipal", "drilldown", "municipal_drilldown"),
   simplify = TRUE,
   fill = "#2d6ea3",
   fill_opacity = 0.58,
@@ -18,7 +26,15 @@ focus_map(
   lift_scale = 1.16,
   focus_padding = 40,
   focus_size = 0.76,
+  min_focus_width = 0,
+  min_focus_height = 0,
+  tiny_feature_threshold = 48,
+  tiny_feature_boost = 1,
   max_zoom = NULL,
+  origin_context = c("none", "socket", "inset", "both"),
+  origin_context_position = c("bottom-left", "bottom-right", "top-left", "top-right"),
+  focus_context_opacity = 0.3,
+  show_drag_zoom = FALSE,
   font_size = 14,
   show_labels = TRUE,
   show_sidebar = TRUE,
@@ -53,6 +69,34 @@ Defaults to row order if \code{NULL}.}
 \item{group_col}{Character. Optional column for region/group
 colouring. Polygons sharing a group value share a hue.}
 
+\item{group_palette}{Optional named character vector of colours for
+\code{group_col} values. Names should match group values; unmatched groups
+fall back to the widget palette.}
+
+\item{context_col}{Optional column identifying features that should remain
+as geographic context rather than active focus features.}
+
+\item{context_values}{Character vector of values in \code{context_col} that mark
+context features. Default \code{"context"}.}
+
+\item{context_mode}{How context features are drawn: \code{"fade"} keeps them
+visible but muted, \code{"hide"} makes them invisible, and \code{"show"} draws them
+normally.}
+
+\item{context_fill}{Fill colour for context features when
+\code{context_mode = "fade"}.}
+
+\item{context_opacity}{Fill opacity for faded context features.}
+
+\item{context_clickable}{Should context features remain clickable? Default
+\code{FALSE}.}
+
+\item{focus_preset}{Optional named preset for common interactive workflows.
+\code{"municipal"} tunes small-area focus, source cues, drag zoom, and dense
+layer performance. \code{"drilldown"} tunes context fading and source cues for
+selected-section maps. \code{"municipal_drilldown"} combines both. Explicit
+arguments supplied by the user override preset defaults.}
+
 \item{simplify}{Controls geometry simplification for rendering
 performance. \code{TRUE} (default) applies a sensible tolerance
 (\code{dTolerance = 0.001} in WGS 84 degrees, \eqn{\approx}
@@ -78,14 +122,45 @@ close to the map edge.}
 may occupy. Increase this to make selected areas appear larger while
 preserving \code{focus_padding}.}
 
+\item{min_focus_width, min_focus_height}{Minimum focused feature width and
+height in screen pixels. When a selected feature is very small, the widget
+may zoom past the usual density-aware default until the lifted feature
+reaches these dimensions. Set to \code{0} to disable either constraint.}
+
+\item{tiny_feature_threshold}{Screen-pixel size below which a selected
+feature receives an adaptive lift-scale boost. Set to \code{0} to disable.}
+
+\item{tiny_feature_boost}{Maximum multiplier applied to \code{lift_scale}
+for the smallest features. Values below \code{1} are not allowed.}
+
 \item{max_zoom}{Optional maximum camera zoom. If \code{NULL}, a density-aware
 default is used.}
+
+\item{origin_context}{How the selected feature's source location should be
+shown while focused. The default \code{"none"} keeps focus maps visually
+unchanged unless this feature is explicitly enabled. \code{"socket"} keeps
+the source outline in the main
+map, \code{"inset"} shows a small overview map, \code{"both"} uses both,
+and \code{"none"} disables the cue.}
+
+\item{origin_context_position}{Position for the overview inset:
+\code{"bottom-left"}, \code{"bottom-right"}, \code{"top-left"}, or
+\code{"top-right"}.}
+
+\item{focus_context_opacity}{Fill opacity for non-selected features while a
+feature is focused. Lower values make tiny selected areas easier to read.}
+
+\item{show_drag_zoom}{Show a widget-level drag-zoom toggle. When enabled,
+users can draw a marquee rectangle to zoom into dense clusters while
+ordinary feature clicks continue to focus the map. Shift-drag works as a
+shortcut even when the button is hidden.}
 
 \item{font_size}{Label font size in px. Default \code{14}.}
 
 \item{show_labels}{Show labels on lifted shapes? Default \code{TRUE}.}
 
-\item{show_sidebar}{Show control sidebar? Default \code{TRUE}.}
+\item{show_sidebar}{Deprecated and has no effect. Will be removed in a
+future version.}
 
 \item{performance_mode}{Logical or \code{NULL}. If \code{NULL}, dense
 layers automatically use shorter camera transitions and lighter

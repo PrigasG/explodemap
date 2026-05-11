@@ -12,6 +12,7 @@ explode_sf_with_lookup(
   lookup,
   lookup_key = join_col,
   region_col = "region",
+  quiet = FALSE,
   ...
 )
 ```
@@ -37,6 +38,12 @@ explode_sf_with_lookup(
 - region_col:
 
   Column name in lookup containing region labels
+
+- quiet:
+
+  If `TRUE`, suppress [`message()`](https://rdrr.io/r/base/message.html)
+  output. Default `FALSE`. Passed through to
+  [`explode_sf()`](https://prigasg.github.io/explodemap/reference/explode_sf.md).
 
 - ...:
 

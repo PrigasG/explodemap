@@ -1,7 +1,7 @@
 citHeader("To cite explodemap in publications, please use:")
 
-citEntry(
-  entry = "Manual",
+bibentry(
+  bibtype = "Manual",
   title = "explodemap: Hierarchical Exploded-View Cartography",
   author = person("George", "Arthur"),
   year = "2026",
@@ -12,4 +12,3 @@ citEntry(
     "Cartography. R package version 0.2.0."
   )
 )
-

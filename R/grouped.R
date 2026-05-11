@@ -336,6 +336,10 @@ layout_regions <- function(sf_obj, region_col,
 #' @param lambda Spring coefficient (default 0.18)
 #' @param eta Repulsion step (default 0.18)
 #' @param padding_sep Minimum block separation (default 20000)
+#' @param anchor_expand,anchor_buffer,density_scale,block_sep Optional aliases
+#'   for `kappa`, `padding`, `delta`, and `padding_sep`, respectively. These
+#'   names are convenient in Shiny dashboards where the controls describe the
+#'   visual effect rather than the solver term.
 #' @param max_iter Max collision iterations (default 60)
 #' @param fix_invalid Auto-repair invalid geometries (default TRUE)
 #' @param centroid_fun "centroid" or "point_on_surface"
@@ -358,6 +362,10 @@ explode_grouped <- function(sf_obj, region_col,
                             lambda       = 0.18,
                             eta          = 0.18,
                             padding_sep  = 20000,
+                            anchor_expand = NULL,
+                            anchor_buffer = NULL,
+                            density_scale = NULL,
+                            block_sep     = NULL,
                             max_iter     = 60,
                             fix_invalid  = TRUE,
                             centroid_fun = c("centroid", "point_on_surface"),
@@ -367,6 +375,11 @@ explode_grouped <- function(sf_obj, region_col,
                             quiet        = FALSE) {
   mode <- match.arg(mode)
   centroid_fun <- match.arg(centroid_fun)
+
+  if (!is.null(anchor_expand)) kappa <- anchor_expand
+  if (!is.null(anchor_buffer)) padding <- anchor_buffer
+  if (!is.null(density_scale)) delta <- density_scale
+  if (!is.null(block_sep)) padding_sep <- block_sep
 
   sf_obj <- validate_input(
     sf_obj,
@@ -471,7 +484,8 @@ explode_grouped <- function(sf_obj, region_col,
     padding = padding,
     delta = delta,
     lambda = lambda,
-    eta = eta
+    eta = eta,
+    padding_sep = padding_sep
   )
 
   plots <- .make_grouped_plots(

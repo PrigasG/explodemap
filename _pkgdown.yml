@@ -28,7 +28,6 @@ navbar:
     - intro
     - reference
     - articles
-    - cheatsheet
     - news
     right:
     - search
@@ -52,9 +51,6 @@ navbar:
       - text: '---'
       - text: Reproducing the paper examples
         href: articles/reproducing-paper-examples.html
-    cheatsheet:
-      text: Cheatsheet
-      href: cheatsheet/explodemap-cheatsheet.pdf
     news:
       text: News
       href: news/index.html
@@ -74,6 +70,7 @@ reference:
   desc: |
     htmlwidgets and Shiny helpers for selected-feature focus, labels, and non-blocking information cards.
   contents:
+  - explode_section
   - focus_map
   - focusmapOutput
   - renderFocusmap

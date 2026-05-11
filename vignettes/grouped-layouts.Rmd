@@ -100,7 +100,8 @@ g_auto <- explode_grouped(
   x,
   region_col = "region",
   mode       = "auto",
-  plot       = FALSE
+  plot       = FALSE,
+  quiet      = TRUE
 )
 
 class(g_auto)
@@ -131,7 +132,8 @@ g_collide <- explode_grouped(
   x,
   region_col = "region",
   mode       = "auto_collision",
-  plot       = FALSE
+  plot       = FALSE,
+  quiet      = TRUE
 )
 
 plot(g_collide)
@@ -161,7 +163,8 @@ is useful for custom workflows or manual adjustment:
 anchors <- layout_regions(
   x,
   region_col = "region",
-  mode       = "auto"
+  mode       = "auto",
+  quiet      = TRUE
 )
 
 anchors[, c("region", "block_radius", "n_units", "anchor_x", "anchor_y")]
@@ -182,7 +185,8 @@ g_manual <- explode_grouped(
   region_col = "region",
   mode       = "manual",
   anchors    = manual_anchors,
-  plot       = FALSE
+  plot       = FALSE,
+  quiet      = TRUE
 )
 
 plot(g_manual)
@@ -219,6 +223,27 @@ smaller or larger extents, adjust `padding`, `delta`, and
 ```{r summary}
 summary(g_collide)
 ```
+
+## Interactive grouped focus maps
+
+Grouped results can be passed directly to `focus_map()`. The widget
+automatically uses `sf_grouped_wgs`, so the displayed geometry matches
+the grouped layout:
+
+```{r grouped-focus-map, eval=FALSE}
+focus_map(
+  g_collide,
+  label_col = "id",
+  id_col = "id",
+  group_col = "region",
+  info_cols = c("region"),
+  performance_mode = TRUE
+)
+```
+
+Inside Shiny, pair `explode_grouped(..., quiet = TRUE, plot = FALSE)`
+with `renderFocusmap()` to avoid console noise and accidental plot
+printing.
 
 ## What the grouped object stores
 

@@ -27,7 +27,6 @@ labelled "Other".'><meta property="og:image" content="https://prigasg.github.io/
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing the paper examples</a></li>
   </ul></li>
-<li class="nav-item"><a class="nav-link" href="../cheatsheet/explodemap-cheatsheet.pdf">Cheatsheet</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -57,6 +56,7 @@ labelled "Other".</p>
 <span>  <span class="va">lookup</span>,</span>
 <span>  lookup_key <span class="op">=</span> <span class="va">join_col</span>,</span>
 <span>  region_col <span class="op">=</span> <span class="st">"region"</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -83,6 +83,11 @@ labelled "Other".</p>
 
 <dt id="arg-region-col">region_col<a class="anchor" aria-label="anchor" href="#arg-region-col"></a></dt>
 <dd><p>Column name in lookup containing region labels</p></dd>
+
+
+<dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
+<dd><p>If <code>TRUE</code>, suppress <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> output. Default <code>FALSE</code>.
+Passed through to <code><a href="explode_sf.html">explode_sf()</a></code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

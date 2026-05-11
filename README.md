@@ -2,7 +2,7 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/george-arthur/explodemap)
+[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/PrigasG/explodemap)
 [![License:
 MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
@@ -48,11 +48,11 @@ install.packages("explodemap_0.2.0.tar.gz", repos = NULL, type = "source")
 The package also includes analytical parameter derivation, cross-dataset
 calibration helpers, optional bounded collision refinement for dense
 municipal cores, and optional TopoJSON export for downstream tools such
-as Power BI.
+as Power BI. Shiny workflows are supported with `focusmapOutput()`,
+`renderFocusmap()`, stable selection events, information cards, and
+`quiet = TRUE` options on geometry builders to keep server logs clean.
 
 For a compact overview, see the
-[cheatsheet](https://prigasg.github.io/explodemap/cheatsheet/explodemap-cheatsheet.pdf)
-and the
 [workflow guide](https://prigasg.github.io/explodemap/articles/workflow-guide.html).
 
 ## Quick start
@@ -93,6 +93,14 @@ print(result)
 plot(result, "both")
 ```
 
+Inside Shiny, keep geometry computation quiet and render the returned
+object explicitly:
+
+``` r
+result <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
+focus_map(result, label_col = "id", group_col = "region")
+```
+
 ## Core entry points
 
 ### Explode any projected `sf` object
@@ -126,6 +134,54 @@ result <- explode_sf_with_lookup(
   lookup_key = "geoid", region_col = "region"
 )
 ```
+
+### Filter a visible section before exploding
+
+In Shiny dashboards and drill-down maps, it is often clearer to filter the
+section the user selected before calling `explode_sf()`. The selected
+subset can then use a more local grouping column while the all-region view
+continues to use the broader region groups.
+
+``` r
+selected_region <- input$region_focus
+if (is.null(selected_region) || !nzchar(selected_region)) {
+  selected_region <- "all"
+}
+
+visible_sf <- if (identical(selected_region, "all")) {
+  nj_counties
+} else {
+  nj_counties[nj_counties$region == selected_region, ]
+}
+
+visible_sf$explode_group <- if (identical(selected_region, "all")) {
+  visible_sf$region
+} else {
+  visible_sf$county_name
+}
+
+exploded <- explode_sf(
+  visible_sf,
+  region_col = "explode_group",
+  alpha_r = if (identical(selected_region, "all")) 26000 else 5250,
+  alpha_l = if (identical(selected_region, "all")) 12500 else 0,
+  refine = TRUE,
+  refine_within = "all",
+  plot = FALSE,
+  quiet = TRUE
+)
+
+focus_map(
+  exploded,
+  label_col = "county_name",
+  group_col = "region",
+  info_cols = c("population_label", "section_rank", "region")
+)
+```
+
+This pattern keeps a compact, focused map for section filters while still
+using the same `explode_sf()` and `focus_map()` workflow as the full map.
+Future package helpers may wrap this filter-first workflow directly.
 
 ## Grouped layouts
 
@@ -166,6 +222,96 @@ Grouped layouts also support:
 
 ``` r
 plot(result, "all")       # original + local + grouped
+```
+
+## Interactive focus maps
+
+`focus_map()` accepts raw `sf`, `exploded_map`, and
+`grouped_exploded_map` objects. For exploded objects it automatically
+uses the WGS84 displaced geometry, so the same result can be plotted,
+exported, or rendered as an interactive focus map.
+
+``` r
+focus_map(
+  result,
+  label_col = "NAME",
+  id_col = "GEOID",
+  group_col = "region",
+  group_palette = c(North = "#4C78A8", Central = "#F58518", South = "#54A24B"),
+  info_cols = c("population", "median_income"),
+  info_card_scale = 0.95
+)
+```
+
+In Shiny, use the exported widget helpers. The widget emits a selection
+value at `input$<outputId>_selected` containing the selected feature ID,
+label, group, and properties.
+
+``` r
+ui <- fluidPage(
+  focusmapOutput("map", height = "650px"),
+  verbatimTextOutput("selected")
+)
+
+server <- function(input, output, session) {
+  output$map <- renderFocusmap({
+    focus_map(result, label_col = "NAME", id_col = "GEOID")
+  })
+
+  output$selected <- renderPrint(input$map_selected)
+}
+```
+
+Use `group_palette` when a dashboard legend or data category already has
+meaningful colours. Unmatched groups fall back to the built-in palette, so
+apps can provide partial palettes while still rendering all groups.
+
+For drill-down dashboards, use `explode_section()` to explode only the
+selected section while keeping the rest of the geography as muted context:
+
+``` r
+focused <- explode_section(
+  municipalities,
+  section_col = "nj_region",
+  section = "South",
+  region_col = "county_name",
+  alpha_r = 900,
+  alpha_l = 600,
+  plot = FALSE,
+  quiet = TRUE
+)
+
+focus_map(
+  focused,
+  label_col = "NAME",
+  id_col = "GEOID",
+  context_col = ".explodemap_role",
+  context_mode = "fade",
+  context_opacity = 0.16
+)
+```
+
+This pattern supports the "click a region, explode that region, keep the
+state as context" workflow without forcing app code to manually stitch
+focus and background geometries back together.
+
+For dense municipal maps, tiny polygons can opt into a closer focus without
+changing the default county-scale behavior:
+
+``` r
+focus_map(
+  focused_municipalities,
+  label_col = "NAME",
+  id_col = "GEOID",
+  min_focus_width = 115,
+  min_focus_height = 88,
+  tiny_feature_threshold = 52,
+  tiny_feature_boost = 1.45,
+  origin_context = "inset",
+  origin_context_position = "bottom-left",
+  focus_context_opacity = 0.14,
+  show_drag_zoom = TRUE
+)
 ```
 
 ## Mathematical guarantees
@@ -231,6 +377,16 @@ refined <- explode_sf(
 This optional layer nudges close same-region neighbors apart while capping
 the extra correction per feature. Use `refine_within = "all"` if the
 remaining crowding crosses region boundaries.
+
+For app code, all main geometry workflows accept `quiet = TRUE`:
+
+``` r
+explode_sf(my_sf, "district", plot = FALSE, quiet = TRUE)
+explode_sf_with_lookup(my_sf, "GEOID", lookup, plot = FALSE, quiet = TRUE)
+explode_state("34", crs = 32118, region_map = regions, plot = FALSE, quiet = TRUE)
+explode_grouped(my_sf, "district", mode = "auto_collision", plot = FALSE, quiet = TRUE)
+layout_regions(my_sf, "district", mode = "auto_collision", quiet = TRUE)
+```
 
 ## Examples
 

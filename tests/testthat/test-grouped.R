@@ -56,3 +56,26 @@ test_that("grouped methods run invisibly", {
   expect_invisible(plot(out, "local"))
   expect_invisible(plot(out, "all"))
 })
+
+test_that("explode_grouped accepts visual alias arguments", {
+  x <- make_grouped_sf()
+
+  out <- explode_grouped(
+    x,
+    region_col = "region",
+    mode = "auto_collision",
+    anchor_expand = 1.2,
+    anchor_buffer = 100,
+    density_scale = 50,
+    block_sep = 75,
+    max_iter = 2,
+    plot = FALSE,
+    quiet = TRUE
+  )
+
+  expect_s3_class(out, "grouped_exploded_map")
+  expect_equal(out$params$kappa, 1.2)
+  expect_equal(out$params$padding, 100)
+  expect_equal(out$params$delta, 50)
+  expect_equal(out$params$padding_sep, 75)
+})

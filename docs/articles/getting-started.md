@@ -98,6 +98,16 @@ Pass your sf object and the name of the grouping column:
 result <- explode_sf(x, region_col = "region", plot = FALSE)
 ```
 
+In Shiny or other non-interactive pipelines, add `quiet = TRUE` to
+suppress progress messages:
+
+``` r
+
+quiet_result <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
+class(quiet_result)
+#> [1] "exploded_map" "list"
+```
+
 The returned object is an S3 object of class `exploded_map`:
 
 ``` r
@@ -363,6 +373,9 @@ nj <- explode_state(
 
 Downloaded data is cached locally so subsequent runs are faster.
 
+Use `quiet = TRUE` in app code if downloads and region assignment happen
+inside a reactive expression.
+
 ## Using a lookup table
 
 [`explode_sf_with_lookup()`](https://prigasg.github.io/explodemap/reference/explode_sf_with_lookup.md)
@@ -399,6 +412,101 @@ result <- explode_sf(
   my_sf,
   region_col = "region",
   export = "output.geojson"
+)
+```
+
+## Interactive focus maps and Shiny
+
+[`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
+renders raw `sf`, `exploded_map`, or `grouped_exploded_map` objects as
+an interactive htmlwidget. Click a polygon to zoom and lift it into
+focus; right-click or press Escape to reset. Information cards can show
+selected fields without blocking the map.
+
+``` r
+
+focus_map(
+  result,
+  label_col = "id",
+  id_col = "id",
+  group_col = "region",
+  group_palette = c(A = "#4C78A8", B = "#F58518", C = "#54A24B"),
+  info_cols = c("id", "region"),
+  info_card_scale = 0.95
+)
+```
+
+In Shiny, use
+[`focusmapOutput()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
+and
+[`renderFocusmap()`](https://prigasg.github.io/explodemap/reference/focus_map.md).
+The widget emits `input$<outputId>_selected`, which includes the
+selected feature ID, label, group, and properties.
+
+``` r
+
+ui <- shiny::fluidPage(
+  focusmapOutput("map", height = "650px"),
+  shiny::verbatimTextOutput("selected")
+)
+
+server <- function(input, output, session) {
+  exploded <- explode_sf(x, "region", plot = FALSE, quiet = TRUE)
+
+  output$map <- renderFocusmap({
+    focus_map(
+      exploded,
+      label_col = "id",
+      id_col = "id",
+      group_col = "region",
+      group_palette = c(A = "#4C78A8", B = "#F58518", C = "#54A24B")
+    )
+  })
+
+  output$selected <- shiny::renderPrint(input$map_selected)
+}
+```
+
+For section drill-downs, use
+[`explode_section()`](https://prigasg.github.io/explodemap/reference/explode_section.md)
+before rendering. It explodes the selected section and marks the rest of
+the layer as context:
+
+``` r
+
+focused <- explode_section(
+  x,
+  section_col = "region",
+  section = "A",
+  region_col = "county",
+  alpha_r = 900,
+  alpha_l = 600,
+  plot = FALSE,
+  quiet = TRUE
+)
+
+focus_map(
+  focused,
+  label_col = "id",
+  context_col = ".explodemap_role",
+  context_mode = "fade"
+)
+```
+
+Small municipal features can use adaptive focus sizing so the selected
+polygon is not left visually distant after the camera moves:
+
+``` r
+
+focus_map(
+  focused,
+  label_col = "id",
+  context_col = ".explodemap_role",
+  context_mode = "fade",
+  min_focus_width = 115,
+  min_focus_height = 88,
+  tiny_feature_threshold = 52,
+  tiny_feature_boost = 1.45
 )
 ```
 

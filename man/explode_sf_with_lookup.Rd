@@ -10,6 +10,7 @@ explode_sf_with_lookup(
   lookup,
   lookup_key = join_col,
   region_col = "region",
+  quiet = FALSE,
   ...
 )
 }
@@ -23,6 +24,9 @@ explode_sf_with_lookup(
 \item{lookup_key}{Column name in lookup matching join_col}
 
 \item{region_col}{Column name in lookup containing region labels}
+
+\item{quiet}{If \code{TRUE}, suppress \code{message()} output. Default \code{FALSE}.
+Passed through to \code{\link[=explode_sf]{explode_sf()}}.}
 
 \item{...}{Passed to \code{\link[=explode_sf]{explode_sf()}}}
 }

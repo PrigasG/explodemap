@@ -17,7 +17,8 @@ layout_regions(
   padding_sep = 20000,
   max_iter = 60,
   quantile_p = 0.85,
-  centroid_fun = c("centroid", "point_on_surface")
+  centroid_fun = c("centroid", "point_on_surface"),
+  quiet = FALSE
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ layout_regions(
 \item{quantile_p}{Quantile for block radius estimation (default 0.85)}
 
 \item{centroid_fun}{"centroid" or "point_on_surface"}
+
+\item{quiet}{If \code{TRUE}, suppress \code{message()} output. Default \code{FALSE}.}
 }
 \value{
 data.frame with region, anchor_x, anchor_y, block_radius, n_units

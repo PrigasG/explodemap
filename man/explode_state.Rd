@@ -24,7 +24,8 @@ explode_state(
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
-  label = paste0("FIPS ", state_fips)
+  label = paste0("FIPS ", state_fips),
+  quiet = FALSE
 )
 }
 \arguments{
@@ -68,11 +69,17 @@ If NULL and \code{refine = TRUE}, uses 10\% of \code{alpha_r + alpha_l}.}
 
 \item{centroid_fun}{"centroid" (default) or "point_on_surface"}
 
-\item{plot}{Print plots on return (default TRUE)}
+\item{plot}{Print plots on return (default TRUE). Automatically suppressed
+when called inside a live Shiny session; use \code{\link[=plot.exploded_map]{plot.exploded_map()}} inside
+\code{renderPlot()} instead.}
 
 \item{export}{NULL (no export), TRUE (auto-named GeoJSON), or a file path}
 
 \item{label}{Title for plots and print output}
+
+\item{quiet}{If \code{TRUE}, suppress all \code{message()} output (useful inside
+Shiny \code{reactive()} and \code{observe()} where messages are invisible to users).
+Default \code{FALSE}.}
 }
 \value{
 An \code{exploded_map} S3 object

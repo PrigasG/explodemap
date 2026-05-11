@@ -18,12 +18,17 @@ explode_grouped(
   lambda = 0.18,
   eta = 0.18,
   padding_sep = 20000,
+  anchor_expand = NULL,
+  anchor_buffer = NULL,
+  density_scale = NULL,
+  block_sep = NULL,
   max_iter = 60,
   fix_invalid = TRUE,
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
-  label = "Grouped Layout"
+  label = "Grouped Layout",
+  quiet = FALSE
 )
 }
 \arguments{
@@ -53,17 +58,25 @@ explode_grouped(
 
 \item{padding_sep}{Minimum block separation (default 20000)}
 
+\item{anchor_expand, anchor_buffer, density_scale, block_sep}{Optional aliases
+for \code{kappa}, \code{padding}, \code{delta}, and \code{padding_sep}, respectively. These
+names are convenient in Shiny dashboards where the controls describe the
+visual effect rather than the solver term.}
+
 \item{max_iter}{Max collision iterations (default 60)}
 
 \item{fix_invalid}{Auto-repair invalid geometries (default TRUE)}
 
 \item{centroid_fun}{"centroid" or "point_on_surface"}
 
-\item{plot}{Print plots (default TRUE)}
+\item{plot}{Print plots (default TRUE). Automatically suppressed inside a
+live Shiny session; use \code{\link[=plot.grouped_exploded_map]{plot.grouped_exploded_map()}} inside \code{renderPlot()}.}
 
 \item{export}{NULL, TRUE, or file path}
 
 \item{label}{Title for plots}
+
+\item{quiet}{If \code{TRUE}, suppress \code{message()} output. Default \code{FALSE}.}
 }
 \value{
 A \code{grouped_exploded_map} S3 object (inherits from \code{exploded_map})

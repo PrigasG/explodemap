@@ -23,7 +23,8 @@ explode_sf(
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
-  label = "Custom Dataset"
+  label = "Custom Dataset",
+  quiet = FALSE
 )
 }
 \arguments{
@@ -65,11 +66,15 @@ If NULL and \code{refine = TRUE}, uses 10\% of \code{alpha_r + alpha_l}.}
 
 \item{centroid_fun}{"centroid" (default) or "point_on_surface"}
 
-\item{plot}{Print plots on return}
+\item{plot}{Print plots on return. Automatically suppressed when called
+inside a live Shiny session; use \code{\link[=plot.exploded_map]{plot.exploded_map()}} inside
+\code{renderPlot()} instead.}
 
 \item{export}{NULL, TRUE, or file path}
 
 \item{label}{Title for plots}
+
+\item{quiet}{If \code{TRUE}, suppress all \code{message()} output. Default \code{FALSE}.}
 }
 \value{
 An \code{exploded_map} S3 object
