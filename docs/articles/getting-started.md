@@ -506,7 +506,11 @@ focus_map(
   min_focus_width = 115,
   min_focus_height = 88,
   tiny_feature_threshold = 52,
-  tiny_feature_boost = 1.45
+  tiny_feature_boost = 1.45,
+  origin_context = "inset",
+  origin_context_position = "bottom-left",
+  focus_context_opacity = 0.14,
+  show_drag_zoom = TRUE
 )
 ```
 

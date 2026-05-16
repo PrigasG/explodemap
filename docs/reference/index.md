@@ -23,6 +23,8 @@ non-blocking information cards.
   [`focusmapOutput()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
   [`renderFocusmap()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
   : Interactive focus-map viewer
+- [`focus_map_preset()`](https://prigasg.github.io/explodemap/reference/focus_map_preset.md)
+  : Focus-map option presets
 
 ## Grouped layouts
 

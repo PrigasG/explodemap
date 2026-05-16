@@ -102,6 +102,37 @@ result <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
 focus_map(result, label_col = "id", group_col = "region")
 ```
 
+## Public dashboards
+
+For public Shiny dashboards, pre-cache or cache boundary downloads where
+possible, and keep map computation out of automatic plotting paths:
+
+``` r
+
+result <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
+```
+
+When a dashboard downloads live TIGER/Line or `tigris` data, wrap the
+load and map-generation steps in Shiny validation so users see a plain
+message instead of a stack trace:
+
+``` r
+
+safe_map <- reactive({
+  tryCatch(
+    explode_sf(x(), region_col = "region", plot = FALSE, quiet = TRUE),
+    error = function(e) {
+      validate(need(FALSE, conditionMessage(e)))
+    }
+  )
+})
+```
+
+Installed example apps in `inst/examples/` include this pattern.
+TopoJSON export is optional and requires the external `mapshaper`
+command-line tool; apps deployed to managed services should check for it
+before offering exports.
+
 ## Core entry points
 
 ### Explode any projected `sf` object
@@ -327,7 +358,11 @@ focus_map(
   min_focus_width = 115,
   min_focus_height = 88,
   tiny_feature_threshold = 52,
-  tiny_feature_boost = 1.45
+  tiny_feature_boost = 1.45,
+  origin_context = "inset",
+  origin_context_position = "bottom-left",
+  focus_context_opacity = 0.14,
+  show_drag_zoom = TRUE
 )
 ```
 

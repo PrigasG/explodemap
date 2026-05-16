@@ -72,6 +72,7 @@ reference:
   contents:
   - explode_section
   - focus_map
+  - focus_map_preset
   - focusmapOutput
   - renderFocusmap
 - title: Grouped layouts
