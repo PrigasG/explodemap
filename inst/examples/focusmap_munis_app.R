@@ -12,6 +12,14 @@ states <- data.frame(
   stringsAsFactors = FALSE
 )
 
+app_error <- function(action, error) {
+  paste0(
+    "We could not ", action, ". ",
+    conditionMessage(error),
+    " Check your internet connection, try a smaller boundary file, or choose a different state."
+  )
+}
+
 assign_quadrant_regions <- function(sf_obj) {
   centroids <- suppressWarnings(sf::st_centroid(sf_obj))
   coords <- sf::st_coordinates(centroids)
@@ -52,7 +60,7 @@ load_munis <- function(state_abbr, cb = TRUE, year = 2024) {
       county_name = dplyr::coalesce(.data$NAMELSAD, .data$NAME)
     )
 
-  munis |>
+  out <- munis |>
     dplyr::mutate(
       STATEFP = as.character(.data$STATEFP),
       COUNTYFP = as.character(.data$COUNTYFP),
@@ -65,6 +73,16 @@ load_munis <- function(state_abbr, cb = TRUE, year = 2024) {
       muni_geoid = .data$GEOID,
       county_name = dplyr::coalesce(.data$county_name, paste0("County ", .data$COUNTYFP))
     )
+
+  if (!nrow(out)) {
+    stop(
+      "No county subdivisions were returned for ", state_abbr, ". ",
+      "Try another state or turn off cartographic boundary files.",
+      call. = FALSE
+    )
+  }
+
+  out
 }
 
 ui <- fluidPage(
@@ -80,6 +98,16 @@ ui <- fluidPage(
         .focus-shell { grid-template-columns: 1fr; grid-template-rows: auto minmax(560px, 1fr); height: auto; min-height: 100vh; }
         .focus-controls { border-right: 0; border-bottom: 1px solid #dbe6f1; }
         .focus-map { height: 75vh; }
+      }
+      .shiny-output-error-validation {
+        color: #713f12;
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 6px;
+        padding: 14px 16px;
+        margin: 12px;
+        font-size: 15px;
+        line-height: 1.4;
       }
     "))
   ),
@@ -108,21 +136,39 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   munis <- reactive({
-    load_munis(input$state, cb = isTRUE(input$cb))
+    tryCatch(
+      load_munis(input$state, cb = isTRUE(input$cb)),
+      error = function(e) {
+        validate(need(FALSE, app_error("load county subdivision boundaries", e)))
+      }
+    )
   }) |>
     bindCache(input$state, input$cb)
 
   map_data <- reactive({
     x <- munis()
 
-    if (identical(input$mode, "exploded") && nrow(x) >= 3) {
-      projected <- sf::st_transform(x, 5070) |>
-        assign_quadrant_regions()
-      result <- explode_sf(
-        projected,
-        region_col = "region",
-        plot = FALSE,
-        label = paste(input$state, "county subdivisions")
+    if (identical(input$mode, "exploded")) {
+      validate(need(
+        nrow(x) >= 3,
+        "Exploded mode needs at least three mapped areas. Choose a state with more subdivisions or switch to Raw mode."
+      ))
+
+      result <- tryCatch(
+        {
+          projected <- sf::st_transform(x, 5070) |>
+            assign_quadrant_regions()
+          explode_sf(
+            projected,
+            region_col = "region",
+            plot = FALSE,
+            quiet = TRUE,
+            label = paste(input$state, "county subdivisions")
+          )
+        },
+        error = function(e) {
+          validate(need(FALSE, app_error("create the exploded map", e)))
+        }
       )
 
       list(x = result, label_col = NULL, group_col = "region")
@@ -133,23 +179,28 @@ server <- function(input, output, session) {
 
   output$map <- renderFocusmap({
     md <- map_data()
-    focus_map(
-      md$x,
-      label_col = md$label_col,
-      id_col = "muni_geoid",
-      group_col = md$group_col,
-      info_cols = c("muni_label", "county_name", "muni_geoid"),
-      info_labels = c(muni_label = "Subdivision", county_name = "County", muni_geoid = "GEOID"),
-      info_title = "muni_label",
-      font_size = input$font_size,
-      lift_scale = input$lift_scale,
-      focus_size = input$focus_size,
-      focus_padding = input$focus_padding,
-      info_card_scale = input$info_card_scale,
-      show_labels = isTRUE(input$show_labels),
-      performance_mode = TRUE,
-      width = "100%",
-      height = "100%"
+    tryCatch(
+      focus_map(
+        md$x,
+        label_col = md$label_col,
+        id_col = "muni_geoid",
+        group_col = md$group_col,
+        info_cols = c("muni_label", "county_name", "muni_geoid"),
+        info_labels = c(muni_label = "Subdivision", county_name = "County", muni_geoid = "GEOID"),
+        info_title = "muni_label",
+        font_size = input$font_size,
+        lift_scale = input$lift_scale,
+        focus_size = input$focus_size,
+        focus_padding = input$focus_padding,
+        info_card_scale = input$info_card_scale,
+        show_labels = isTRUE(input$show_labels),
+        performance_mode = TRUE,
+        width = "100%",
+        height = "100%"
+      ),
+      error = function(e) {
+        validate(need(FALSE, app_error("render the interactive map", e)))
+      }
     )
   })
 }

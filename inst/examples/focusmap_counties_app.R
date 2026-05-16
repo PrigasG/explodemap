@@ -12,14 +12,32 @@ states <- data.frame(
   stringsAsFactors = FALSE
 )
 
+app_error <- function(action, error) {
+  paste0(
+    "We could not ", action, ". ",
+    conditionMessage(error),
+    " Check your internet connection, try a smaller boundary file, or choose a different state."
+  )
+}
+
 load_counties <- function(state_abbr, cb = TRUE, year = 2024) {
-  tigris::counties(state = state_abbr, year = year, cb = cb, class = "sf") |>
+  out <- tigris::counties(state = state_abbr, year = year, cb = cb, class = "sf") |>
     dplyr::filter(!sf::st_is_empty(.data$geometry)) |>
     dplyr::mutate(
       county_label = dplyr::coalesce(.data$NAMELSAD, .data$NAME),
       county_geoid = .data$GEOID,
       county_id = paste0(.data$STATEFP, .data$COUNTYFP)
     )
+
+  if (!nrow(out)) {
+    stop(
+      "No counties were returned for ", state_abbr, ". ",
+      "Try another state or turn off cartographic boundary files.",
+      call. = FALSE
+    )
+  }
+
+  out
 }
 
 assign_quadrant_regions <- function(sf_obj) {
@@ -53,6 +71,16 @@ ui <- fluidPage(
         .focus-controls { border-right: 0; border-bottom: 1px solid #dbe6f1; }
         .focus-map { height: 75vh; }
       }
+      .shiny-output-error-validation {
+        color: #713f12;
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 6px;
+        padding: 14px 16px;
+        margin: 12px;
+        font-size: 15px;
+        line-height: 1.4;
+      }
     "))
   ),
   div(
@@ -80,23 +108,41 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   counties <- reactive({
-    load_counties(input$state, cb = isTRUE(input$cb))
+    tryCatch(
+      load_counties(input$state, cb = isTRUE(input$cb)),
+      error = function(e) {
+        validate(need(FALSE, app_error("load county boundaries", e)))
+      }
+    )
   }) |>
     bindCache(input$state, input$cb)
 
   map_data <- reactive({
     x <- counties()
 
-    if (identical(input$mode, "exploded") && nrow(x) >= 3) {
-      projected <- x |>
-        sf::st_transform(5070) |>
-        assign_quadrant_regions()
+    if (identical(input$mode, "exploded")) {
+      validate(need(
+        nrow(x) >= 3,
+        "Exploded mode needs at least three mapped areas. Choose a state with more counties or switch to Raw mode."
+      ))
 
-      result <- explode_sf(
-        projected,
-        region_col = "region",
-        plot = FALSE,
-        label = paste(input$state, "counties")
+      result <- tryCatch(
+        {
+          projected <- x |>
+            sf::st_transform(5070) |>
+            assign_quadrant_regions()
+
+          explode_sf(
+            projected,
+            region_col = "region",
+            plot = FALSE,
+            quiet = TRUE,
+            label = paste(input$state, "counties")
+          )
+        },
+        error = function(e) {
+          validate(need(FALSE, app_error("create the exploded map", e)))
+        }
       )
 
       list(x = result, label_col = NULL, group_col = "region")
@@ -107,23 +153,28 @@ server <- function(input, output, session) {
 
   output$map <- renderFocusmap({
     md <- map_data()
-    focus_map(
-      md$x,
-      label_col = md$label_col,
-      id_col = "county_geoid",
-      group_col = md$group_col,
-      info_cols = c("county_label", "county_geoid"),
-      info_labels = c(county_label = "County", county_geoid = "GEOID"),
-      info_title = "county_label",
-      font_size = input$font_size,
-      lift_scale = input$lift_scale,
-      focus_size = input$focus_size,
-      focus_padding = input$focus_padding,
-      info_card_scale = input$info_card_scale,
-      show_labels = isTRUE(input$show_labels),
-      performance_mode = NULL,
-      width = "100%",
-      height = "100%"
+    tryCatch(
+      focus_map(
+        md$x,
+        label_col = md$label_col,
+        id_col = "county_geoid",
+        group_col = md$group_col,
+        info_cols = c("county_label", "county_geoid"),
+        info_labels = c(county_label = "County", county_geoid = "GEOID"),
+        info_title = "county_label",
+        font_size = input$font_size,
+        lift_scale = input$lift_scale,
+        focus_size = input$focus_size,
+        focus_padding = input$focus_padding,
+        info_card_scale = input$info_card_scale,
+        show_labels = isTRUE(input$show_labels),
+        performance_mode = NULL,
+        width = "100%",
+        height = "100%"
+      ),
+      error = function(e) {
+        validate(need(FALSE, app_error("render the interactive map", e)))
+      }
     )
   })
 }

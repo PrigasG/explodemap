@@ -10,3 +10,4 @@
 ^cheatsheet$
 ^pkgdown$
 ^\.github$
+^cran-comments\.md$

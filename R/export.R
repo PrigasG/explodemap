@@ -28,10 +28,24 @@
 #' @keywords internal
 .as_export_sf <- function(x) {
   if (inherits(x, "grouped_exploded_map")) {
+    if (is.null(x$sf_grouped_wgs)) {
+      stop(
+        "`grouped_exploded_map` is missing its WGS84 grouped geometry. ",
+        "Recreate it with explode_grouped() before exporting.",
+        call. = FALSE
+      )
+    }
     return(x$sf_grouped_wgs)
   }
 
   if (inherits(x, "exploded_map")) {
+    if (is.null(x$sf_exp_wgs)) {
+      stop(
+        "`exploded_map` is missing its WGS84 exploded geometry. ",
+        "Recreate it with explode_sf() before exporting.",
+        call. = FALSE
+      )
+    }
     return(x$sf_exp_wgs)
   }
 
@@ -39,7 +53,11 @@
     crs <- sf::st_crs(x)
 
     if (is.na(crs)) {
-      warning("Input sf object has no CRS; exporting as-is.", call. = FALSE)
+      warning(
+        "Input sf object has no CRS, so export_topojson() cannot transform it to WGS84. ",
+        "Exporting coordinates as-is.",
+        call. = FALSE
+      )
       return(x)
     }
 
@@ -166,7 +184,8 @@ export_topojson <- function(x, file, simplify = NULL, overwrite = FALSE) {
   ext <- tolower(tools::file_ext(file))
   if (!ext %in% c("topojson", "json")) {
     warning(
-      "Output file does not end in .topojson or .json.",
+      "Output file does not end in .topojson or .json. ",
+      "The file will still be written as TopoJSON.",
       call. = FALSE
     )
   }
@@ -215,13 +234,25 @@ export_topojson <- function(x, file, simplify = NULL, overwrite = FALSE) {
     simplify = simplify
   )
 
-  cmd_out <- suppressWarnings(
-    system2(exe, args = args, stdout = TRUE, stderr = TRUE)
+  cmd_out <- tryCatch(
+    suppressWarnings(system2(exe, args = args, stdout = TRUE, stderr = TRUE)),
+    error = function(e) {
+      stop(
+        "TopoJSON export failed while running mapshaper. ",
+        "Check that mapshaper works from your system terminal. ",
+        "Details: ", conditionMessage(e),
+        call. = FALSE
+      )
+    }
   )
 
   if (!file.exists(out_path)) {
     detail <- if (length(cmd_out)) paste(cmd_out, collapse = "\n") else ""
-    stop("TopoJSON export failed.\n", detail, call. = FALSE)
+    stop(
+      "TopoJSON export failed; mapshaper did not create the output file.",
+      if (nzchar(detail)) paste0("\nMapshaper output:\n", detail) else "",
+      call. = FALSE
+    )
   }
 
   size_kb <- round(file.info(out_path)$size / 1024, 1)

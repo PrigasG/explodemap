@@ -72,6 +72,11 @@
   grouped-layout solver controls.
 * Shiny workflows now have quieter geometry builders, automatic plot
   suppression safeguards, and selection events for linked side panels.
+* Public-facing dashboard examples now show clear Shiny validation messages
+  for failed boundary downloads, empty data, map-generation failures, and
+  widget-rendering failures.
+* TIGER/Line downloads and TopoJSON export now fail with clearer, actionable
+  error messages when external services, files, or tools are unavailable.
 * `validate_input()` now returns visibly, making repaired geometries less
   fragile in internal workflows.
 

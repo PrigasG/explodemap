@@ -344,9 +344,18 @@ explode_sf_with_lookup <- function(sf_obj,
     fname <- paste0("exploded_",
                     gsub("[^a-zA-Z0-9]", "_", tolower(label)), ".geojson")
   } else if (is.character(export)) {
+    if (length(export) != 1 || !nzchar(export)) {
+      stop(
+        "`export` must be NULL, TRUE, or a single non-empty output file path.",
+        call. = FALSE
+      )
+    }
     fname <- export
   } else {
-    return(invisible(NULL))
+    stop(
+      "`export` must be NULL, TRUE, or a single non-empty output file path.",
+      call. = FALSE
+    )
   }
   sf::st_write(sf_exp_wgs, fname, driver = "GeoJSON",
                delete_dsn = TRUE, quiet = TRUE)

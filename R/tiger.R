@@ -48,6 +48,38 @@
   )
 }
 
+.download_file_or_stop <- function(url, dest, label) {
+  status <- tryCatch(
+    utils::download.file(url, dest, quiet = TRUE, mode = "wb"),
+    error = function(e) {
+      stop(
+        "Could not download ", label, " from the Census TIGER/Line server. ",
+        "Check your internet connection and try again. ",
+        "Details: ", conditionMessage(e),
+        call. = FALSE
+      )
+    }
+  )
+
+  if (!identical(status, 0L)) {
+    stop(
+      "Could not download ", label, " from the Census TIGER/Line server. ",
+      "Check your internet connection and try again.",
+      call. = FALSE
+    )
+  }
+
+  if (!file.exists(dest) || isTRUE(file.info(dest)$size == 0)) {
+    stop(
+      "Downloaded ", label, " but the file was empty. ",
+      "The Census TIGER/Line server may be unavailable; please try again later.",
+      call. = FALSE
+    )
+  }
+
+  invisible(dest)
+}
+
 
 #' Download TIGER/Line county subdivision boundaries
 #' @param fips 2-digit state FIPS code
@@ -55,6 +87,11 @@
 #' @return sf object
 #' @keywords internal
 .download_cousub <- function(fips, crs) {
+  if (!is.character(fips) || length(fips) != 1 || !grepl("^[0-9]{2}$", fips)) {
+    stop("`state_fips` must be a 2-digit character string, such as \"34\" for New Jersey.",
+         call. = FALSE)
+  }
+
   key <- paste0("cousub_", fips)
   if (.cache_exists(key)) {
     obj <- .cache_load(key)
@@ -65,11 +102,28 @@
   url <- paste0("https://www2.census.gov/geo/tiger/TIGER2024/COUSUB/",
                 "tl_2024_", fips, "_cousub.zip")
   tmp <- tempfile(fileext = ".zip")
-  utils::download.file(url, tmp, quiet = TRUE, mode = "wb")
+  .download_file_or_stop(url, tmp, paste0("county subdivisions for FIPS ", fips))
   dir <- file.path(tempdir(), paste0("cousub_", fips, "_", Sys.getpid()))
   dir.create(dir, showWarnings = FALSE)
-  utils::unzip(tmp, exdir = dir)
+  tryCatch(
+    utils::unzip(tmp, exdir = dir),
+    error = function(e) {
+      stop(
+        "Could not unzip county subdivision data for FIPS ", fips, ". ",
+        "The downloaded file may be incomplete. Please try again. ",
+        "Details: ", conditionMessage(e),
+        call. = FALSE
+      )
+    }
+  )
   shp <- list.files(dir, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+  if (!length(shp)) {
+    stop(
+      "County subdivision data for FIPS ", fips, " did not contain a shapefile. ",
+      "The Census download may have changed or failed.",
+      call. = FALSE
+    )
+  }
   obj <- sf::st_read(shp[1], quiet = TRUE) |>
     dplyr::filter(.data$COUSUBFP != "00000") |>
     sf::st_transform(crs)
@@ -84,11 +138,28 @@
   if (.cache_exists(key)) return(.cache_load(key))
   url <- "https://www2.census.gov/geo/tiger/TIGER2024/COUNTY/tl_2024_us_county.zip"
   tmp <- tempfile(fileext = ".zip")
-  utils::download.file(url, tmp, quiet = TRUE, mode = "wb")
+  .download_file_or_stop(url, tmp, "national county lookup")
   dir <- file.path(tempdir(), paste0("county_nat_", Sys.getpid()))
   dir.create(dir, showWarnings = FALSE)
-  utils::unzip(tmp, exdir = dir)
+  tryCatch(
+    utils::unzip(tmp, exdir = dir),
+    error = function(e) {
+      stop(
+        "Could not unzip the national county lookup. ",
+        "The downloaded file may be incomplete. Please try again. ",
+        "Details: ", conditionMessage(e),
+        call. = FALSE
+      )
+    }
+  )
   shp <- list.files(dir, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+  if (!length(shp)) {
+    stop(
+      "The national county lookup download did not contain a shapefile. ",
+      "The Census download may have changed or failed.",
+      call. = FALSE
+    )
+  }
   obj <- sf::st_read(shp[1], quiet = TRUE) |>
     sf::st_drop_geometry() |>
     dplyr::select("STATEFP", "COUNTYFP", "NAME")
