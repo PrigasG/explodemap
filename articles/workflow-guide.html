@@ -46,7 +46,6 @@
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing the paper examples</a></li>
   </ul>
 </li>
-<li class="nav-item"><a class="nav-link" href="../cheatsheet/explodemap-cheatsheet.pdf">Cheatsheet</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -126,7 +125,8 @@ a grouping column:</p>
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/explode_sf.html">explode_sf</a></span><span class="op">(</span></span>
 <span>  <span class="va">my_sf</span>,</span>
 <span>  region_col <span class="op">=</span> <span class="st">"region"</span>,</span>
-<span>  plot <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  plot <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Use <code><a href="../reference/explode_sf_with_lookup.html">explode_sf_with_lookup()</a></code> when group membership lives
 in a separate table:</p>
@@ -137,7 +137,8 @@ in a separate table:</p>
 <span>  lookup <span class="op">=</span> <span class="va">region_lookup</span>,</span>
 <span>  lookup_key <span class="op">=</span> <span class="st">"geoid"</span>,</span>
 <span>  region_col <span class="op">=</span> <span class="st">"region"</span>,</span>
-<span>  plot <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  plot <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Use <code><a href="../reference/explode_state.html">explode_state()</a></code> when you want the package to
 download U.S. Census TIGER/Line county subdivision data for a state:</p>
@@ -146,7 +147,8 @@ download U.S. Census TIGER/Line county subdivision data for a state:</p>
 <span>  state_fips <span class="op">=</span> <span class="st">"34"</span>,</span>
 <span>  crs <span class="op">=</span> <span class="fl">32118</span>,</span>
 <span>  region_map <span class="op">=</span> <span class="va">nj_regions</span>,</span>
-<span>  plot <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  plot <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Downloaded data is cached by <code>tigris</code>, so repeated runs
 are faster.</p>
@@ -187,7 +189,8 @@ layout level, such as a national map with multiple region blocks:</p>
 <span>  <span class="va">my_sf</span>,</span>
 <span>  region_col <span class="op">=</span> <span class="st">"hhs_region"</span>,</span>
 <span>  mode <span class="op">=</span> <span class="st">"auto_collision"</span>,</span>
-<span>  plot <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  plot <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The grouped workflow has three modes:</p>
 <table class="table">
@@ -226,6 +229,7 @@ contextual fields in a non-blocking information card:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/focus_map.html">focus_map</a></span><span class="op">(</span></span>
 <span>  <span class="va">result</span>,</span>
 <span>  group_col <span class="op">=</span> <span class="st">"region"</span>,</span>
+<span>  group_palette <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>North <span class="op">=</span> <span class="st">"#4C78A8"</span>, Central <span class="op">=</span> <span class="st">"#F58518"</span>, South <span class="op">=</span> <span class="st">"#54A24B"</span><span class="op">)</span>,</span>
 <span>  info_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"NAME"</span>, <span class="st">"GEOID"</span><span class="op">)</span>,</span>
 <span>  focus_size <span class="op">=</span> <span class="fl">0.76</span>,</span>
 <span>  focus_padding <span class="op">=</span> <span class="fl">40</span>,</span>
@@ -239,10 +243,50 @@ contextual fields in a non-blocking information card:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">server</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/explode_sf.html">explode_sf</a></span><span class="op">(</span><span class="va">munis</span>, <span class="st">"region"</span>, plot <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
 <span>  <span class="va">output</span><span class="op">$</span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/focus_map.html">renderFocusmap</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>    <span class="fu"><a href="../reference/focus_map.html">focus_map</a></span><span class="op">(</span><span class="va">munis</span>, label_col <span class="op">=</span> <span class="st">"NAME"</span>, info_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GEOID"</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="../reference/focus_map.html">focus_map</a></span><span class="op">(</span></span>
+<span>      <span class="va">result</span>,</span>
+<span>      label_col <span class="op">=</span> <span class="st">"NAME"</span>,</span>
+<span>      id_col <span class="op">=</span> <span class="st">"GEOID"</span>,</span>
+<span>      group_col <span class="op">=</span> <span class="st">"region"</span>,</span>
+<span>      group_palette <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>North <span class="op">=</span> <span class="st">"#4C78A8"</span>, Central <span class="op">=</span> <span class="st">"#F58518"</span>, South <span class="op">=</span> <span class="st">"#54A24B"</span><span class="op">)</span>,</span>
+<span>      info_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GEOID"</span>, <span class="st">"population"</span><span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
 <span>  <span class="op">}</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
+<p>The Shiny widget publishes selections at
+<code>input$map_selected</code>. Use that reactive value to drive side
+panels, tables, or linked charts.</p>
+<p>For region or category filters, <code><a href="../reference/explode_section.html">explode_section()</a></code> can
+explode only the selected section while keeping the rest of the layer as
+geographic context:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">focused</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/explode_section.html">explode_section</a></span><span class="op">(</span></span>
+<span>  <span class="va">munis</span>,</span>
+<span>  section_col <span class="op">=</span> <span class="st">"nj_region"</span>,</span>
+<span>  section <span class="op">=</span> <span class="va">input</span><span class="op">$</span><span class="va">region</span>,</span>
+<span>  region_col <span class="op">=</span> <span class="st">"county_name"</span>,</span>
+<span>  alpha_r <span class="op">=</span> <span class="fl">900</span>,</span>
+<span>  alpha_l <span class="op">=</span> <span class="fl">600</span>,</span>
+<span>  plot <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/focus_map.html">focus_map</a></span><span class="op">(</span></span>
+<span>  <span class="va">focused</span>,</span>
+<span>  label_col <span class="op">=</span> <span class="st">"NAME"</span>,</span>
+<span>  id_col <span class="op">=</span> <span class="st">"GEOID"</span>,</span>
+<span>  context_col <span class="op">=</span> <span class="st">".explodemap_role"</span>,</span>
+<span>  context_mode <span class="op">=</span> <span class="st">"fade"</span>,</span>
+<span>  context_opacity <span class="op">=</span> <span class="fl">0.16</span>,</span>
+<span>  performance_mode <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>This keeps focused sections compact while preserving the full map
+outline as context. Use <code>context_mode = "hide"</code> when the
+background should be available to the layout but not visible in the
+widget.</p>
 </div>
 <div class="section level2">
 <h2 id="performance-guidance">Performance guidance<a class="anchor" aria-label="anchor" href="#performance-guidance"></a>
@@ -252,6 +296,8 @@ contextual fields in a non-blocking information card:</p>
 <li>Use a projected CRS for displacement workflows.</li>
 <li>Use <code>plot = FALSE</code> inside apps or scripts when you only
 need returned objects.</li>
+<li>Use <code>quiet = TRUE</code> inside app server code to suppress
+progress messages.</li>
 <li>Use <code>focus_map(performance_mode = TRUE)</code> for dense
 municipal layers.</li>
 <li>Simplify for web display when the browser becomes the
@@ -267,13 +313,13 @@ recomputing geometry in the app server.</li>
 <h2 id="installed-examples">Installed examples<a class="anchor" aria-label="anchor" href="#installed-examples"></a>
 </h2>
 <p>Small local examples:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/basic_explode_sf.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/collision_refinement.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/lookup_workflow.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/manual_parameter_tuning.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Interactive examples that download public data:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">shiny</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">runApp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/focusmap_munis_app.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">shiny</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">runApp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/focusmap_counties_app.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>

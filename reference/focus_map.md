@@ -14,6 +14,14 @@ focus_map(
   label_col = NULL,
   id_col = NULL,
   group_col = NULL,
+  group_palette = NULL,
+  context_col = NULL,
+  context_values = "context",
+  context_mode = c("fade", "hide", "show"),
+  context_fill = "#cfd9df",
+  context_opacity = 0.18,
+  context_clickable = FALSE,
+  focus_preset = c("none", "municipal", "drilldown", "municipal_drilldown"),
   simplify = TRUE,
   fill = "#2d6ea3",
   fill_opacity = 0.58,
@@ -21,7 +29,15 @@ focus_map(
   lift_scale = 1.16,
   focus_padding = 40,
   focus_size = 0.76,
+  min_focus_width = 0,
+  min_focus_height = 0,
+  tiny_feature_threshold = 48,
+  tiny_feature_boost = 1,
   max_zoom = NULL,
+  origin_context = c("none", "socket", "inset", "both"),
+  origin_context_position = c("bottom-left", "bottom-right", "top-left", "top-right"),
+  focus_context_opacity = 0.3,
+  show_drag_zoom = FALSE,
   font_size = 14,
   show_labels = TRUE,
   show_sidebar = TRUE,
@@ -64,6 +80,47 @@ renderFocusmap(expr, env = parent.frame(), quoted = FALSE)
   Character. Optional column for region/group colouring. Polygons
   sharing a group value share a hue.
 
+- group_palette:
+
+  Optional named character vector of colours for `group_col` values.
+  Names should match group values; unmatched groups fall back to the
+  widget palette.
+
+- context_col:
+
+  Optional column identifying features that should remain as geographic
+  context rather than active focus features.
+
+- context_values:
+
+  Character vector of values in `context_col` that mark context
+  features. Default `"context"`.
+
+- context_mode:
+
+  How context features are drawn: `"fade"` keeps them visible but muted,
+  `"hide"` makes them invisible, and `"show"` draws them normally.
+
+- context_fill:
+
+  Fill colour for context features when `context_mode = "fade"`.
+
+- context_opacity:
+
+  Fill opacity for faded context features.
+
+- context_clickable:
+
+  Should context features remain clickable? Default `FALSE`.
+
+- focus_preset:
+
+  Optional named preset for common interactive workflows. `"municipal"`
+  tunes small-area focus, source cues, drag zoom, and dense layer
+  performance. `"drilldown"` tunes context fading and source cues for
+  selected-section maps. `"municipal_drilldown"` combines both. Explicit
+  arguments supplied by the user override preset defaults.
+
 - simplify:
 
   Controls geometry simplification for rendering performance. `TRUE`
@@ -101,10 +158,52 @@ renderFocusmap(expr, env = parent.frame(), quoted = FALSE)
   Increase this to make selected areas appear larger while preserving
   `focus_padding`.
 
+- min_focus_width, min_focus_height:
+
+  Minimum focused feature width and height in screen pixels. When a
+  selected feature is very small, the widget may zoom past the usual
+  density-aware default until the lifted feature reaches these
+  dimensions. Set to `0` to disable either constraint.
+
+- tiny_feature_threshold:
+
+  Screen-pixel size below which a selected feature receives an adaptive
+  lift-scale boost. Set to `0` to disable.
+
+- tiny_feature_boost:
+
+  Maximum multiplier applied to `lift_scale` for the smallest features.
+  Values below `1` are not allowed.
+
 - max_zoom:
 
   Optional maximum camera zoom. If `NULL`, a density-aware default is
   used.
+
+- origin_context:
+
+  How the selected feature's source location should be shown while
+  focused. The default `"none"` keeps focus maps visually unchanged
+  unless this feature is explicitly enabled. `"socket"` keeps the source
+  outline in the main map, `"inset"` shows a small overview map,
+  `"both"` uses both, and `"none"` disables the cue.
+
+- origin_context_position:
+
+  Position for the overview inset: `"bottom-left"`, `"bottom-right"`,
+  `"top-left"`, or `"top-right"`.
+
+- focus_context_opacity:
+
+  Fill opacity for non-selected features while a feature is focused.
+  Lower values make tiny selected areas easier to read.
+
+- show_drag_zoom:
+
+  Show a widget-level drag-zoom toggle. When enabled, users can draw a
+  marquee rectangle to zoom into dense clusters while ordinary feature
+  clicks continue to focus the map. Shift-drag works as a shortcut even
+  when the button is hidden.
 
 - font_size:
 
@@ -116,7 +215,7 @@ renderFocusmap(expr, env = parent.frame(), quoted = FALSE)
 
 - show_sidebar:
 
-  Show control sidebar? Default `TRUE`.
+  Deprecated and has no effect. Will be removed in a future version.
 
 - performance_mode:
 

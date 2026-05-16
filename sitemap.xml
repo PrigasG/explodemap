@@ -30,6 +30,7 @@
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-sf_to_geojson_fast.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/estimate_block_radii.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_grouped.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/explode_section.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_sf.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_sf_core.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_sf_with_lookup.html</loc></url>
@@ -38,6 +39,7 @@
 <url><loc>https://prigasg.github.io/explodemap/reference/export_topojson.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/fmt_dist.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/focus_map.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/focus_map_preset.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/index.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/layout_regions.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/plot.exploded_map.html</loc></url>

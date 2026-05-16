@@ -17,10 +17,14 @@ projected sf data or state-level TIGER/Line inputs.
 htmlwidgets and Shiny helpers for selected-feature focus, labels, and
 non-blocking information cards.
 
+- [`explode_section()`](https://prigasg.github.io/explodemap/reference/explode_section.md)
+  : Explode one selected section and keep the rest as context
 - [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
   [`focusmapOutput()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
   [`renderFocusmap()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
   : Interactive focus-map viewer
+- [`focus_map_preset()`](https://prigasg.github.io/explodemap/reference/focus_map_preset.md)
+  : Focus-map option presets
 
 ## Grouped layouts
 

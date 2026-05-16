@@ -29,7 +29,6 @@ extension from Section 12 of the paper."><meta property="og:image" content="http
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing the paper examples</a></li>
   </ul></li>
-<li class="nav-item"><a class="nav-link" href="../cheatsheet/explodemap-cheatsheet.pdf">Cheatsheet</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -68,12 +67,17 @@ extension from Section 12 of the paper.</p>
 <span>  lambda <span class="op">=</span> <span class="fl">0.18</span>,</span>
 <span>  eta <span class="op">=</span> <span class="fl">0.18</span>,</span>
 <span>  padding_sep <span class="op">=</span> <span class="fl">20000</span>,</span>
+<span>  anchor_expand <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  anchor_buffer <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  density_scale <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  block_sep <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_iter <span class="op">=</span> <span class="fl">60</span>,</span>
 <span>  fix_invalid <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  centroid_fun <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"centroid"</span>, <span class="st">"point_on_surface"</span><span class="op">)</span>,</span>
 <span>  plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  export <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  label <span class="op">=</span> <span class="st">"Grouped Layout"</span></span>
+<span>  label <span class="op">=</span> <span class="st">"Grouped Layout"</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -133,6 +137,13 @@ extension from Section 12 of the paper.</p>
 <dd><p>Minimum block separation (default 20000)</p></dd>
 
 
+<dt id="arg-anchor-expand-anchor-buffer-density-scale-block-sep">anchor_expand, anchor_buffer, density_scale, block_sep<a class="anchor" aria-label="anchor" href="#arg-anchor-expand-anchor-buffer-density-scale-block-sep"></a></dt>
+<dd><p>Optional aliases
+for <code>kappa</code>, <code>padding</code>, <code>delta</code>, and <code>padding_sep</code>, respectively. These
+names are convenient in Shiny dashboards where the controls describe the
+visual effect rather than the solver term.</p></dd>
+
+
 <dt id="arg-max-iter">max_iter<a class="anchor" aria-label="anchor" href="#arg-max-iter"></a></dt>
 <dd><p>Max collision iterations (default 60)</p></dd>
 
@@ -146,7 +157,8 @@ extension from Section 12 of the paper.</p>
 
 
 <dt id="arg-plot">plot<a class="anchor" aria-label="anchor" href="#arg-plot"></a></dt>
-<dd><p>Print plots (default TRUE)</p></dd>
+<dd><p>Print plots (default TRUE). Automatically suppressed inside a
+live Shiny session; use <code><a href="plot.grouped_exploded_map.html">plot.grouped_exploded_map()</a></code> inside <code>renderPlot()</code>.</p></dd>
 
 
 <dt id="arg-export">export<a class="anchor" aria-label="anchor" href="#arg-export"></a></dt>
@@ -155,6 +167,10 @@ extension from Section 12 of the paper.</p>
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
 <dd><p>Title for plots</p></dd>
+
+
+<dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
+<dd><p>If <code>TRUE</code>, suppress <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> output. Default <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

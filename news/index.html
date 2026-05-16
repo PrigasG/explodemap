@@ -25,7 +25,6 @@
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing the paper examples</a></li>
   </ul></li>
-<li class="nav-item"><a class="nav-link" href="../cheatsheet/explodemap-cheatsheet.pdf">Cheatsheet</a></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -51,6 +50,7 @@
 <li>Added <code><a href="../reference/export_topojson.html">export_topojson()</a></code> for optional TopoJSON export via the external <code>mapshaper</code> CLI tool, for downstream tools such as Power BI.</li>
 <li>Added <code><a href="../reference/summary.grouped_exploded_map.html">summary.grouped_exploded_map()</a></code> for grouped-layout diagnostics, including local displacement parameters, anchor parameters, and block radii.</li>
 <li>Added optional bounded collision refinement to <code><a href="../reference/explode_sf.html">explode_sf()</a></code> and <code><a href="../reference/explode_state.html">explode_state()</a></code> for dense municipal cores, with diagnostics stored in the returned <code>refinement</code> component.</li>
+<li>Added <code><a href="../reference/explode_section.html">explode_section()</a></code> for drill-down dashboards that explode one selected section while keeping the remaining geography as faded or hidden context for <code><a href="../reference/focus_map.html">focus_map()</a></code>.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-2-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-0"></a></h3>
@@ -66,6 +66,18 @@
 <li>Grouped S3 methods were consolidated and cleaned up for more consistent printing, plotting, and summary output.</li>
 <li>Distance formatting in diagnostic output now adapts between metres and kilometres, improving readability for both small synthetic examples and real-world datasets.</li>
 <li>Focus maps now support non-blocking info cards, selected-area sizing controls, and denser-layer performance tuning for Shiny workflows.</li>
+<li>Focus maps now support named <code>group_palette</code> values, allowing Shiny apps to align widget colouring with dashboard legends or domain-specific palettes.</li>
+<li>Focus maps now support context features via <code>context_col</code>, <code>context_mode</code>, <code>context_opacity</code>, and <code>context_clickable</code>, enabling selected-region focus maps with muted background geography.</li>
+<li>Focus maps now support adaptive tiny-feature focus controls via <code>min_focus_width</code>, <code>min_focus_height</code>, <code>tiny_feature_threshold</code>, and <code>tiny_feature_boost</code>, improving municipal drill-down maps with very small selected polygons.</li>
+<li>Focus maps now support selected-feature origin context via <code>origin_context</code> and <code>origin_context_position</code>, including an overview inset that keeps small municipal focus views anchored to the broader geography. The cue is opt-in by default.</li>
+<li>Focus maps now expose <code>focus_context_opacity</code> to tune how strongly the non-selected background geography recedes during focused views.</li>
+<li>Focus maps now support opt-in drag zoom via <code>show_drag_zoom</code>. Users can use the button or Shift-drag to draw a marquee rectangle and smoothly zoom into dense clusters before selecting individual features.</li>
+<li>Drag zoom behaves as a navigation layer over focus maps: plain clicks still focus polygons while the toggle is active, and turning the tool off no longer resets the current focus.</li>
+<li>
+<code><a href="../reference/explode_grouped.html">explode_grouped()</a></code> now accepts visual aliases (<code>anchor_expand</code>, <code>anchor_buffer</code>, <code>density_scale</code>, and <code>block_sep</code>) for the corresponding grouped-layout solver controls.</li>
+<li>Shiny workflows now have quieter geometry builders, automatic plot suppression safeguards, and selection events for linked side panels.</li>
+<li>Public-facing dashboard examples now show clear Shiny validation messages for failed boundary downloads, empty data, map-generation failures, and widget-rendering failures.</li>
+<li>TIGER/Line downloads and TopoJSON export now fail with clearer, actionable error messages when external services, files, or tools are unavailable.</li>
 <li>
 <code><a href="../reference/validate_input.html">validate_input()</a></code> now returns visibly, making repaired geometries less fragile in internal workflows.</li>
 </ul></div>
@@ -73,7 +85,8 @@
 <h3 id="documentation-0-2-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-2-0"></a></h3>
 <ul><li>Added three vignettes: getting started, grouped layouts, and paper replication.</li>
 <li>Added small installed examples for the basic <code>sf</code> workflow, optional collision refinement, lookup-table grouping, and manual parameter tuning.</li>
-<li>Added a workflow-selection vignette and a site-linked cheatsheet for release-oriented user guidance.</li>
+<li>Added a workflow-selection vignette for release-oriented user guidance.</li>
+<li>Added Shiny-oriented guidance for exploding a visible section while preserving the rest of the map as context in <code><a href="../reference/focus_map.html">focus_map()</a></code>.</li>
 <li>Added an <code>inst/CITATION</code> entry for academic citation.</li>
 <li>Added pkgdown site configuration and GitHub Pages support.</li>
 </ul><hr></div>

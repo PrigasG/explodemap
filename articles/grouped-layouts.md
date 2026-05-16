@@ -90,11 +90,9 @@ g_auto <- explode_grouped(
   x,
   region_col = "region",
   mode       = "auto",
-  plot       = FALSE
+  plot       = FALSE,
+  quiet      = TRUE
 )
-#> Level 1: Applying local explosion (alpha_l = 2410 m)...
-#> Level 2: Computing anchor positions (mode = auto)...
-#> Applying anchor displacement...
 
 class(g_auto)
 #> [1] "grouped_exploded_map" "exploded_map"         "list"
@@ -142,12 +140,9 @@ g_collide <- explode_grouped(
   x,
   region_col = "region",
   mode       = "auto_collision",
-  plot       = FALSE
+  plot       = FALSE,
+  quiet      = TRUE
 )
-#> Level 1: Applying local explosion (alpha_l = 2410 m)...
-#> Level 2/3: Computing anchor positions (mode = auto_collision)...
-#> Anchor solver reached max iterations (60). Layout may have residual overlaps.
-#> Applying anchor displacement...
 
 plot(g_collide)
 ```
@@ -190,7 +185,8 @@ custom workflows or manual adjustment:
 anchors <- layout_regions(
   x,
   region_col = "region",
-  mode       = "auto"
+  mode       = "auto",
+  quiet      = TRUE
 )
 
 anchors[, c("region", "block_radius", "n_units", "anchor_x", "anchor_y")]
@@ -218,11 +214,9 @@ g_manual <- explode_grouped(
   region_col = "region",
   mode       = "manual",
   anchors    = manual_anchors,
-  plot       = FALSE
+  plot       = FALSE,
+  quiet      = TRUE
 )
-#> Level 1: Applying local explosion (alpha_l = 2410 m)...
-#> Level 2: Computing anchor positions (mode = manual)...
-#> Applying anchor displacement...
 
 plot(g_manual)
 ```
@@ -288,6 +282,30 @@ summary(g_collide)
 #> 2 R2            3910.       2
 #> 3 R3            3910.       2
 ```
+
+## Interactive grouped focus maps
+
+Grouped results can be passed directly to
+[`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md).
+The widget automatically uses `sf_grouped_wgs`, so the displayed
+geometry matches the grouped layout:
+
+``` r
+
+focus_map(
+  g_collide,
+  label_col = "id",
+  id_col = "id",
+  group_col = "region",
+  info_cols = c("region"),
+  performance_mode = TRUE
+)
+```
+
+Inside Shiny, pair `explode_grouped(..., quiet = TRUE, plot = FALSE)`
+with
+[`renderFocusmap()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
+to avoid console noise and accidental plot printing.
 
 ## What the grouped object stores
 

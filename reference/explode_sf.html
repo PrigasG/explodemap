@@ -25,7 +25,6 @@
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing the paper examples</a></li>
   </ul></li>
-<li class="nav-item"><a class="nav-link" href="../cheatsheet/explodemap-cheatsheet.pdf">Cheatsheet</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -67,7 +66,8 @@
 <span>  centroid_fun <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"centroid"</span>, <span class="st">"point_on_surface"</span><span class="op">)</span>,</span>
 <span>  plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  export <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  label <span class="op">=</span> <span class="st">"Custom Dataset"</span></span>
+<span>  label <span class="op">=</span> <span class="st">"Custom Dataset"</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -146,7 +146,9 @@ If NULL and <code>refine = TRUE</code>, uses 10% of <code>alpha_r + alpha_l</cod
 
 
 <dt id="arg-plot">plot<a class="anchor" aria-label="anchor" href="#arg-plot"></a></dt>
-<dd><p>Print plots on return</p></dd>
+<dd><p>Print plots on return. Automatically suppressed when called
+inside a live Shiny session; use <code><a href="plot.exploded_map.html">plot.exploded_map()</a></code> inside
+<code>renderPlot()</code> instead.</p></dd>
 
 
 <dt id="arg-export">export<a class="anchor" aria-label="anchor" href="#arg-export"></a></dt>
@@ -155,6 +157,10 @@ If NULL and <code>refine = TRUE</code>, uses 10% of <code>alpha_r + alpha_l</cod
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
 <dd><p>Title for plots</p></dd>
+
+
+<dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
+<dd><p>If <code>TRUE</code>, suppress all <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> output. Default <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

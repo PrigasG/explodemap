@@ -28,7 +28,8 @@ when you already have polygon data and a grouping column:
 result <- explode_sf(
   my_sf,
   region_col = "region",
-  plot = FALSE
+  plot = FALSE,
+  quiet = TRUE
 )
 ```
 
@@ -44,7 +45,8 @@ result <- explode_sf_with_lookup(
   lookup = region_lookup,
   lookup_key = "geoid",
   region_col = "region",
-  plot = FALSE
+  plot = FALSE,
+  quiet = TRUE
 )
 ```
 
@@ -59,7 +61,8 @@ result <- explode_state(
   state_fips = "34",
   crs = 32118,
   region_map = nj_regions,
-  plot = FALSE
+  plot = FALSE,
+  quiet = TRUE
 )
 ```
 
@@ -106,7 +109,8 @@ grouped <- explode_grouped(
   my_sf,
   region_col = "hhs_region",
   mode = "auto_collision",
-  plot = FALSE
+  plot = FALSE,
+  quiet = TRUE
 )
 ```
 
@@ -132,6 +136,7 @@ information card:
 focus_map(
   result,
   group_col = "region",
+  group_palette = c(North = "#4C78A8", Central = "#F58518", South = "#54A24B"),
   info_cols = c("NAME", "GEOID"),
   focus_size = 0.76,
   focus_padding = 40,
@@ -149,11 +154,56 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
+  result <- explode_sf(munis, "region", plot = FALSE, quiet = TRUE)
+
   output$map <- renderFocusmap({
-    focus_map(munis, label_col = "NAME", info_cols = c("GEOID"))
+    focus_map(
+      result,
+      label_col = "NAME",
+      id_col = "GEOID",
+      group_col = "region",
+      group_palette = c(North = "#4C78A8", Central = "#F58518", South = "#54A24B"),
+      info_cols = c("GEOID", "population")
+    )
   })
 }
 ```
+
+The Shiny widget publishes selections at `input$map_selected`. Use that
+reactive value to drive side panels, tables, or linked charts.
+
+For region or category filters,
+[`explode_section()`](https://prigasg.github.io/explodemap/reference/explode_section.md)
+can explode only the selected section while keeping the rest of the
+layer as geographic context:
+
+``` r
+
+focused <- explode_section(
+  munis,
+  section_col = "nj_region",
+  section = input$region,
+  region_col = "county_name",
+  alpha_r = 900,
+  alpha_l = 600,
+  plot = FALSE,
+  quiet = TRUE
+)
+
+focus_map(
+  focused,
+  label_col = "NAME",
+  id_col = "GEOID",
+  context_col = ".explodemap_role",
+  context_mode = "fade",
+  context_opacity = 0.16,
+  performance_mode = TRUE
+)
+```
+
+This keeps focused sections compact while preserving the full map
+outline as context. Use `context_mode = "hide"` when the background
+should be available to the layout but not visible in the widget.
 
 ## Performance guidance
 
@@ -162,6 +212,8 @@ Before exploding or focusing:
 - Use a projected CRS for displacement workflows.
 - Use `plot = FALSE` inside apps or scripts when you only need returned
   objects.
+- Use `quiet = TRUE` inside app server code to suppress progress
+  messages.
 - Use `focus_map(performance_mode = TRUE)` for dense municipal layers.
 - Simplify for web display when the browser becomes the bottleneck.
 - Keep downloaded TIGER/Line examples in scripts, vignettes with

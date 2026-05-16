@@ -5,5 +5,5 @@ Attach region labels to TIGER/Line data via county names
 ## Usage
 
 ``` r
-.attach_regions_tiger(sf_obj, fips, region_map)
+.attach_regions_tiger(sf_obj, fips, region_map, quiet = FALSE)
 ```

@@ -46,7 +46,6 @@
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing the paper examples</a></li>
   </ul>
 </li>
-<li class="nav-item"><a class="nav-link" href="../cheatsheet/explodemap-cheatsheet.pdf">Cheatsheet</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -176,11 +175,9 @@ modes:</p>
 <span>  <span class="va">x</span>,</span>
 <span>  region_col <span class="op">=</span> <span class="st">"region"</span>,</span>
 <span>  mode       <span class="op">=</span> <span class="st">"auto"</span>,</span>
-<span>  plot       <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  plot       <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet      <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Level 1: Applying local explosion (alpha_l = 2410 m)...</span></span>
-<span><span class="co">#&gt; Level 2: Computing anchor positions (mode = auto)...</span></span>
-<span><span class="co">#&gt; Applying anchor displacement...</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">g_auto</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "grouped_exploded_map" "exploded_map"         "list"</span></span>
@@ -217,12 +214,9 @@ pulls them back toward their radial targets:</p>
 <span>  <span class="va">x</span>,</span>
 <span>  region_col <span class="op">=</span> <span class="st">"region"</span>,</span>
 <span>  mode       <span class="op">=</span> <span class="st">"auto_collision"</span>,</span>
-<span>  plot       <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  plot       <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet      <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Level 1: Applying local explosion (alpha_l = 2410 m)...</span></span>
-<span><span class="co">#&gt; Level 2/3: Computing anchor positions (mode = auto_collision)...</span></span>
-<span><span class="co">#&gt; Anchor solver reached max iterations (60). Layout may have residual overlaps.</span></span>
-<span><span class="co">#&gt; Applying anchor displacement...</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">g_collide</span><span class="op">)</span></span></code></pre></div>
 <p><img src="grouped-layouts_files/figure-html/collision-mode-1.png" class="r-plt" alt="" width="1050"></p>
@@ -256,7 +250,8 @@ adjustment:</p>
 <code class="sourceCode R"><span><span class="va">anchors</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/layout_regions.html">layout_regions</a></span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  region_col <span class="op">=</span> <span class="st">"region"</span>,</span>
-<span>  mode       <span class="op">=</span> <span class="st">"auto"</span></span>
+<span>  mode       <span class="op">=</span> <span class="st">"auto"</span>,</span>
+<span>  quiet      <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">anchors</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"region"</span>, <span class="st">"block_radius"</span>, <span class="st">"n_units"</span>, <span class="st">"anchor_x"</span>, <span class="st">"anchor_y"</span><span class="op">)</span><span class="op">]</span></span>
@@ -282,11 +277,9 @@ adjustment:</p>
 <span>  region_col <span class="op">=</span> <span class="st">"region"</span>,</span>
 <span>  mode       <span class="op">=</span> <span class="st">"manual"</span>,</span>
 <span>  anchors    <span class="op">=</span> <span class="va">manual_anchors</span>,</span>
-<span>  plot       <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  plot       <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet      <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Level 1: Applying local explosion (alpha_l = 2410 m)...</span></span>
-<span><span class="co">#&gt; Level 2: Computing anchor positions (mode = manual)...</span></span>
-<span><span class="co">#&gt; Applying anchor displacement...</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">g_manual</span><span class="op">)</span></span></code></pre></div>
 <p><img src="grouped-layouts_files/figure-html/manual-anchors-1.png" class="r-plt" alt="" width="1050"></p>
@@ -404,6 +397,26 @@ coordinate system and visual scale.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> R1            <span style="text-decoration: underline;">3</span>910.       2</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> R2            <span style="text-decoration: underline;">3</span>910.       2</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> R3            <span style="text-decoration: underline;">3</span>910.       2</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="interactive-grouped-focus-maps">Interactive grouped focus maps<a class="anchor" aria-label="anchor" href="#interactive-grouped-focus-maps"></a>
+</h2>
+<p>Grouped results can be passed directly to <code><a href="../reference/focus_map.html">focus_map()</a></code>.
+The widget automatically uses <code>sf_grouped_wgs</code>, so the
+displayed geometry matches the grouped layout:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/focus_map.html">focus_map</a></span><span class="op">(</span></span>
+<span>  <span class="va">g_collide</span>,</span>
+<span>  label_col <span class="op">=</span> <span class="st">"id"</span>,</span>
+<span>  id_col <span class="op">=</span> <span class="st">"id"</span>,</span>
+<span>  group_col <span class="op">=</span> <span class="st">"region"</span>,</span>
+<span>  info_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"region"</span><span class="op">)</span>,</span>
+<span>  performance_mode <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Inside Shiny, pair
+<code>explode_grouped(..., quiet = TRUE, plot = FALSE)</code> with
+<code><a href="../reference/focus_map.html">renderFocusmap()</a></code> to avoid console noise and accidental plot
+printing.</p>
 </div>
 <div class="section level2">
 <h2 id="what-the-grouped-object-stores">What the grouped object stores<a class="anchor" aria-label="anchor" href="#what-the-grouped-object-stores"></a>

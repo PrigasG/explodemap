@@ -20,7 +20,8 @@ layout_regions(
   padding_sep = 20000,
   max_iter = 60,
   quantile_p = 0.85,
-  centroid_fun = c("centroid", "point_on_surface")
+  centroid_fun = c("centroid", "point_on_surface"),
+  quiet = FALSE
 )
 ```
 
@@ -78,6 +79,11 @@ layout_regions(
 - centroid_fun:
 
   "centroid" or "point_on_surface"
+
+- quiet:
+
+  If `TRUE`, suppress [`message()`](https://rdrr.io/r/base/message.html)
+  output. Default `FALSE`.
 
 ## Value
 
