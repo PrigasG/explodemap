@@ -124,7 +124,7 @@ th { background:#edf4fb; }
 <h1>Interactive Map Gallery</h1>
 <p>Comparison outputs for the explodemap paper: original geography where available, formula-derived analytical layouts, and documented display-offset layouts used for publication figures and web review.</p>
 <div class="meta">
-<div><strong>GitHub Pages</strong><br><a href="https://prigasg.github.io/explodemap/map-gallery/">https://prigasg.github.io/explodemap/map-gallery/</a></div>
+<div><strong>GitHub Pages</strong><br><a href="https://prigasg.github.io/explodemap/map-gallery/index.html">https://prigasg.github.io/explodemap/map-gallery/index.html</a></div>
 <div><strong>Repository</strong><br><a href="https://github.com/PrigasG/explodemap">https://github.com/PrigasG/explodemap</a></div>
 <div><strong>Package version</strong><br>0.2.0</div>
 <div><strong>Date accessed</strong><br>May 26, 2026</div>
