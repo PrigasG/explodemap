@@ -1,7 +1,7 @@
 source(file.path("paper", "scripts", "00_setup.R"))
 write_run_info("08_render_dragged_layouts")
 
-drag_cases_env <- Sys.getenv("EXPLODEMAP_DRAG_CASES", "NJ,PA,OH,MI,KY,IL,ND,NC,VA")
+drag_cases_env <- Sys.getenv("EXPLODEMAP_DRAG_CASES", "NJ,PA,OH,MI,KY,IL,ND,NC,VA,TN,GA,MN,CA,CO")
 drag_cases <- tolower(trimws(strsplit(drag_cases_env, ",", fixed = TRUE)[[1]]))
 drag_cases <- drag_cases[nzchar(drag_cases)]
 

@@ -160,11 +160,86 @@ label_virginia_clusters <- function(centers) {
   stats::setNames(labels, centers$cluster)
 }
 
+label_georgia_clusters <- function(centers) {
+  remaining <- centers$cluster
+  labels <- character(nrow(centers))
+
+  # Atlanta metro — highest combined x + y + density proxy (NE quadrant)
+  score <- centers$x + centers$y
+  north <- centers$cluster[which.max(score)]
+  labels[north] <- "North"
+  remaining <- setdiff(remaining, north)
+
+  east <- remaining[which.max(centers$x[match(remaining, centers$cluster)])]
+  labels[east] <- "East"
+  remaining <- setdiff(remaining, east)
+
+  west <- remaining[which.min(centers$x[match(remaining, centers$cluster)])]
+  labels[west] <- "West"
+  remaining <- setdiff(remaining, west)
+
+  south <- remaining[which.min(centers$y[match(remaining, centers$cluster)])]
+  labels[south] <- "South"
+  remaining <- setdiff(remaining, south)
+
+  labels[remaining] <- "Central"
+  stats::setNames(labels, centers$cluster)
+}
+
+label_minnesota_clusters <- function(centers) {
+  remaining <- centers$cluster
+  labels <- character(nrow(centers))
+
+  north <- centers$cluster[which.max(centers$y)]
+  labels[north] <- "North"
+  remaining <- setdiff(remaining, north)
+
+  south <- remaining[which.min(centers$y[match(remaining, centers$cluster)])]
+  labels[south] <- "South"
+  remaining <- setdiff(remaining, south)
+
+  # Twin Cities metro — highest x among the middle two (more eastern)
+  metro <- remaining[which.max(centers$x[match(remaining, centers$cluster)])]
+  labels[metro] <- "Metro"
+  remaining <- setdiff(remaining, metro)
+
+  labels[remaining] <- "Central"
+  stats::setNames(labels, centers$cluster)
+}
+
+label_california_clusters <- function(centers) {
+  remaining <- centers$cluster
+  labels <- character(nrow(centers))
+
+  # NorCal — northernmost
+  norcal <- centers$cluster[which.max(centers$y)]
+  labels[norcal] <- "NorCal"
+  remaining <- setdiff(remaining, norcal)
+
+  # SoCal — southernmost
+  socal <- remaining[which.min(centers$y[match(remaining, centers$cluster)])]
+  labels[socal] <- "SoCal"
+  remaining <- setdiff(remaining, socal)
+
+  # Bay Area — westernmost of the remaining (coastal, mid-latitude)
+  bayarea <- remaining[which.min(centers$x[match(remaining, centers$cluster)])]
+  labels[bayarea] <- "BayArea"
+  remaining <- setdiff(remaining, bayarea)
+
+  # Central Valley — lowest y among remaining two
+  cv <- remaining[which.min(centers$y[match(remaining, centers$cluster)])]
+  labels[cv] <- "CentralValley"
+  remaining <- setdiff(remaining, cv)
+
+  labels[remaining] <- "Central"
+  stats::setNames(labels, centers$cluster)
+}
+
 paper_state_registry <- list(
   NJ = list(
     name = "New Jersey",
     fips = "34",
-    crs = 32118,
+    crs = 32111,
     region_map = list(
       North = c("Bergen", "Essex", "Hudson", "Morris", "Passaic", "Sussex", "Union", "Warren"),
       Central = c("Hunterdon", "Mercer", "Middlesex", "Monmouth", "Somerset"),
@@ -357,5 +432,92 @@ paper_state_registry <- list(
     manual_alpha_r = NA_real_,
     manual_alpha_l = NA_real_,
     manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters. Virginia independent cities are included as separate features alongside counties."
+  ),
+
+  # ---------------------------------------------------------------------------
+  # Second wave: TN, GA, MN, CA, CO  (added 2026-05)
+  # ---------------------------------------------------------------------------
+
+  TN = list(
+    name = "Tennessee",
+    fips = "47",
+    crs = 32616,
+    region_map = list(
+      East   = c("Anderson", "Bledsoe", "Blount", "Bradley", "Campbell", "Carter",
+                 "Claiborne", "Cocke", "Cumberland", "Grainger", "Greene", "Hamblen",
+                 "Hamilton", "Hancock", "Hawkins", "Jefferson", "Johnson", "Knox",
+                 "Loudon", "McMinn", "Meigs", "Monroe", "Morgan", "Polk", "Rhea",
+                 "Roane", "Scott", "Sequatchie", "Sevier", "Sullivan", "Unicoi",
+                 "Union", "Washington", "Marion"),
+      Middle = c("Bedford", "Cannon", "Cheatham", "Clay", "Coffee", "Davidson",
+                 "DeKalb", "Dickson", "Fentress", "Franklin", "Giles", "Grundy",
+                 "Hickman", "Houston", "Humphreys", "Jackson", "Lawrence", "Lewis",
+                 "Lincoln", "Macon", "Marshall", "Maury", "Montgomery", "Moore",
+                 "Overton", "Perry", "Pickett", "Putnam", "Robertson", "Rutherford",
+                 "Smith", "Stewart", "Sumner", "Trousdale", "Van Buren", "Warren",
+                 "Wayne", "White", "Williamson", "Wilson"),
+      West   = c("Benton", "Carroll", "Chester", "Crockett", "Decatur", "Dyer",
+                 "Fayette", "Gibson", "Hardeman", "Hardin", "Haywood", "Henderson",
+                 "Henry", "Lake", "Lauderdale", "Madison", "McNairy", "Obion",
+                 "Shelby", "Tipton", "Weakley")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = NA_character_
+  ),
+
+  GA = list(
+    name = "Georgia",
+    fips = "13",
+    crs = 32617,
+    region_map = function() make_cluster_region_map("13", 32617, 5, label_georgia_clusters),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  MN = list(
+    name = "Minnesota",
+    fips = "27",
+    crs = 32615,
+    region_map = function() make_cluster_region_map("27", 32615, 4, label_minnesota_clusters),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  CA = list(
+    name = "California",
+    fips = "06",
+    crs = 32610,
+    region_map = function() make_cluster_region_map("06", 32610, 5, label_california_clusters),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  CO = list(
+    name = "Colorado",
+    fips = "08",
+    crs = 32613,
+    region_map = list(
+      East                    = c("Alamosa", "Baca", "Bent", "Chaffee", "Cheyenne",
+                                  "Conejos", "Costilla", "Crowley", "Custer", "Huerfano",
+                                  "Kiowa", "Kit Carson", "Las Animas", "Lincoln", "Logan",
+                                  "Mineral", "Morgan", "Otero", "Phillips", "Prowers",
+                                  "Rio Grande", "Saguache", "Sedgwick", "Washington", "Yuma"),
+      `Front Range & Mountains` = c("Adams", "Arapahoe", "Boulder", "Broomfield",
+                                    "Clear Creek", "Denver", "Douglas", "El Paso", "Elbert",
+                                    "Fremont", "Gilpin", "Jefferson", "Lake", "Larimer",
+                                    "Park", "Pueblo", "Teller", "Weld"),
+      West                    = c("Archuleta", "Delta", "Dolores", "Eagle", "Garfield",
+                                  "Grand", "Gunnison", "Hinsdale", "Jackson", "La Plata",
+                                  "Mesa", "Moffat", "Montezuma", "Montrose", "Ouray",
+                                  "Pitkin", "Rio Blanco", "Routt", "San Juan", "San Miguel",
+                                  "Summit")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = NA_character_
   )
 )

@@ -1,7 +1,7 @@
 source(file.path("paper", "scripts", "00_setup.R"))
 write_run_info("02_cross_state_validation")
 
-states_env <- Sys.getenv("EXPLODEMAP_PAPER_STATES", "NJ,PA,OH,MI,KY,IL,ND,NC,VA")
+states_env <- Sys.getenv("EXPLODEMAP_PAPER_STATES", "NJ,PA,OH,MI,KY,IL,ND,NC,VA,TN,GA,MN,CA,CO")
 states <- trimws(strsplit(states_env, ",", fixed = TRUE)[[1]])
 run_metrics <- identical(tolower(Sys.getenv("EXPLODEMAP_PAPER_RUN_METRICS", "false")), "true")
 run_figures <- !identical(tolower(Sys.getenv("EXPLODEMAP_PAPER_RUN_FIGURES", "true")), "false")

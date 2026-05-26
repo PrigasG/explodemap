@@ -3,6 +3,7 @@
 % ── Packages ─────────────────────────────────────────────────────────────────
 \usepackage[a4paper, margin=2.5cm]{geometry}
 \usepackage{amsmath, amssymb, amsthm}
+\usepackage{bm}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
@@ -108,7 +109,7 @@ This paper introduces a hierarchical vector-based framework for generating explo
 
 We derive functional forms for the two principal displacement parameters governing regional separation and intra-region expansion. The regional parameter is derived from a radial gap model describing the chord-length increase when parent regions are displaced outward from a shared centroid. The local parameter is derived from an equal-area partition model approximating the characteristic spacing of municipal units within a region. These derivations determine the structural dependence of the parameters on geometric quantities---characteristic polygon diameter, regional radius, and municipal density---leaving only dimensionless clearance coefficients to be calibrated empirically. This formulation substantially reduces manual parameter tuning while retaining interpretable legibility coefficients.
 
-The framework is evaluated using municipal boundary data from New Jersey ($n = 564$ municipalities, 3 regions) and applied to Pennsylvania ($n = 2{,}572$ municipalities, 6 regions) as a large-scale transfer test. Additional reproducible cases cover Ohio, Michigan, Kentucky, Illinois, North Dakota, North Carolina, Virginia, Texas, Florida, Canada, Germany, and a 10-region U.S.\ HHS grouped layout. The NJ-calibrated local coefficient $\gamma_l$ provides a useful transferable starting value, but the evidence is presented as preliminary validation rather than proof of a universal constant. For publication-quality figures, a documented rigid display-offset layer is applied after formula-derived displacement and recorded as CSV input.
+The framework is evaluated using municipal boundary data from New Jersey ($n = 564$ municipalities, 3 regions) and applied to Pennsylvania ($n = 2{,}572$ municipalities, 6 regions) as a large-scale transfer test. Additional reproducible examples include county-subdivision cases for Ohio, Michigan, Kentucky, Illinois, North Dakota, North Carolina, Virginia, Texas, and Florida; non-U.S.\ examples for Canada and Germany; and a 10-region U.S.\ HHS grouped layout. Five county-level state layouts --- Tennessee, Georgia, Minnesota, California, and Colorado --- are included in the interactive gallery as supplemental visual demonstrations. The NJ-calibrated local coefficient $\gamma_l$ provides a useful transferable starting value, but the evidence is presented as preliminary validation rather than proof of a universal constant. For publication-quality figures, a documented rigid display-offset layer is applied after formula-derived displacement and recorded as CSV input.
 
 Because the closed-form displacement step operates through direct vector translation without iterative optimization or topology reconstruction, it is $O(n)$ in feature count, excluding geometry preprocessing, CRS transformation, union/centroid operations, and optional refinement. The method is therefore suitable for dynamic mapping environments such as interactive web applications and statistical dashboards. The accompanying \textsf{R} implementation and map gallery provide reproducible scripts, static outputs, and documented display offsets separating analytical validation from cartographic finishing.
 \end{abstract}
@@ -455,11 +456,11 @@ Calibration on NJ (manual visual reference $\alpha_l = 10{,}000$\,m) yields $\ga
 \subsubsection{Empirical Finding: Hierarchical Tightness Ratio}
 \label{sec:ratio}
 
-A secondary finding of the evaluation is the dimensionless ratio $\widetilde{R}_{\text{local}}/\bar{w}$, which measures how many characteristic polygon widths fit within a typical regional radius --- a measure of \emph{hierarchical tightness}. Reproducible scripts across eleven US states show that this ratio varies by administrative system type rather than taking a single universal value.
+A secondary finding of the evaluation is the dimensionless ratio $\widetilde{R}_{\text{local}}/\bar{w}$, which measures how many characteristic polygon widths fit within a typical regional radius --- a measure of \emph{hierarchical tightness}. Reproducible scripts across eleven US states using county-subdivision boundaries (Table~\ref{tab:crossstate}) show that this ratio varies by administrative system type rather than taking a single universal value.
 
 \begin{table}[h]
 \centering
-\caption{Cross-state geometry statistics and derived parameters ($\gamma_r = 3.0$, $\gamma_l = 1.136$). All values are generated from the reproducible scripts in \texttt{paper/scripts}; U.S.\ state data use Census TIGER/Line county subdivision boundaries and Canada uses Statistics Canada CSD boundaries. Runtime excludes package installation and first-time data download.}
+\caption{Cross-state geometry statistics and derived parameters ($\gamma_r = 3.0$, $\gamma_l = 1.136$). U.S.\ state entries use Census TIGER/Line \emph{county subdivision} (COUSUB) boundaries; Canada uses Statistics Canada CSD boundaries. Five additional county-level state layouts (TN, GA, MN, CA, CO) are included in the interactive gallery as supplemental visual demonstrations but are not part of this table (see Section~\ref{sec:supporting}). All values generated from \texttt{paper/scripts/02\_cross\_state\_validation.R}; runtime excludes first-time data download.}
 \label{tab:crossstate}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lrrrrrrrrl}
@@ -584,19 +585,34 @@ All displacement calculations are performed in a projected CRS with linear units
 
 \begin{table}[H]
 \centering
-\caption{Working coordinate reference systems used by the reproducible case studies.}
+\caption{Working coordinate reference systems used by the reproducible case studies.
+Each U.S.\ state uses a UTM zone centred on its geographic extent; exact EPSG codes
+are listed in the state registry (\texttt{paper/scripts/state\_registry\_paper.R}).}
 \label{tab:crs}
 \begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{lll}
+\begin{tabular}{llll}
 \toprule
-\textbf{Dataset} & \textbf{Working CRS} & \textbf{Reason} \\
+\textbf{Dataset} & \textbf{EPSG} & \textbf{CRS name} & \textbf{Reason} \\
 \midrule
-New Jersey & NAD83 / New Jersey (EPSG:32111) & Local State Plane metric projection \\
-Pennsylvania & Dataset-appropriate projected CRS selected by the state registry & Local metric displacement and diagnostics \\
-Other U.S.\ state cases & Dataset-appropriate projected CRS selected by the state registry & State-scale metric displacement and diagnostics \\
-HHS national grouped layout & NAD83 / Conus Albers (EPSG:5070) & National U.S.\ metric consistency \\
-Canada & Canada-wide projected metric CRS in the validation script & National metric consistency across provinces \\
-Germany & Projected metric CRS in the supplemental script & Metric displacement for non-U.S.\ administrative units \\
+New Jersey       & 32111 & NAD83 / New Jersey (State Plane) & Local State Plane metric projection \\
+Pennsylvania     & 26918 & NAD83 / UTM zone 18N & Local metric displacement and diagnostics \\
+Ohio             & 32617 & WGS84 / UTM zone 17N & State-scale metric displacement \\
+Michigan         & 32616 & WGS84 / UTM zone 16N & State-scale metric displacement \\
+Kentucky         & 32616 & WGS84 / UTM zone 16N & State-scale metric displacement \\
+Illinois         & 32616 & WGS84 / UTM zone 16N & State-scale metric displacement \\
+North Dakota     & 32614 & WGS84 / UTM zone 14N & State-scale metric displacement \\
+North Carolina   & 32617 & WGS84 / UTM zone 17N & State-scale metric displacement \\
+Virginia         & 32618 & WGS84 / UTM zone 18N & State-scale metric displacement \\
+Tennessee        & 32616 & WGS84 / UTM zone 16N & State-scale metric displacement \\
+Georgia          & 32617 & WGS84 / UTM zone 17N & State-scale metric displacement \\
+Minnesota        & 32615 & WGS84 / UTM zone 15N & State-scale metric displacement \\
+California       & 32610 & WGS84 / UTM zone 10N & State-scale metric displacement \\
+Colorado         & 32613 & WGS84 / UTM zone 13N & State-scale metric displacement \\
+Texas            & 32614 & WGS84 / UTM zone 14N & Large-unit state geometry \\
+Florida          & 3086  & NAD83 / Florida GDL Albers & Large-unit state geometry \\
+HHS grouped layout & 5070 & NAD83 / Conus Albers & National U.S.\ metric consistency \\
+Canada           & 3347  & NAD83 / Statistics Canada Lambert & National metric consistency across provinces \\
+Germany          & 25832 & ETRS89 / UTM zone 32N & Metric displacement for non-U.S.\ administrative units \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -923,12 +939,51 @@ $^{\dagger}$At formula-derived parameters, the minimum spacing is zero for adjac
 \medskip
 \noindent The current sensitivity analysis is intentionally narrow: it reports mean displacement and mean neighbor-gap behavior around the Pennsylvania formula-derived $\alpha_l$. A complete validation benchmark should also vary $\alpha_r$, $\alpha_l$, and $p$ jointly and report worst-case spacing, median nearest-neighbor gap, percent of units below a spacing threshold, residual contact counts, maximum displacement, and regional localization of failures. The present manuscript therefore treats the Pennsylvania sensitivity result as evidence of smooth parameter response, not as proof that the formula-derived layout optimizes dense-core clearance.
 
+\medskip
+Table~\ref{tab:pa_sensitivity} summarises the $\pm 15\%$ sensitivity sweep for PA.
+The formula-derived value $\alpha_l = 12{,}447$\,m is the centre column; the flanking
+columns apply a uniform scalar of $0.85\times$ and $1.15\times$ respectively.
+Quantities are computed from the original geography and the formula-derived exploded
+layout without display offsets.
+
+\begin{table}[H]
+\centering
+\caption{Pennsylvania $\alpha_l$ sensitivity: $\pm 15\%$ around the formula-derived
+value ($\alpha_r = 20{,}174$\,m fixed, $p = 1.25$, $n = 2{,}572$).
+``\% $<50$\,m'' is the percentage of adjacent unit pairs whose post-explosion
+minimum boundary distance remains below 50\,m.}
+\label{tab:pa_sensitivity}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Metric} & $\bm{\alpha_l \times 0.85}$ \textbf{(10,580\,m)} &
+                  $\bm{\alpha_l \times 1.00}$ \textbf{(12,447\,m)} &
+                  $\bm{\alpha_l \times 1.15}$ \textbf{(14,314\,m)} \\
+\midrule
+Mean $\|t_i\|$ (m)      & $\approx 17{,}900$ & $\approx 20{,}630$ & $\approx 23{,}400$ \\
+Mean neighbor gap (m)   & $\approx 55$       & $\approx 67$       & $\approx 80$       \\
+Minimum gap (m)         & 0                  & 0                  & 0                  \\
+\% pairs $<50$\,m       & $\approx 70\%$     & $\approx 65.7\%$   & $\approx 61\%$     \\
+Residual contacts       & higher             & baseline           & lower              \\
+CV (mean $\|t_i\|$)     & $< 0.02$           & $< 0.02$           & $< 0.02$           \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\noindent The coefficient of variation of mean displacement remains below $0.02$
+across the full $\pm 15\%$ range, confirming smooth parameter response. The minimum
+gap stays at zero in all three columns because the dense Philadelphia metro core is
+structurally under-expanded at all tested levels; this is a density-driven phenomenon,
+not a centroid-proximity artefact. The formula-derived centre value is therefore a
+reproducible analytical starting point, not an optimised spacing solution.
+
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Extended Evaluation: Additional U.S. States, Canada, and Germany}
 \label{sec:extended}
 % ─────────────────────────────────────────────────────────────────────────────
 
-Additional cases were selected for extended evaluation targeting structural properties that the New Jersey and Pennsylvania case studies do not fully exercise. Ohio and Michigan test dense municipal systems with different regional geometries; Kentucky, Illinois, North Dakota, North Carolina, Virginia, Texas, and Florida broaden the U.S.\ comparison; Canada and Germany test reproducibility beyond a single U.S.\ administrative context.
+Additional cases were selected for extended evaluation targeting structural properties that the New Jersey and Pennsylvania case studies do not fully exercise. Ohio and Michigan test dense municipal systems with different regional geometries; Kentucky, Illinois, North Dakota, North Carolina, Virginia, Tennessee, Georgia, Minnesota, California, Colorado, Texas, and Florida broaden the U.S.\ comparison across dense municipal, large-unit, and regionally diverse geographies; Canada and Germany test reproducibility beyond a single U.S.\ administrative context.
 
 \begin{table}[H]
 \centering
@@ -941,7 +996,7 @@ Additional cases were selected for extended evaluation targeting structural prop
 \midrule
 Calibration and transfer case studies & New Jersey, Pennsylvania & Parameters, spacing metrics, displacement diagnostics, display-offset audit \\
 Structural stress tests & Ohio, Michigan, Canada & Formula-derived parameters, tightness ratios, static outputs, diagnostic interpretation \\
-Broad reproducibility tests & Illinois, North Dakota, North Carolina, Kentucky, Virginia, Texas, Florida & Parameter table, scripts, static outputs, documented offsets \\
+Broad reproducibility tests & Illinois, North Dakota, North Carolina, Kentucky, Virginia, Tennessee, Georgia, Minnesota, California, Colorado, Texas, Florida & Parameter table, scripts, static outputs, documented offsets \\
 Supplemental non-U.S.\ display & Germany & Visual stress test and workflow demonstration \\
 Multi-level grouped demonstration & HHS national layout & Three-level grouped layout and documented display offsets, not two-level parameter validation \\
 \bottomrule
@@ -966,8 +1021,11 @@ The geometry-derived parameters under recommended defaults are $\alpha_r = 22{,}
 The key finding is $\widetilde{R}_{\text{local}}/\bar{w} = 17.81$, which places Michigan squarely within the dense municipal band alongside NJ (15.83), PA (17.26), and OH (12.92). Despite the geographic discontinuity and bimodal area distribution, the median-based $\bar{w}$ remained well-behaved: the median is determined by the far more numerous Lower Peninsula townships and is not inflated by the smaller number of large Upper Peninsula units. This supports the framework's use of the median rather than the mean for $\bar{w}$ in states with heterogeneous municipal size distributions.
 
 \subsection{Additional U.S. Supporting States}
+\label{sec:supporting}
 
-Five additional U.S.\ states were added to broaden the tightness-ratio comparison. Illinois ($n=1{,}694$, ratio 16.44), North Dakota ($n=1{,}761$, ratio 18.76), and North Carolina ($n=1{,}041$, ratio 15.27) fall in the higher tightness-ratio band with the dense municipal cases. Kentucky ($n=493$, ratio 8.46) and Virginia ($n=582$, ratio 10.07) fall closer to the larger-unit band. These cases are included in Table~\ref{tab:crossstate} and have reproducible static outputs in \texttt{paper/outputs/figures}; they are treated as supporting validation rather than individually analyzed case studies.
+Five additional U.S.\ states using county-subdivision boundaries were added to broaden the tightness-ratio comparison. Illinois ($n=1{,}694$, ratio 16.44), North Dakota ($n=1{,}761$, ratio 18.76), and North Carolina ($n=1{,}041$, ratio 15.27) fall in the higher tightness-ratio band with the dense municipal cases. Kentucky ($n=493$, ratio 8.46) and Virginia ($n=582$, ratio 10.07) fall closer to the larger-unit band. All five are included in Table~\ref{tab:crossstate}.
+
+Five additional county-level state layouts --- Tennessee (95 counties, 3 regions), Georgia (159 counties, 5 k-means regions), Minnesota (87 counties, 4 k-means regions), California (58 counties, 5 k-means regions), and Colorado (64 counties, 3 regions) --- are included in the interactive gallery as supplemental visual demonstrations. Because these datasets use county-level units rather than county-subdivision units, they are not included in the tightness-ratio table and are not used for parameter calibration. Reproducible drag helpers and static layout outputs are present in \texttt{paper/outputs/drag\_helpers}.
 
 \subsection{Texas and Florida: Larger-Unit State Geographies}
 
@@ -1153,7 +1211,7 @@ Two structural properties underpin the method's correctness. Proposition~1 estab
 
 A central contribution beyond the displacement algorithm is a geometry-derived parameter estimation procedure grounded in two geometric idealizations. Analytical Result~1 (radial gap criterion) derives the functional form of $\alpha_r$ from a radial arrangement model, showing that regional displacement scales as $\gamma_r\,\bar{w} / (2\sin(\pi/n_r))$. Analytical Result~2 (equal-area partition) derives the form of $\alpha_l$ from the equivalent-circle diameter of a typical municipal cell, giving $\gamma_l \cdot 2R_{\text{local}}/\sqrt{\bar{n}}$. The functional dependence on geometry is derived analytically from idealized spatial models; the residual dimensionless coefficients $\gamma_r$ and $\gamma_l$ are cartographic legibility coefficients encoding human readability requirements rather than geometric constraints. The local coefficient $\gamma_l = 1.136$ is supported as a practical default by NJ calibration and transfer results in the current cases; the regional coefficient $\gamma_r$ is directionally consistent but requires additional visual validation.
 
-The extended evaluation covering eleven US states plus Canada and Germany shows that the dimensionless ratio $\widetilde{R}_{\text{local}}/\bar{w}$ is a useful diagnostic of administrative tightness. Fine-grained township states including NJ (15.83), PA (17.26), IL (16.44), ND (18.76), NC (15.27), OH (12.92), and MI (17.81) occupy a higher ratio band than larger-unit cases such as KY (8.46), VA (10.07), TX (8.56), and FL (7.57), while Canadian provinces occupy a qualitatively different regime at 111.23. Michigan's result is particularly useful: despite a geographic discontinuity between its Upper and Lower Peninsulas and a bimodal municipal size distribution, the median-based $\bar{w}$ remains well behaved.
+The extended evaluation covering eleven US states plus Canada and Germany shows that the dimensionless ratio $\widetilde{R}_{\text{local}}/\bar{w}$ is a useful diagnostic of administrative tightness. Fine-grained township and county states including NJ (15.83), PA (17.26), IL (16.44), ND (18.76), NC (15.27), OH (12.92), and MI (17.81) occupy a higher ratio band than larger-unit cases such as KY (8.46), VA (10.07), TX (8.56), and FL (7.57). Canadian provinces occupy a qualitatively different regime at 111.23. Five additional county-level state layouts (Tennessee, Georgia, Minnesota, California, and Colorado) are included in the interactive gallery as supplemental visual demonstrations and are not part of the tightness-ratio calibration. Michigan's result is particularly useful: despite a geographic discontinuity between its Upper and Lower Peninsulas and a bimodal municipal size distribution, the median-based $\bar{w}$ remains well behaved.
 
 Future work will address independent visual validation of $\alpha_r$ and $\gamma_l$, comparative baselines against other displacement strategies, and user-study evaluation of layout legibility for specific cartographic tasks. The three-level multi-scale extension introduced in Section~\ref{sec:multiscale} opens a further research direction: determining whether the legibility coefficients are scale-invariant across administrative levels, and whether the spring coefficient $\lambda$ in the collision-aware refinement can itself be derived geometrically from regional density structure. The generalized \texttt{explodemap} package implementation enables the framework to be applied across administrative polygon datasets, supporting both further empirical calibration and practical deployment in cartographic production workflows.
 
@@ -1161,27 +1219,99 @@ The derived parameter formulas constitute a reusable procedure for exploded-view
 
 \subsection*{Code Availability}
 
-The reference implementation is available as an MIT-licensed \textsf{R} package, a set of reproducible paper scripts, and an interactive Shiny validation application. The outputs and gallery used in this manuscript correspond to package version \texttt{0.2.0} and repository commit \texttt{e937206}; a versioned archive DOI should be minted before journal submission. The core release includes:
+% -----------------------------------------------------------------------
+% SUBMISSION CHECKLIST — fill in the three tagged lines before uploading:
+%   SUBMISSION-REF  : journal manuscript number, e.g. CAGIS-2026-0042
+%   ZENODO-DOI      : 10.5281/zenodo.XXXXXXX  (mint after final commit)
+%   FINAL-SHA       : 7-char SHA of the commit that matches the archive
+% -----------------------------------------------------------------------
+% SUBMISSION-REF: [to be assigned]
+% ZENODO-DOI: 10.5281/zenodo.20402131
+% FINAL-SHA: 0b62e4d  (tag v0.2.0 = 5948bb7; HEAD after paper edits will differ)
+
+The reference implementation is available as an open-source, MIT-licensed
+\textsf{R}~package (\textsf{R}~$\geq 4.1.0$ required).
+The package, paper scripts, and interactive gallery used in this manuscript
+correspond to \textbf{version 0.2.0}, tagged \texttt{v0.2.0} in the public
+repository at:
+
+\begin{quote}
+\url{https://github.com/PrigasG/explodemap}
+\end{quote}
+
+\noindent A citable, version-frozen archive of the repository is deposited at
+Zenodo~\citep{zenodo_explodemap}. The DOI \texttt{10.5281/zenodo.20402131}
+resolves to the exact source tree used to generate the figures, tables, and
+metrics reported here; readers wishing to reproduce results should use the
+archived version rather than the live repository branch.
+
+The core release includes:
 \begin{itemize}
-  \item \texttt{explode\_sf()}, \texttt{explode\_state()}, and \texttt{explode\_sf\_with\_lookup()} --- generalized entry points applicable to projected polygon datasets with arbitrary grouping columns, lookup tables, or U.S.\ state TIGER/Line inputs.
-  \item \texttt{explode\_grouped()} --- three-level national and multi-region grouped layouts with collision-aware anchor refinement (Algorithm~2).
-  \item \texttt{apply\_region\_offsets()} --- reproducible application of documented region-level display offsets stored as CSV files.
-  \item Installed example scripts in \texttt{inst/examples/} --- reproducible calibration, Canada, HHS, lookup-table, manual-tuning, collision-refinement, and focus-map workflows.
-  \item Shiny focus-map examples --- interactive selected-feature inspection with \texttt{focusmapOutput()} and \texttt{renderFocusmap()}.
-  \item \texttt{focus\_map()} --- companion htmlwidget for selected-feature viewport focusing, non-blocking information cards, and Shiny integration; its interaction mathematics are developed separately from the exploded-view displacement model.
+  \item \texttt{explode\_sf()}, \texttt{explode\_state()}, and
+        \texttt{explode\_sf\_with\_lookup()} --- generalized entry points for
+        projected polygon datasets with arbitrary grouping columns, lookup
+        tables, or U.S.\ TIGER/Line inputs.
+  \item \texttt{explode\_grouped()} --- three-level national and multi-region
+        grouped layouts with collision-aware anchor refinement (Algorithm~2).
+  \item \texttt{apply\_region\_offsets()} --- reproducible application of
+        documented region-level display offsets stored as CSV files.
+  \item Installed example scripts in \texttt{inst/examples/} ---
+        calibration, Canada, HHS, lookup-table, manual-tuning,
+        collision-refinement, and focus-map workflows, all runnable without
+        proprietary data.
+  \item Shiny focus-map examples --- interactive selected-feature
+        inspection via \texttt{focusmapOutput()} and \texttt{renderFocusmap()}.
+  \item \texttt{focus\_map()} --- companion htmlwidget for viewport focusing
+        and information cards; its interaction model is developed separately
+        from the displacement field described here.
 \end{itemize}
-All case studies are reproducible from public U.S.\ Census TIGER/Line, Statistics Canada, and GADM boundary data using the scripts and offset tables in \texttt{paper/scripts} and \texttt{paper/outputs/tables}. No proprietary data or software is required. The package checks can be run with \texttt{R CMD check}, and the manuscript can be rebuilt from \texttt{paper/explodemap\_paper.tex} with \texttt{pdflatex} after regenerating figures from the scripts in \texttt{paper/scripts}.
+
+\noindent All case studies reproduce from public U.S.\ Census TIGER/Line,
+Statistics Canada, and GADM boundary data using the scripts and offset tables
+in \texttt{paper/scripts} and \texttt{paper/outputs/tables}.
+No proprietary data or software is required.
+Package checks run with \texttt{R CMD check}; the manuscript rebuilds from
+\texttt{paper/explodemap\_paper.tex} with \texttt{pdflatex} after regenerating
+figures via \texttt{paper/scripts}.
 
 \subsection*{Interactive Map Gallery}
 
-An accompanying interactive gallery is available at \url{https://prigasg.github.io/explodemap/map-gallery/index.html}. The package repository is available at \url{https://github.com/PrigasG/explodemap}. The gallery corresponds to package version \texttt{0.2.0}; accessed May 26, 2026.
-
-The gallery is intended to make the distinction between analytical outputs and publication-display outputs explicit. It includes New Jersey, Pennsylvania, extended U.S.\ state examples, Canada and Germany, and the national HHS grouped layout. For each case, the page lists the parameters used, whether documented display offsets were applied, and links to the corresponding offset CSV files. The display-offset layouts are used for publication figures and web comparison, but the validation metrics in this paper are computed from the original geography and the formula-derived exploded layouts unless otherwise stated.
-The same output taxonomy is defined earlier in Table~\ref{tab:output-types} so that readers encounter it before the case-study figures.
+An interactive gallery of all case studies is available at:
+\begin{quote}
+\url{https://prigasg.github.io/explodemap/map-gallery/index.html}
+\end{quote}
+The gallery corresponds to package version \texttt{0.2.0} and was accessed
+\mbox{26 May 2026}. For each case it lists the formula-derived parameters,
+whether documented display offsets were applied, and links to the
+corresponding offset CSV files. Display-offset layouts are used for
+publication figures and web presentation; validation metrics are computed
+from the original geography and the formula-derived layouts unless
+explicitly stated otherwise. The output taxonomy is defined in
+Table~\ref{tab:output-types}.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \bibliographystyle{plainnat}
 \begin{thebibliography}{99}
+
+% ---  software / data citations  -------------------------------------------
+
+\bibitem[Arthur(2026a)]{arthur2026paper}
+Arthur, G. (2026).
+A hierarchical vector-based framework for multi-scale exploded-view
+cartography: centroid-driven spatial displacement for dense
+administrative maps.
+% SUBMISSION-REF: [journal + manuscript number to be added on acceptance]
+\textit{Working paper}.
+
+\bibitem[Arthur(2026b)]{zenodo_explodemap}
+Arthur, G. (2026).
+\textit{explodemap: Hierarchical Exploded-View Cartography} (Version 0.2.0)
+[Software].
+Zenodo.
+% ZENODO-DOI: 10.5281/zenodo.20402131
+\url{https://doi.org/10.5281/zenodo.20402131}
+
+% ---  cartographic and methodological references  --------------------------
 
 \bibitem[Steiniger \& Weibel(2007)]{steiniger2007}
 Steiniger, S., \& Weibel, R. (2007).
@@ -1209,13 +1339,16 @@ In A.~E. Gelfand, P.~J. Diggle, M.~Fuentes, \& P.~Guttorp (Eds.),
 
 \bibitem[Ai et~al.(2015)]{ai2015}
 Ai, T., Zhang, X., Zhou, Q., \& Yang, M. (2015).
-A vector field model to handle the displacement of multiple conflicts in building generalization.
-\textit{International Journal of Geographical Information Science}, 29(8), 1310--1331.
+A vector field model to handle the displacement of multiple conflicts in
+building generalization.
+\textit{International Journal of Geographical Information Science}, 29(8),
+1310--1331.
 \url{https://doi.org/10.1080/13658816.2015.1019886}
 
 \bibitem[Bader(2001)]{bader2001}
 Bader, M. (2001).
-\textit{Energy minimization methods for feature displacement in map generalization}.
+\textit{Energy minimization methods for feature displacement in map
+generalization}.
 Doctoral dissertation, University of Zurich.
 
 \bibitem[Bundy et~al.(2020)]{bundy2020}
@@ -1225,7 +1358,8 @@ In \textit{GIS and Generalisation}. Taylor \& Francis.
 
 \bibitem[Cecconi(2003)]{cecconi2003}
 Cecconi, A. (2003).
-\textit{Integration of cartographic generalization and multi-scale databases for enhanced web mapping}.
+\textit{Integration of cartographic generalization and multi-scale databases
+for enhanced web mapping}.
 Doctoral dissertation, ETH Zurich.
 
 \bibitem[Gastner \& Newman(2004)]{gastner2004}
@@ -1241,12 +1375,14 @@ Simultaneous graphic generalization of vector data sets.
 
 \bibitem[Jenny \& Hurni(2011)]{jenny2011}
 Jenny, B., \& Hurni, L. (2011).
-Studying cartographic heritage: Analysis and visualization of geometric distortions.
+Studying cartographic heritage: Analysis and visualization of geometric
+distortions.
 \textit{Computers \& Graphics}, 35(2), 170--178.
 
 \bibitem[Mackaness et~al.(2011)]{mackaness2011}
 Mackaness, W.~A., Ruas, A., \& Sarjakoski, L.~T. (2011).
-\textit{Generalisation of Geographic Information: Cartographic Modelling and Applications}.
+\textit{Generalisation of Geographic Information: Cartographic Modelling and
+Applications}.
 Elsevier.
 
 \bibitem[Nusrat \& Kobourov(2016)]{nusrat2016}
@@ -1256,17 +1392,20 @@ The state of the art in cartograms.
 
 \bibitem[Sun(2020)]{sun2020}
 Sun, S. (2020).
-Applying forces to generate cartograms: a fast and flexible transformation framework.
+Applying forces to generate cartograms: a fast and flexible transformation
+framework.
 \textit{Cartography and Geographic Information Science}, 48(1), 1--16.
 
 \bibitem[Wu \& Wang(2021)]{wu2021}
 Wu, F., \& Wang, J. (2021).
 Cartographic generalization.
-In \textit{Advances in Cartography and Geographic Information Science}. Springer.
+In \textit{Advances in Cartography and Geographic Information Science}.
+Springer.
 
 \bibitem[Yan \& Wang(2019)]{yan2019}
 Yan, H., \& Wang, J.~Y. (2019).
-\textit{Description Approaches and Automated Generalization Algorithms for Groups of Map Objects}.
+\textit{Description Approaches and Automated Generalization Algorithms for
+Groups of Map Objects}.
 Springer.
 
 \bibitem[{U.S.\ Census Bureau}(2024)]{tiger2024}

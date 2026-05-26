@@ -5,7 +5,7 @@
 state_registry <- list(
 
   NJ = list(
-    name = "New Jersey", fips = "34", crs = 32118,
+    name = "New Jersey", fips = "34", crs = 32111,
     region_map = list(
       North   = c("Bergen","Essex","Hudson","Morris","Passaic","Sussex","Union","Warren"),
       Central = c("Hunterdon","Mercer","Middlesex","Monmouth","Somerset"),
