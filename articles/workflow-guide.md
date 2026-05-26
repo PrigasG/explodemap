@@ -59,7 +59,7 @@ subdivision data for a state:
 
 result <- explode_state(
   state_fips = "34",
-  crs = 32118,
+  crs = 32111,
   region_map = nj_regions,
   plot = FALSE,
   quiet = TRUE

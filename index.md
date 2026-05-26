@@ -147,7 +147,7 @@ result <- explode_sf(my_sf, region_col = "district")
 ``` r
 
 nj <- explode_state(
-  state_fips = "34", crs = 32118,
+  state_fips = "34", crs = 32111,
   region_map = list(
     North   = c("Bergen","Essex","Hudson","Morris","Passaic","Sussex","Union","Warren"),
     Central = c("Hunterdon","Mercer","Middlesex","Monmouth","Somerset"),
@@ -437,7 +437,7 @@ For app code, all main geometry workflows accept `quiet = TRUE`:
 
 explode_sf(my_sf, "district", plot = FALSE, quiet = TRUE)
 explode_sf_with_lookup(my_sf, "GEOID", lookup, plot = FALSE, quiet = TRUE)
-explode_state("34", crs = 32118, region_map = regions, plot = FALSE, quiet = TRUE)
+explode_state("34", crs = 32111, region_map = regions, plot = FALSE, quiet = TRUE)
 explode_grouped(my_sf, "district", mode = "auto_collision", plot = FALSE, quiet = TRUE)
 layout_regions(my_sf, "district", mode = "auto_collision", quiet = TRUE)
 ```
