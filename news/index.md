@@ -30,6 +30,11 @@
   [`explode_state()`](https://prigasg.github.io/explodemap/reference/explode_state.md)
   for dense municipal cores, with diagnostics stored in the returned
   `refinement` component.
+- Added
+  [`explode_section()`](https://prigasg.github.io/explodemap/reference/explode_section.md)
+  for drill-down dashboards that explode one selected section while
+  keeping the remaining geography as faded or hidden context for
+  [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md).
 
 ### Improvements
 
@@ -58,6 +63,41 @@
   and real-world datasets.
 - Focus maps now support non-blocking info cards, selected-area sizing
   controls, and denser-layer performance tuning for Shiny workflows.
+- Focus maps now support named `group_palette` values, allowing Shiny
+  apps to align widget colouring with dashboard legends or
+  domain-specific palettes.
+- Focus maps now support context features via `context_col`,
+  `context_mode`, `context_opacity`, and `context_clickable`, enabling
+  selected-region focus maps with muted background geography.
+- Focus maps now support adaptive tiny-feature focus controls via
+  `min_focus_width`, `min_focus_height`, `tiny_feature_threshold`, and
+  `tiny_feature_boost`, improving municipal drill-down maps with very
+  small selected polygons.
+- Focus maps now support selected-feature origin context via
+  `origin_context` and `origin_context_position`, including an overview
+  inset that keeps small municipal focus views anchored to the broader
+  geography. The cue is opt-in by default.
+- Focus maps now expose `focus_context_opacity` to tune how strongly the
+  non-selected background geography recedes during focused views.
+- Focus maps now support opt-in drag zoom via `show_drag_zoom`. Users
+  can use the button or Shift-drag to draw a marquee rectangle and
+  smoothly zoom into dense clusters before selecting individual
+  features.
+- Drag zoom behaves as a navigation layer over focus maps: plain clicks
+  still focus polygons while the toggle is active, and turning the tool
+  off no longer resets the current focus.
+- [`explode_grouped()`](https://prigasg.github.io/explodemap/reference/explode_grouped.md)
+  now accepts visual aliases (`anchor_expand`, `anchor_buffer`,
+  `density_scale`, and `block_sep`) for the corresponding grouped-layout
+  solver controls.
+- Shiny workflows now have quieter geometry builders, automatic plot
+  suppression safeguards, and selection events for linked side panels.
+- Public-facing dashboard examples now show clear Shiny validation
+  messages for failed boundary downloads, empty data, map-generation
+  failures, and widget-rendering failures.
+- TIGER/Line downloads and TopoJSON export now fail with clearer,
+  actionable error messages when external services, files, or tools are
+  unavailable.
 - [`validate_input()`](https://prigasg.github.io/explodemap/reference/validate_input.md)
   now returns visibly, making repaired geometries less fragile in
   internal workflows.
@@ -69,8 +109,11 @@
 - Added small installed examples for the basic `sf` workflow, optional
   collision refinement, lookup-table grouping, and manual parameter
   tuning.
-- Added a workflow-selection vignette and a site-linked cheatsheet for
-  release-oriented user guidance.
+- Added a workflow-selection vignette for release-oriented user
+  guidance.
+- Added Shiny-oriented guidance for exploding a visible section while
+  preserving the rest of the map as context in
+  [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md).
 - Added an `inst/CITATION` entry for academic citation.
 - Added pkgdown site configuration and GitHub Pages support.
 

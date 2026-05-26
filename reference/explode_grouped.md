@@ -21,12 +21,17 @@ explode_grouped(
   lambda = 0.18,
   eta = 0.18,
   padding_sep = 20000,
+  anchor_expand = NULL,
+  anchor_buffer = NULL,
+  density_scale = NULL,
+  block_sep = NULL,
   max_iter = 60,
   fix_invalid = TRUE,
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
-  label = "Grouped Layout"
+  label = "Grouped Layout",
+  quiet = FALSE
 )
 ```
 
@@ -84,6 +89,12 @@ explode_grouped(
 
   Minimum block separation (default 20000)
 
+- anchor_expand, anchor_buffer, density_scale, block_sep:
+
+  Optional aliases for `kappa`, `padding`, `delta`, and `padding_sep`,
+  respectively. These names are convenient in Shiny dashboards where the
+  controls describe the visual effect rather than the solver term.
+
 - max_iter:
 
   Max collision iterations (default 60)
@@ -98,7 +109,10 @@ explode_grouped(
 
 - plot:
 
-  Print plots (default TRUE)
+  Print plots (default TRUE). Automatically suppressed inside a live
+  Shiny session; use
+  [`plot.grouped_exploded_map()`](https://prigasg.github.io/explodemap/reference/plot.grouped_exploded_map.md)
+  inside `renderPlot()`.
 
 - export:
 
@@ -107,6 +121,11 @@ explode_grouped(
 - label:
 
   Title for plots
+
+- quiet:
+
+  If `TRUE`, suppress [`message()`](https://rdrr.io/r/base/message.html)
+  output. Default `FALSE`.
 
 ## Value
 

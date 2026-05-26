@@ -27,7 +27,8 @@ explode_state(
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
-  label = paste0("FIPS ", state_fips)
+  label = paste0("FIPS ", state_fips),
+  quiet = FALSE
 )
 ```
 
@@ -109,7 +110,10 @@ explode_state(
 
 - plot:
 
-  Print plots on return (default TRUE)
+  Print plots on return (default TRUE). Automatically suppressed when
+  called inside a live Shiny session; use
+  [`plot.exploded_map()`](https://prigasg.github.io/explodemap/reference/plot.exploded_map.md)
+  inside `renderPlot()` instead.
 
 - export:
 
@@ -118,6 +122,13 @@ explode_state(
 - label:
 
   Title for plots and print output
+
+- quiet:
+
+  If `TRUE`, suppress all
+  [`message()`](https://rdrr.io/r/base/message.html) output (useful
+  inside Shiny `reactive()` and `observe()` where messages are invisible
+  to users). Default `FALSE`.
 
 ## Value
 

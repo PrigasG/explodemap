@@ -24,7 +24,8 @@ explode_sf(
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
-  label = "Custom Dataset"
+  label = "Custom Dataset",
+  quiet = FALSE
 )
 ```
 
@@ -102,7 +103,10 @@ explode_sf(
 
 - plot:
 
-  Print plots on return
+  Print plots on return. Automatically suppressed when called inside a
+  live Shiny session; use
+  [`plot.exploded_map()`](https://prigasg.github.io/explodemap/reference/plot.exploded_map.md)
+  inside `renderPlot()` instead.
 
 - export:
 
@@ -111,6 +115,12 @@ explode_sf(
 - label:
 
   Title for plots
+
+- quiet:
+
+  If `TRUE`, suppress all
+  [`message()`](https://rdrr.io/r/base/message.html) output. Default
+  `FALSE`.
 
 ## Value
 

@@ -1,7 +1,5 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://prigasg.github.io/explodemap/404.html</loc></url>
-<url><loc>https://prigasg.github.io/explodemap/LICENSE-text.html</loc></url>
-<url><loc>https://prigasg.github.io/explodemap/LICENSE.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/articles/getting-started.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/articles/grouped-layouts.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/articles/index.html</loc></url>
@@ -9,7 +7,11 @@
 <url><loc>https://prigasg.github.io/explodemap/articles/workflow-guide.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/authors.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/index.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/LICENSE-text.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/LICENSE.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/map-gallery/index.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/news/index.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/apply_region_offsets.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/cache_clear.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/cache_list.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/calibration_row.html</loc></url>
@@ -29,15 +31,17 @@
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-refine_anchors.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-sf_to_geojson_fast.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/estimate_block_radii.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/explodemap-package.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_grouped.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/explode_section.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_sf.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_sf_core.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_sf_with_lookup.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/explode_state.html</loc></url>
-<url><loc>https://prigasg.github.io/explodemap/reference/explodemap-package.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/export_topojson.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/fmt_dist.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/focus_map.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/focus_map_preset.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/index.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/layout_regions.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/plot.exploded_map.html</loc></url>
