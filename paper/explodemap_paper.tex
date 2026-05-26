@@ -1223,11 +1223,11 @@ The derived parameter formulas constitute a reusable procedure for exploded-view
 % SUBMISSION CHECKLIST — fill in the three tagged lines before uploading:
 %   SUBMISSION-REF  : journal manuscript number, e.g. CAGIS-2026-0042
 %   ZENODO-DOI      : 10.5281/zenodo.XXXXXXX  (mint after final commit)
-%   FINAL-SHA       : 7-char SHA of the commit that matches the archive
+%   FINAL-SHA       : 7-char SHA of the repository state used by the manuscript
 % -----------------------------------------------------------------------
 % SUBMISSION-REF: [to be assigned]
 % ZENODO-DOI: 10.5281/zenodo.20402131
-% FINAL-SHA: 0b62e4d  (tag v0.2.0 = 5948bb7; HEAD after paper edits will differ)
+% FINAL-SHA: 1952569  (tag v0.2.0 = 5948bb7; update after final sync commit)
 
 The reference implementation is available as an open-source, MIT-licensed
 \textsf{R}~package (\textsf{R}~$\geq 4.1.0$ required).
@@ -1239,11 +1239,13 @@ repository at:
 \url{https://github.com/PrigasG/explodemap}
 \end{quote}
 
-\noindent A citable, version-frozen archive of the repository is deposited at
+\noindent A citable copy of the manuscript PDF is deposited at
 Zenodo~\citep{zenodo_explodemap}. The DOI \texttt{10.5281/zenodo.20402131}
-resolves to the exact source tree used to generate the figures, tables, and
-metrics reported here; readers wishing to reproduce results should use the
-archived version rather than the live repository branch.
+identifies the submitted paper artifact. The reproducible source code, paper
+scripts, display-offset tables, and interactive gallery are maintained in the
+public GitHub repository; readers wishing to reproduce results should use the
+tagged release and the commit identified in this section rather than relying
+only on the live repository branch.
 
 The core release includes:
 \begin{itemize}

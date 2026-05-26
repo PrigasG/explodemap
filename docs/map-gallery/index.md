@@ -100,6 +100,49 @@ Texas display-offset layout
 
 Florida display-offset layout
 
+### Supplemental County-Level Gallery Layouts
+
+These additional layouts use county-level units rather than
+county-subdivision units. They are included as visual demonstrations of
+the same display-offset workflow, not as tightness-ratio calibration
+cases.
+
+![Tennessee county-level display-offset
+layout](assets/figures/tn_dragged_layout.png)
+
+Tennessee display-offset layout
+
+![Georgia county-level display-offset
+layout](assets/figures/ga_dragged_layout.png)
+
+Georgia display-offset layout
+
+![Minnesota county-level display-offset
+layout](assets/figures/mn_dragged_layout.png)
+
+Minnesota display-offset layout
+
+![California county-level display-offset
+layout](assets/figures/ca_dragged_layout.png)
+
+California display-offset layout
+
+![Colorado county-level display-offset
+layout](assets/figures/co_dragged_layout.png)
+
+Colorado display-offset layout
+
+[Tennessee offset
+CSV](https://prigasg.github.io/explodemap/map-gallery/assets/tables/tn_drag_offsets_used.csv)
+[Georgia offset
+CSV](https://prigasg.github.io/explodemap/map-gallery/assets/tables/ga_drag_offsets_used.csv)
+[Minnesota offset
+CSV](https://prigasg.github.io/explodemap/map-gallery/assets/tables/mn_drag_offsets_used.csv)
+[California offset
+CSV](https://prigasg.github.io/explodemap/map-gallery/assets/tables/ca_drag_offsets_used.csv)
+[Colorado offset
+CSV](https://prigasg.github.io/explodemap/map-gallery/assets/tables/co_drag_offsets_used.csv)
+
 ### Formula-Derived Validation Parameters
 
 | Case | alpha_r (km) | alpha_l (km) | Units | Manual offsets in metrics? | Offset CSV |

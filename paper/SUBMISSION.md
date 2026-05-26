@@ -59,8 +59,12 @@ Replace `FINAL-SHA` comment value in `explodemap_paper.tex` with
 the new SHA. Also update the `FINAL-SHA` line in the Code Availability
 section if it appears in prose.
 
-Current HEAD (as of last paper edit): `0b62e4d`
+Current HEAD before gallery synchronization: `1952569`
 Tagged release v0.2.0: `5948bb7`
+
+After the final synchronization commit, update this line and the
+`% FINAL-SHA:` comment in `paper/explodemap_paper.tex` to the commit
+that contains the final paper and gallery assets.
 
 ---
 
