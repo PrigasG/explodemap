@@ -11,6 +11,12 @@
 
 \item{...}{Ignored}
 }
+\value{
+Invisibly returns \code{x}, the original \code{exploded_map} object. The
+method is called for its side effect of printing a compact diagnostic
+overview of units, regions, derived parameters, and optional refinement
+information.
+}
 \description{
 Print an exploded_map object
 }

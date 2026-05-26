@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>explodemap Interactive Map Gallery</title>
+<style>
+:root { --ink:#17202a; --muted:#5d6d7e; --line:#d8dee4; --brand:#2166ac; --bg:#f7f9fb; }
+body { margin:0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:var(--bg); }
+header { background:#fff; border-bottom:1px solid var(--line); padding:32px max(24px, calc((100vw - 1180px) / 2)); }
+main { max-width:1180px; margin:0 auto; padding:28px 24px 56px; }
+h1 { margin:0 0 10px; font-size:clamp(2rem, 4vw, 3.2rem); line-height:1.05; }
+h2 { margin:0 0 10px; font-size:1.35rem; }
+h3 { margin:24px 0 10px; }
+p { line-height:1.55; }
+a { color:var(--brand); }
+.meta { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:18px; color:var(--muted); }
+.nav { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
+.nav a { border:1px solid var(--line); border-radius:6px; padding:8px 10px; text-decoration:none; background:#fff; color:var(--ink); }
+.card { background:#fff; border:1px solid var(--line); border-radius:8px; padding:20px; margin:20px 0; }
+.figure-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px; align-items:start; }
+figure { margin:0; border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; }
+img { display:block; width:100%; height:auto; }
+figcaption { padding:9px 10px; color:var(--muted); font-size:.92rem; border-top:1px solid var(--line); }
+table { border-collapse:collapse; width:100%; margin-top:12px; background:#fff; }
+th, td { border:1px solid var(--line); padding:9px 10px; text-align:left; vertical-align:top; }
+th { background:#edf4fb; }
+.links a { display:inline-block; margin-right:10px; }
+@media (max-width: 640px) { header { padding:24px 18px; } main { padding:20px 14px 44px; } }
+</style>
+</head>
+<body>
+<header>
+<h1>Interactive Map Gallery</h1>
+<p>Comparison outputs for the explodemap paper: original geography where available, formula-derived analytical layouts, and documented display-offset layouts used for publication figures and web review.</p>
+<div class="meta">
+<div><strong>GitHub Pages</strong><br><a href="https://prigasg.github.io/explodemap/map-gallery/">https://prigasg.github.io/explodemap/map-gallery/</a></div>
+<div><strong>Repository</strong><br><a href="https://github.com/PrigasG/explodemap">https://github.com/PrigasG/explodemap</a></div>
+<div><strong>Package version</strong><br>0.2.0</div>
+<div><strong>Date accessed</strong><br>May 26, 2026</div>
+</div>
+<nav class="nav">
+<a href="#nj">New Jersey</a><a href="#pa">Pennsylvania</a><a href="#states">Extended U.S. states</a><a href="#world">Canada/Germany</a><a href="#hhs">HHS grouped layout</a><a href="#downloads">Download data/code</a>
+</nav>
+</header>
+<main>
+<section class="card">
+<h2>How to Read the Outputs</h2>
+<table>
+<thead><tr><th>Output type</th><th>Used for</th><th>Manual offsets?</th><th>Used in quantitative metrics?</th></tr></thead>
+<tbody>
+<tr><td>Original geographic layout</td><td>Baseline</td><td>No</td><td>Yes</td></tr>
+<tr><td>Formula-derived exploded layout</td><td>Validation</td><td>No</td><td>Yes</td></tr>
+<tr><td>Display-offset layout</td><td>Publication figures / web gallery</td><td>Yes, documented</td><td>Only if explicitly stated</td></tr>
+</tbody>
+</table>
+</section>
+<span id="nj"></span><section class="card"><h2>New Jersey</h2><p>Formula-derived and display-offset layouts for the calibration case. The display offsets are documented separately from the analytical validation output.</p><div class="figure-grid"><figure><img src="assets/figures/nj_formula_derived.png" alt="New Jersey formula-derived exploded layout"><figcaption>Formula-derived exploded layout</figcaption></figure>
+<figure><img src="assets/figures/nj_dragged_layout.png" alt="New Jersey display-offset exploded layout"><figcaption>Display-offset layout</figcaption></figure></div><p class="links"><a href="assets/tables/nj_drag_offsets_used.csv">Display offset CSV</a></p></section><span id="pa"></span><section class="card"><h2>Pennsylvania</h2><p>The Pennsylvania case includes the original geography, the formula-derived validation output, the display-offset figure, and a displacement-vector diagnostic showing how municipal units are pulled apart.</p><div class="figure-grid"><figure><img src="assets/figures/pa_original.png" alt="Pennsylvania original geography"><figcaption>Original geography</figcaption></figure>
+<figure><img src="assets/figures/pa_formula_derived.png" alt="Pennsylvania formula-derived exploded layout"><figcaption>Formula-derived exploded layout</figcaption></figure>
+<figure><img src="assets/figures/pa_dragged_layout.png" alt="Pennsylvania display-offset layout"><figcaption>Display-offset layout</figcaption></figure>
+<figure><img src="assets/figures/pa_displacement_vectors.png" alt="Pennsylvania displacement vector diagnostic"><figcaption>Displacement vectors</figcaption></figure></div><p class="links"><a href="assets/tables/pa_drag_offsets_used.csv">Display offset CSV</a> <a href="assets/tables/cross_state_metrics.csv">Validation metrics CSV</a></p></section><section id="states" class="card">
+<h2>Extended U.S. States</h2>
+<p>Additional state examples show where the same analytical parameter derivation remains stable and where documented display offsets improve publication readability.</p>
+<div class="figure-grid">
+<figure><img src="assets/figures/oh_dragged_layout.png" alt="Ohio display-offset layout"><figcaption>Ohio display-offset layout</figcaption></figure>
+<figure><img src="assets/figures/mi_dragged_layout.png" alt="Michigan display-offset layout"><figcaption>Michigan display-offset layout</figcaption></figure>
+<figure><img src="assets/figures/ky_dragged_layout.png" alt="Kentucky display-offset layout"><figcaption>Kentucky display-offset layout</figcaption></figure>
+<figure><img src="assets/figures/il_dragged_layout.png" alt="Illinois display-offset layout"><figcaption>Illinois display-offset layout</figcaption></figure>
+<figure><img src="assets/figures/nd_dragged_layout.png" alt="North Dakota display-offset layout"><figcaption>North Dakota display-offset layout</figcaption></figure>
+<figure><img src="assets/figures/nc_dragged_layout.png" alt="North Carolina display-offset layout"><figcaption>North Carolina display-offset layout</figcaption></figure>
+<figure><img src="assets/figures/va_dragged_layout.png" alt="Virginia display-offset layout"><figcaption>Virginia display-offset layout</figcaption></figure>
+<figure><img src="assets/figures/tx_dragged_layout.png" alt="Texas display-offset layout"><figcaption>Texas display-offset layout</figcaption></figure>
+<figure><img src="assets/figures/fl_dragged_layout.png" alt="Florida display-offset layout"><figcaption>Florida display-offset layout</figcaption></figure>
+</div>
+<h3>Formula-Derived Validation Parameters</h3>
+<table>
+<thead><tr><th>Case</th><th>alpha_r (km)</th><th>alpha_l (km)</th><th>Units</th><th>Manual offsets in metrics?</th><th>Offset CSV</th></tr></thead>
+<tbody><tr><td>New Jersey</td><td>6.8</td><td>10</td><td>564</td><td>No</td><td><a href="assets/tables/nj_drag_offsets_used.csv">CSV</a></td></tr>
+<tr><td>Pennsylvania</td><td>20.2</td><td>12.4</td><td>2,572</td><td>No</td><td><a href="assets/tables/pa_drag_offsets_used.csv">CSV</a></td></tr>
+<tr><td>Ohio</td><td>23.6</td><td>17.5</td><td>1,602</td><td>No</td><td><a href="assets/tables/oh_drag_offsets_used.csv">CSV</a></td></tr>
+<tr><td>Michigan</td><td>23</td><td>22.2</td><td>1,540</td><td>No</td><td><a href="assets/tables/mi_drag_offsets_used.csv">CSV</a></td></tr>
+<tr><td>Kentucky</td><td>40.7</td><td>30.7</td><td>493</td><td>No</td><td><a href="assets/tables/ky_drag_offsets_used.csv">CSV</a></td></tr>
+<tr><td>Illinois</td><td>23.1</td><td>19.6</td><td>1,694</td><td>No</td><td><a href="assets/tables/il_drag_offsets_used.csv">CSV</a></td></tr>
+<tr><td>North Dakota</td><td>18.8</td><td>18.2</td><td>1,761</td><td>No</td><td><a href="assets/tables/nd_drag_offsets_used.csv">CSV</a></td></tr>
+<tr><td>North Carolina</td><td>20.3</td><td>23.1</td><td>1,041</td><td>No</td><td><a href="assets/tables/nc_drag_offsets_used.csv">CSV</a></td></tr>
+<tr><td>Virginia</td><td>36.9</td><td>30.9</td><td>582</td><td>No</td><td><a href="assets/tables/va_drag_offsets_used.csv">CSV</a></td></tr>
+<tr><td>Texas</td><td>79</td><td>39.7</td><td>862</td><td>No</td><td><a href="assets/tables/tx_drag_offsets_used.csv">CSV</a></td></tr>
+<tr><td>Florida</td><td>47.7</td><td>43.6</td><td>316</td><td>No</td><td><a href="assets/tables/fl_drag_offsets_used.csv">CSV</a></td></tr></tbody></table>
+</section>
+<section id="world" class="card">
+<h2>Canada/Germany</h2>
+<p>Canada and Germany illustrate multi-region transfer outside the main U.S. municipal calibration set. Canada is included in the quantitative table; Germany is included as a display and stress-test example.</p>
+<div class="figure-grid">
+<figure><img src="assets/figures/canada_dragged_layout.png" alt="Canada display-offset layout"><figcaption>Canada display-offset layout</figcaption></figure>
+<figure><img src="assets/figures/germany_dragged_layout.png" alt="Germany display-offset layout"><figcaption>Germany display-offset layout</figcaption></figure>
+</div>
+<p class="links"><a href="assets/tables/canada_drag_offsets_used.csv">Canada offset CSV</a> <a href="assets/tables/germany_drag_offsets_used.csv">Germany offset CSV</a></p>
+</section>
+<section id="hhs" class="card">
+<h2>HHS National Grouped Layout</h2>
+<p>The HHS example uses numbered region labels, with region membership defined in the manuscript table. The second figure documents the display-offset movement used to clean up the final publication layout.</p>
+<div class="figure-grid">
+<figure><img src="assets/figures/hhs_dragged_layout.png" alt="HHS national grouped display layout"><figcaption>Final HHS grouped layout</figcaption></figure>
+<figure><img src="assets/figures/hhs_display_offsets.png" alt="HHS display-offset movement diagnostic"><figcaption>Documented display offsets</figcaption></figure>
+</div>
+<p class="links"><a href="assets/tables/hhs_drag_offsets_used.csv">HHS offset CSV</a></p>
+</section>
+<section id="downloads" class="card">
+<h2>Download Data/Code</h2>
+<p>The publication figures are generated from the package source, paper scripts, and documented offset tables. The repository contains the regeneration scripts under <code>paper/scripts</code>; this page mirrors the figures and small CSV outputs needed to audit the display-offset layouts.</p>
+<p class="links"><a href="https://github.com/PrigasG/explodemap/tree/master/paper/scripts">Paper scripts</a> <a href="assets/tables/cross_state_metrics.csv">Cross-state metrics CSV</a> <a href="assets/tables/dragged_layout_render_index.csv">Rendered-layout index CSV</a> <a href="https://github.com/PrigasG/explodemap">Repository</a></p>
+</section>
+</main>
+</body>
+</html>

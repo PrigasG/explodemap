@@ -553,7 +553,7 @@ explode_grouped <- function(sf_obj, region_col,
 
   subtitle <- paste0(
     "mode=", params$mode,
-    "  \u03b1_l=", round(params$alpha_l), "m",
+    "  alpha_l=", round(params$alpha_l), "m",
     "  p=", params$p
   )
 

@@ -6,6 +6,11 @@
 \usage{
 cache_list()
 }
+\value{
+Invisibly returns a character vector of cached \code{.rds} file names.
+The visible output is a message listing the cache directory and file sizes,
+or a message that the cache is empty.
+}
 \description{
 List cached datasets
 }

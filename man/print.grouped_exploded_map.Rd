@@ -11,6 +11,11 @@
 
 \item{...}{Ignored}
 }
+\value{
+Invisibly returns \code{x}, the original \code{grouped_exploded_map} object.
+The method is called for its side effect of printing a compact diagnostic
+overview of units, regions, grouping mode, and grouped-layout parameters.
+}
 \description{
 Print a grouped_exploded_map object
 }

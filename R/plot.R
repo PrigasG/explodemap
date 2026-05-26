@@ -16,7 +16,7 @@
   )
 
   subtitle <- if (!is.null(params))
-    paste0("\u03b1_r=", round(params$alpha_r), "m  \u03b1_l=",
+    paste0("alpha_r=", round(params$alpha_r), "m  alpha_l=",
            round(params$alpha_l), "m  p=", params$p)
   else ""
 

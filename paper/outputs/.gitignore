@@ -1,0 +1,5 @@
+figures/*
+tables/*
+logs/*
+drag_helpers/*/layout.rds
+!.gitignore

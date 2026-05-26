@@ -28,6 +28,7 @@ navbar:
     - intro
     - reference
     - articles
+    - gallery
     - news
     right:
     - search
@@ -51,6 +52,9 @@ navbar:
       - text: '---'
       - text: Reproducing the paper examples
         href: articles/reproducing-paper-examples.html
+    gallery:
+      text: Interactive Map Gallery
+      href: map-gallery/index.html
     news:
       text: News
       href: news/index.html
@@ -94,6 +98,7 @@ reference:
     Optional export helpers and cache management utilities.
   contents:
   - export_topojson
+  - apply_region_offsets
   - cache_list
   - cache_clear
 - title: Methods

@@ -24,11 +24,4 @@ inspected, modified, or passed through \code{do.call()}.
 }
 \examples{
 focus_map_preset("municipal")
-\dontrun{
-args <- c(
-  list(x = exploded_municipalities, label_col = "NAME"),
-  focus_map_preset("municipal")
-)
-do.call(focus_map, args)
-}
 }

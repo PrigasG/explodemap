@@ -9,6 +9,10 @@ cache_clear(key = NULL)
 \arguments{
 \item{key}{Specific cache key to clear, or NULL to clear all}
 }
+\value{
+Invisibly returns \code{NULL}. The function is called for its side effect
+of deleting cached \code{.rds} files and reporting what was removed.
+}
 \description{
 Clear explodemap download cache
 }

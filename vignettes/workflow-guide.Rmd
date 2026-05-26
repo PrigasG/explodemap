@@ -231,6 +231,8 @@ source(system.file("examples/manual_parameter_tuning.R", package = "explodemap")
 Interactive examples that download public data:
 
 ```{r eval=FALSE}
-shiny::runApp(system.file("examples/focusmap_munis_app.R", package = "explodemap"))
-shiny::runApp(system.file("examples/focusmap_counties_app.R", package = "explodemap"))
+if (interactive()) {
+  shiny::runApp(system.file("examples/focusmap_munis_app.R", package = "explodemap"))
+  shiny::runApp(system.file("examples/focusmap_counties_app.R", package = "explodemap"))
+}
 ```

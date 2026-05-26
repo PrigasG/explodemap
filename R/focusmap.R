@@ -114,12 +114,25 @@
 #' @return An \code{htmlwidgets} object.
 #'
 #' @examples
-#' \dontrun{
-#' focus_map(nj_counties, label_col = "NAME")
+#' \donttest{
+#' poly <- function(xmin, ymin, xmax, ymax) {
+#'   sf::st_polygon(list(rbind(
+#'     c(xmin, ymin), c(xmax, ymin), c(xmax, ymax),
+#'     c(xmin, ymax), c(xmin, ymin)
+#'   )))
+#' }
 #'
-#' result <- explode_sf(nj_counties, region_col = "region")
-#' focus_map(result)
-#' focus_map(result, group_col = "region")
+#' counties <- sf::st_sf(
+#'   NAME = c("A", "B"),
+#'   region = c("North", "South"),
+#'   geometry = sf::st_sfc(
+#'     poly(-74.2, 40.0, -74.0, 40.2),
+#'     poly(-73.9, 40.0, -73.7, 40.2),
+#'     crs = 4326
+#'   )
+#' )
+#'
+#' focus_map(counties, label_col = "NAME", group_col = "region")
 #' }
 #'
 #' @export

@@ -16,13 +16,6 @@
 #' @export
 #' @examples
 #' focus_map_preset("municipal")
-#' \dontrun{
-#' args <- c(
-#'   list(x = exploded_municipalities, label_col = "NAME"),
-#'   focus_map_preset("municipal")
-#' )
-#' do.call(focus_map, args)
-#' }
 focus_map_preset <- function(name = c("municipal", "drilldown", "municipal_drilldown", "none")) {
   name <- match.arg(name)
 

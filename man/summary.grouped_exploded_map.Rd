@@ -11,6 +11,11 @@
 
 \item{...}{Ignored}
 }
+\value{
+Invisibly returns \code{object}, the original \code{grouped_exploded_map}
+object. The method is called for its side effect of printing dataset size,
+grouping diagnostics, anchor parameters, and anchor radii.
+}
 \description{
 Summary of a grouped_exploded_map object
 }

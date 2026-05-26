@@ -22,3 +22,9 @@ plot(x, which = c("grouped", "original", "local", "all"), ...)
 - ...:
 
   Ignored
+
+## Value
+
+Invisibly returns `x`, the original `grouped_exploded_map` object. The
+method is called for its side effect of drawing the stored `ggplot2`
+grouped, original, and/or local map objects.

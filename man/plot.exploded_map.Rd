@@ -13,6 +13,11 @@
 
 \item{...}{Ignored}
 }
+\value{
+Invisibly returns \code{x}, the original \code{exploded_map} object. The
+method is called for its side effect of drawing the stored \code{ggplot2}
+original and/or exploded map objects.
+}
 \description{
 Plot an exploded_map object
 }

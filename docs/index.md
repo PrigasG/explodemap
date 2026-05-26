@@ -469,8 +469,10 @@ Interactive focus-map examples are installed as app scripts:
 
 ``` r
 
-shiny::runApp(system.file("examples/focusmap_munis_app.R", package = "explodemap"))
-shiny::runApp(system.file("examples/focusmap_counties_app.R", package = "explodemap"))
+if (interactive()) {
+  shiny::runApp(system.file("examples/focusmap_munis_app.R", package = "explodemap"))
+  shiny::runApp(system.file("examples/focusmap_counties_app.R", package = "explodemap"))
+}
 ```
 
 ## Export

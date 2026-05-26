@@ -5,6 +5,10 @@
 #' Print an exploded_map object
 #' @param x An `exploded_map` object
 #' @param ... Ignored
+#' @return Invisibly returns `x`, the original `exploded_map` object. The
+#'   method is called for its side effect of printing a compact diagnostic
+#'   overview of units, regions, derived parameters, and optional refinement
+#'   information.
 #' @export
 print.exploded_map <- function(x, ...) {
   stats  <- x$stats
@@ -41,6 +45,9 @@ print.exploded_map <- function(x, ...) {
 #' @param x An `exploded_map` object
 #' @param which "exploded" (default), "original", or "both"
 #' @param ... Ignored
+#' @return Invisibly returns `x`, the original `exploded_map` object. The
+#'   method is called for its side effect of drawing the stored `ggplot2`
+#'   original and/or exploded map objects.
 #' @export
 plot.exploded_map <- function(x, which = c("exploded", "original", "both"), ...) {
   which <- match.arg(which)
@@ -52,6 +59,10 @@ plot.exploded_map <- function(x, which = c("exploded", "original", "both"), ...)
 #' Summary of an exploded_map object
 #' @param object An `exploded_map` object
 #' @param ... Ignored
+#' @return Invisibly returns `object`, the original `exploded_map` object. The
+#'   method is called for its side effect of printing a human-readable summary
+#'   of dataset size, geometry statistics, displacement parameters, refinement
+#'   diagnostics, and implied calibration coefficients.
 #' @export
 summary.exploded_map <- function(object, ...) {
   stats  <- object$stats
@@ -127,6 +138,9 @@ calibration_row <- function(x) {
 #' Print a grouped_exploded_map object
 #' @param x A `grouped_exploded_map` object
 #' @param ... Ignored
+#' @return Invisibly returns `x`, the original `grouped_exploded_map` object.
+#'   The method is called for its side effect of printing a compact diagnostic
+#'   overview of units, regions, grouping mode, and grouped-layout parameters.
 #' @export
 print.grouped_exploded_map <- function(x, ...) {
   stats  <- x$stats
@@ -154,6 +168,9 @@ print.grouped_exploded_map <- function(x, ...) {
 #' @param x A `grouped_exploded_map` object
 #' @param which "grouped" (default), "original", "local", or "all"
 #' @param ... Ignored
+#' @return Invisibly returns `x`, the original `grouped_exploded_map` object.
+#'   The method is called for its side effect of drawing the stored `ggplot2`
+#'   grouped, original, and/or local map objects.
 #' @export
 plot.grouped_exploded_map <- function(x, which = c("grouped", "original", "local", "all"), ...) {
   which <- match.arg(which)
@@ -168,6 +185,9 @@ plot.grouped_exploded_map <- function(x, which = c("grouped", "original", "local
 #' Summary of a grouped_exploded_map object
 #' @param object A `grouped_exploded_map` object
 #' @param ... Ignored
+#' @return Invisibly returns `object`, the original `grouped_exploded_map`
+#'   object. The method is called for its side effect of printing dataset size,
+#'   grouping diagnostics, anchor parameters, and anchor radii.
 #' @export
 summary.grouped_exploded_map <- function(object, ...) {
   stats  <- object$stats

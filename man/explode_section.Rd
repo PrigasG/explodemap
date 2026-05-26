@@ -54,7 +54,27 @@ be passed directly to \code{\link[=focus_map]{focus_map()}} with \code{context_c
 non-selected features.
 }
 \examples{
-\dontrun{
+\donttest{
+poly <- function(xmin, ymin, xmax, ymax) {
+  sf::st_polygon(list(rbind(
+    c(xmin, ymin), c(xmax, ymin), c(xmax, ymax),
+    c(xmin, ymax), c(xmin, ymin)
+  )))
+}
+
+municipalities <- sf::st_sf(
+  NAME = c("A", "B", "C", "D"),
+  nj_region = c("South", "South", "North", "North"),
+  county_name = c("Atlantic", "Cape May", "Bergen", "Hudson"),
+  geometry = sf::st_sfc(
+    poly(0, 0, 1000, 1000),
+    poly(2000, 0, 3000, 1000),
+    poly(0, 2000, 1000, 3000),
+    poly(2000, 2000, 3000, 3000),
+    crs = 3857
+  )
+)
+
 focused <- explode_section(
   municipalities,
   section_col = "nj_region",
@@ -62,7 +82,8 @@ focused <- explode_section(
   region_col = "county_name",
   alpha_r = 1800,
   alpha_l = 1200,
-  plot = FALSE
+  plot = FALSE,
+  quiet = TRUE
 )
 
 focus_map(

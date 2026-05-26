@@ -13,6 +13,11 @@
 
 \item{...}{Ignored}
 }
+\value{
+Invisibly returns \code{x}, the original \code{grouped_exploded_map} object.
+The method is called for its side effect of drawing the stored \code{ggplot2}
+grouped, original, and/or local map objects.
+}
 \description{
 Plot a grouped_exploded_map object
 }

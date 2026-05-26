@@ -203,6 +203,8 @@
 #' Clear explodemap download cache
 #'
 #' @param key Specific cache key to clear, or NULL to clear all
+#' @return Invisibly returns `NULL`. The function is called for its side effect
+#'   of deleting cached `.rds` files and reporting what was removed.
 #' @export
 cache_clear <- function(key = NULL) {
   cache_dir <- .cache_dir()
@@ -219,6 +221,10 @@ cache_clear <- function(key = NULL) {
 }
 
 #' List cached datasets
+#'
+#' @return Invisibly returns a character vector of cached `.rds` file names.
+#'   The visible output is a message listing the cache directory and file sizes,
+#'   or a message that the cache is empty.
 #' @export
 cache_list <- function() {
   cache_dir <- .cache_dir()
