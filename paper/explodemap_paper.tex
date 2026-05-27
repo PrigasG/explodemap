@@ -107,7 +107,7 @@ Exploded-view cartography provides a method for improving the readability of den
 
 This paper introduces a hierarchical vector-based framework for generating exploded administrative maps using centroid-driven displacement fields. The method translates polygon geometries using a deterministic vector formulation derived from hierarchical centroid relationships, allowing simultaneous separation at multiple administrative levels while preserving the internal morphology of each geographic unit exactly through rigid-body translation.
 
-We derive functional forms for the two principal displacement parameters governing regional separation and intra-region expansion. The regional parameter is derived from a radial gap model describing the chord-length increase when parent regions are displaced outward from a shared centroid. The local parameter is derived from an equal-area partition model approximating the characteristic spacing of municipal units within a region. These derivations determine the structural dependence of the parameters on geometric quantities---characteristic polygon diameter, regional radius, and municipal density---leaving only dimensionless clearance coefficients to be calibrated empirically. This formulation substantially reduces manual parameter tuning while retaining interpretable legibility coefficients.
+Functional forms are derived for the two principal displacement parameters governing regional separation and intra-region expansion. The regional parameter is derived from a radial gap model describing the chord-length increase when parent regions are displaced outward from a shared centroid. The local parameter is derived from an equal-area partition model approximating the characteristic spacing of municipal units within a region. These derivations determine the structural dependence of the parameters on geometric quantities---characteristic polygon diameter, regional radius, and municipal density---leaving only dimensionless clearance coefficients to be calibrated empirically. This formulation substantially reduces manual parameter tuning while retaining interpretable legibility coefficients.
 
 The framework is evaluated using municipal boundary data from New Jersey ($n = 564$ municipalities, 3 regions) and applied to Pennsylvania ($n = 2{,}572$ municipalities, 6 regions) as a large-scale transfer test. Additional reproducible examples include county-subdivision cases for Ohio, Michigan, Kentucky, Illinois, North Dakota, North Carolina, Virginia, Texas, and Florida; non-U.S.\ examples for Canada and Germany; and a 10-region U.S.\ HHS grouped layout. Five county-level state layouts --- Tennessee, Georgia, Minnesota, California, and Colorado --- are included in the interactive gallery as supplemental visual demonstrations. The NJ-calibrated local coefficient $\gamma_l$ provides a useful transferable starting value, but the evidence is presented as preliminary validation rather than proof of a universal constant. For publication-quality figures, a documented rigid display-offset layer is applied after formula-derived displacement and recorded as CSV input.
 
@@ -132,7 +132,7 @@ This paper proposes a hierarchical centroid-driven displacement framework for ex
 
 \paragraph{Contributions.} The main contributions of this work are:
 \begin{enumerate}
-  \item We formalize a hierarchical piecewise-rigid displacement approach for exploded-view administrative cartography, in which each feature undergoes rigid-body motion while displacement vectors are sampled from centroid-derived radial potentials. This places the method between rigid transforms, continuous deformation, and topological rearrangements.
+  \item Formalization of a hierarchical piecewise-rigid displacement approach for exploded-view administrative cartography, in which each feature undergoes rigid-body motion while displacement vectors are sampled from centroid-derived radial potentials. This places the method between rigid transforms, continuous deformation, and topological rearrangements.
   \item A rigid-body translation framework (Proposition~1) guaranteeing exact preservation of feature shape, area, perimeter, and topological structure --- unlike cartogram and deformation methods that warp geometry.
   \item Geometry-derived parameter formulas (Analytical Results~1--2) linking displacement magnitude to intrinsic dataset properties, constituting a reusable parameterization procedure applicable to any administrative polygon dataset with a defined hierarchy.
   \item A closed-form displacement step that is $O(n)$ in feature count, with a zoom-dependent extension $t_i(z) = \lambda(z)\cdot t_i$ for interactive multi-scale layouts.
@@ -170,7 +170,7 @@ Hierarchical data structures are central to multi-scale mapping. \citet{cecconi2
 
 The method differs from prior work in three main respects. First, it produces an exploded-view layout rather than a conflict-only displacement. Second, it is deterministic and closed-form, avoiding iterative optimization. Third, it defines displacement from hierarchical centroid structure, yielding a lightweight multi-scale method suited to real-time visualization.
 
-More broadly, existing cartographic transformations include rigid transforms (translation, rotation, scaling), continuous deformation (cartograms, rubber-sheet maps, diffusion-based warping), and topological rearrangements (schematic maps, grid maps). The present method formalizes a \emph{piecewise rigid hierarchical displacement} approach: each feature undergoes rigid-body motion, while the displacement vectors are sampled from centroid-derived radial potentials. To our knowledge, this specific combination has not been systematically formalized for administrative exploded-view cartography.
+More broadly, existing cartographic transformations include rigid transforms (translation, rotation, scaling), continuous deformation (cartograms, rubber-sheet maps, diffusion-based warping), and topological rearrangements (schematic maps, grid maps). The present method formalizes a \emph{piecewise rigid hierarchical displacement} approach: each feature undergoes rigid-body motion, while the displacement vectors are sampled from centroid-derived radial potentials. This specific combination has not been systematically formalized for administrative exploded-view cartography in the literature reviewed here.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Methodology}
@@ -310,7 +310,7 @@ A key consequence of this design is that the local expansion is a monotonic func
   \delta_i = \alpha_l\, s_i = \alpha_l \left(\frac{r_i}{d_{\max}}\right)^p, \qquad
   \delta_j = \alpha_l\, s_j = \alpha_l \left(\frac{r_j}{d_{\max}}\right)^p
 \]
-Since $r_i < r_j$ and $p > 0$, we have $\delta_i < \delta_j$. Each unit is displaced along its own unit vector $\hat{d}_{\text{local}}$ away from $C_r$, so the displaced radial distance satisfies:
+Since $r_i < r_j$ and $p > 0$, it follows that $\delta_i < \delta_j$. Each unit is displaced along its own unit vector $\hat{d}_{\text{local}}$ away from $C_r$, so the displaced radial distance satisfies:
 \[
   \|C'_i - C'_r\| = r_i + \delta_i, \qquad \|C'_j - C'_r\| = r_j + \delta_j
 \]
@@ -389,7 +389,7 @@ where $\lambda(z)$ decreases monotonically with zoom level $z$. At full extent $
 \subsection{Geometry-Derived Parameter Formulation}
 \label{sec:autoparams}
 
-The displacement framework requires two primary scale parameters: $\alpha_r$, governing regional separation magnitude, and $\alpha_l$, governing local intra-region expansion magnitude. Rather than selecting these values heuristically, we derive their functional dependence on geometric properties of the dataset using two simplified spatial models. These derivations determine the structural form of each parameter, leaving only dimensionless clearance coefficients that capture cartographic spacing requirements and can be estimated from validated case studies.
+The displacement framework requires two primary scale parameters: $\alpha_r$, governing regional separation magnitude, and $\alpha_l$, governing local intra-region expansion magnitude. Rather than selecting these values heuristically, their functional dependence on geometric properties of the dataset is derived using two simplified spatial models. These derivations determine the structural form of each parameter, leaving only dimensionless clearance coefficients that capture cartographic spacing requirements and can be estimated from validated case studies.
 
 Two idealized geometric models are used:
 \begin{enumerate}
@@ -417,7 +417,7 @@ Hence the displacement required to achieve a target additional gap $g_r$ is:
 \]
 \end{mdframed}
 
-\noindent The radial gap model determines the structural form of the regional displacement parameter. However, the minimum desired clearance between adjacent region boundaries is not determined purely by geometry; it also reflects cartographic design considerations such as legibility and whitespace requirements. We therefore express the required gap as $g_r = \gamma_r\,\bar{w}$, where $\bar{w}$ is the characteristic polygon diameter and $\gamma_r$ is a dimensionless clearance coefficient. Substituting into the gap criterion yields:
+\noindent The radial gap model determines the structural form of the regional displacement parameter. However, the minimum desired clearance between adjacent region boundaries is not determined purely by geometry; it also reflects cartographic design considerations such as legibility and whitespace requirements. The required gap is therefore expressed as $g_r = \gamma_r\,\bar{w}$, where $\bar{w}$ is the characteristic polygon diameter and $\gamma_r$ is a dimensionless clearance coefficient. Substituting into the gap criterion yields:
 \begin{equation}
   \boxed{\alpha_r = \frac{\gamma_r\,\bar{w}}{2\,\sin(\pi / n_r)}}
   \label{eq:alpha_r_derived}
@@ -426,7 +426,7 @@ This separates the geometric dependence---derived analytically from the radial a
 
 The radial gap criterion is a centroid-level proxy, not a boundary-clearance guarantee. It predicts the displacement magnitude needed to increase centroid-level chord spacing under an equal-angular idealization. Real parent regions are irregular, anisotropic, and unequally spaced around the global centroid, so Equation~\eqref{eq:alpha_r_derived} should be interpreted as a geometry-scaled starting value for regional separation rather than a proof of positive boundary-to-boundary clearance.
 
-Calibration on NJ yields $\gamma_r = 2.64$ from a manual visual reference of $\alpha_r = 6{,}000$\,m. Earlier PA experiments imply a second, partially heuristic value near $\gamma_r = 3.72$. These values are directionally consistent but not sufficient to fix $\gamma_r$ as universal. We therefore use $\gamma_r = 3.0$ as a working default and report it as an empirical legibility coefficient requiring additional independently judged calibration.
+Calibration on NJ yields $\gamma_r = 2.64$ from a manual visual reference of $\alpha_r = 6{,}000$\,m. Earlier PA experiments imply a second, partially heuristic value near $\gamma_r = 3.72$. These values are directionally consistent but not sufficient to fix $\gamma_r$ as universal. The working default used here is therefore $\gamma_r = 3.0$, reported as an empirical legibility coefficient requiring additional independently judged calibration.
 
 \subsubsection{Analytical Result 2: Local Expansion (Equal-Area Partition Model)}
 
