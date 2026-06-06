@@ -1,6 +1,6 @@
 {
 "type": "FeatureCollection",
-"name": "file5b7020dd36e8",
+"name": "filebab8b585fd0",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32617" } },
 "features": [
 { "type": "Feature", "properties": { "drag_region": "Northwest", "region": "Northwest", "NAME": "Auburn", "NAMELSAD": "Auburn township" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 339969.072816836240236, 4547113.313113271258771 ], [ 340320.217766087735072, 4557489.285284504294395 ], [ 346344.231114927737508, 4557312.061711422167718 ], [ 346160.937078730843496, 4546867.256210059858859 ], [ 339969.072816836240236, 4547113.313113271258771 ] ] ] } },

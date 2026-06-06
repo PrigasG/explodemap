@@ -55,7 +55,7 @@ $`\gamma_r`$ and $`\gamma_l`$.
 ``` r
 
 nj <- explode_state(
-  state_fips = "34", crs = 32118,
+  state_fips = "34", crs = 32111,
   region_map = list(
     North   = c("Bergen", "Essex", "Hudson", "Morris",
                 "Passaic", "Sussex", "Union", "Warren"),
@@ -485,6 +485,27 @@ tolerance.
 Together, these examples cover the paper’s calibration, transfer,
 cross-state, international, and grouped-layout results using the package
 API.
+
+------------------------------------------------------------------------
+
+## Paper drag helpers
+
+The source repository includes an interactive drag-helper workflow for
+documenting display-only region offsets used in publication figures and
+the pkgdown gallery. The helpers are not run during package checks, but
+can be regenerated from the repository root:
+
+``` r
+
+source("paper/scripts/07_generate_drag_helpers.R")
+```
+
+By default the helper inventory covers 26 U.S. state cases: NJ, PA, OH,
+MI, KY, IL, ND, NC, VA, TN, GA, MN, CA, CO, TX, FL, AZ, IN, MA, MO, NV,
+NY, OR, SC, UT, and WA. Each helper is written to
+`paper/outputs/drag_helpers/<case>/index.html` with a matching
+`map.geojson`; exported offsets are saved as
+`paper/outputs/tables/<case>_drag_offsets.csv`.
 
 ------------------------------------------------------------------------
 

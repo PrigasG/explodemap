@@ -2,6 +2,8 @@
 
 ## explodemap 0.2.0
 
+CRAN release: 2026-05-27
+
 ### New features
 
 - Added a three-level grouped layout engine via

@@ -50,7 +50,7 @@ navbar:
       - text: Grouped layouts and anchor placement
         href: articles/grouped-layouts.html
       - text: '---'
-      - text: Reproducing the paper examples
+      - text: Reproducing paper examples and drag helpers
         href: articles/reproducing-paper-examples.html
     gallery:
       text: Interactive Map Gallery
@@ -119,7 +119,7 @@ articles:
   contents: workflow-guide
 - title: Grouped layouts
   contents: grouped-layouts
-- title: Paper replication
+- title: Paper replication and drag helpers
   contents: reproducing-paper-examples
 footer:
   structure:

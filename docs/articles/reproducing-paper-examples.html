@@ -43,7 +43,7 @@
     <li><a class="dropdown-item" href="../articles/workflow-guide.html">Choosing a workflow</a></li>
     <li><a class="dropdown-item" href="../articles/grouped-layouts.html">Grouped layouts and anchor placement</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing the paper examples</a></li>
+    <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing paper examples and drag helpers</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../map-gallery/index.html">Interactive Map Gallery</a></li>
@@ -125,7 +125,7 @@ and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>γ</mi><mi>l</mi></msub><annotation encoding="application/x-tex">\gamma_l</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/explode_state.html">explode_state</a></span><span class="op">(</span></span>
-<span>  state_fips <span class="op">=</span> <span class="st">"34"</span>, crs <span class="op">=</span> <span class="fl">32118</span>,</span>
+<span>  state_fips <span class="op">=</span> <span class="st">"34"</span>, crs <span class="op">=</span> <span class="fl">32111</span>,</span>
 <span>  region_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    North   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Bergen"</span>, <span class="st">"Essex"</span>, <span class="st">"Hudson"</span>, <span class="st">"Morris"</span>,</span>
 <span>                <span class="st">"Passaic"</span>, <span class="st">"Sussex"</span>, <span class="st">"Union"</span>, <span class="st">"Warren"</span><span class="op">)</span>,</span>
@@ -703,9 +703,26 @@ API.</p>
 <hr>
 </div>
 <div class="section level2">
+<h2 id="paper-drag-helpers">Paper drag helpers<a class="anchor" aria-label="anchor" href="#paper-drag-helpers"></a>
+</h2>
+<p>The source repository includes an interactive drag-helper workflow
+for documenting display-only region offsets used in publication figures
+and the pkgdown gallery. The helpers are not run during package checks,
+but can be regenerated from the repository root:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"paper/scripts/07_generate_drag_helpers.R"</span><span class="op">)</span></span></code></pre></div>
+<p>By default the helper inventory covers 26 U.S. state cases: NJ, PA,
+OH, MI, KY, IL, ND, NC, VA, TN, GA, MN, CA, CO, TX, FL, AZ, IN, MA, MO,
+NV, NY, OR, SC, UT, and WA. Each helper is written to
+<code>paper/outputs/drag_helpers/&lt;case&gt;/index.html</code> with a
+matching <code>map.geojson</code>; exported offsets are saved as
+<code>paper/outputs/tables/&lt;case&gt;_drag_offsets.csv</code>.</p>
+<hr>
+</div>
+<div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.1 (2025-06-13 ucrt)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-w64-mingw32/x64</span></span>

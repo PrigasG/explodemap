@@ -358,7 +358,7 @@ municipalities by a county-to-region mapping:
 ``` r
 
 nj <- explode_state(
-  state_fips = "34", crs = 32118,
+  state_fips = "34", crs = 32111,
   region_map = list(
     North   = c("Bergen", "Essex", "Hudson", "Morris",
                 "Passaic", "Sussex", "Union", "Warren"),

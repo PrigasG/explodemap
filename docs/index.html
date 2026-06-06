@@ -48,7 +48,7 @@
     <li><a class="dropdown-item" href="articles/workflow-guide.html">Choosing a workflow</a></li>
     <li><a class="dropdown-item" href="articles/grouped-layouts.html">Grouped layouts and anchor placement</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="articles/reproducing-paper-examples.html">Reproducing the paper examples</a></li>
+    <li><a class="dropdown-item" href="articles/reproducing-paper-examples.html">Reproducing paper examples and drag helpers</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="map-gallery/index.html">Interactive Map Gallery</a></li>
@@ -179,7 +179,7 @@
 </h3>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explode_state.html">explode_state</a></span><span class="op">(</span></span>
-<span>  state_fips <span class="op">=</span> <span class="st">"34"</span>, crs <span class="op">=</span> <span class="fl">32118</span>,</span>
+<span>  state_fips <span class="op">=</span> <span class="st">"34"</span>, crs <span class="op">=</span> <span class="fl">32111</span>,</span>
 <span>  region_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    North   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Bergen"</span>,<span class="st">"Essex"</span>,<span class="st">"Hudson"</span>,<span class="st">"Morris"</span>,<span class="st">"Passaic"</span>,<span class="st">"Sussex"</span>,<span class="st">"Union"</span>,<span class="st">"Warren"</span><span class="op">)</span>,</span>
 <span>    Central <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Hunterdon"</span>,<span class="st">"Mercer"</span>,<span class="st">"Middlesex"</span>,<span class="st">"Monmouth"</span>,<span class="st">"Somerset"</span><span class="op">)</span>,</span>
@@ -417,7 +417,7 @@
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/explode_sf.html">explode_sf</a></span><span class="op">(</span><span class="va">my_sf</span>, <span class="st">"district"</span>, plot <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/explode_sf_with_lookup.html">explode_sf_with_lookup</a></span><span class="op">(</span><span class="va">my_sf</span>, <span class="st">"GEOID"</span>, <span class="va">lookup</span>, plot <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/explode_state.html">explode_state</a></span><span class="op">(</span><span class="st">"34"</span>, crs <span class="op">=</span> <span class="fl">32118</span>, region_map <span class="op">=</span> <span class="va">regions</span>, plot <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/explode_state.html">explode_state</a></span><span class="op">(</span><span class="st">"34"</span>, crs <span class="op">=</span> <span class="fl">32111</span>, region_map <span class="op">=</span> <span class="va">regions</span>, plot <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/explode_grouped.html">explode_grouped</a></span><span class="op">(</span><span class="va">my_sf</span>, <span class="st">"district"</span>, mode <span class="op">=</span> <span class="st">"auto_collision"</span>, plot <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/layout_regions.html">layout_regions</a></span><span class="op">(</span><span class="va">my_sf</span>, <span class="st">"district"</span>, mode <span class="op">=</span> <span class="st">"auto_collision"</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -435,6 +435,7 @@
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/run_calibration.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/run_canada.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/run_hhs.R"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>The repository’s paper workflow also includes interactive drag helpers under <code>paper/outputs/drag_helpers</code>. These helper maps are generated by <code>paper/scripts/07_generate_drag_helpers.R</code> and now cover 26 U.S. state cases: NJ, PA, OH, MI, KY, IL, ND, NC, VA, TN, GA, MN, CA, CO, TX, FL, AZ, IN, MA, MO, NV, NY, OR, SC, UT, and WA. The helpers export documented region-level display-offset CSVs for the publication and pkgdown gallery workflow.</p>
 <p>Interactive focus-map examples are installed as app scripts:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
@@ -470,6 +471,7 @@
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
+<li><a href="https://cloud.r-project.org/package=explodemap" class="external-link">View on CRAN</a></li>
 <li><a href="https://github.com/PrigasG/explodemap/" class="external-link">Browse source code</a></li>
 <li><a href="https://github.com/PrigasG/explodemap/issues" class="external-link">Report a bug</a></li>
 </ul>

@@ -471,6 +471,26 @@ API.
 
 ------------------------------------------------------------------------
 
+## Paper drag helpers
+
+The source repository includes an interactive drag-helper workflow for
+documenting display-only region offsets used in publication figures and
+the pkgdown gallery. The helpers are not run during package checks, but
+can be regenerated from the repository root:
+
+```{r drag-helpers, eval = FALSE}
+source("paper/scripts/07_generate_drag_helpers.R")
+```
+
+By default the helper inventory covers 26 U.S. state cases: NJ, PA, OH,
+MI, KY, IL, ND, NC, VA, TN, GA, MN, CA, CO, TX, FL, AZ, IN, MA, MO, NV,
+NY, OR, SC, UT, and WA. Each helper is written to
+`paper/outputs/drag_helpers/<case>/index.html` with a matching
+`map.geojson`; exported offsets are saved as
+`paper/outputs/tables/<case>_drag_offsets.csv`.
+
+------------------------------------------------------------------------
+
 ## Session info
 
 ```{r session-info}

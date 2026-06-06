@@ -43,7 +43,7 @@
     <li><a class="dropdown-item" href="../articles/workflow-guide.html">Choosing a workflow</a></li>
     <li><a class="dropdown-item" href="../articles/grouped-layouts.html">Grouped layouts and anchor placement</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing the paper examples</a></li>
+    <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing paper examples and drag helpers</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../map-gallery/index.html">Interactive Map Gallery</a></li>
@@ -398,7 +398,7 @@ boundaries automatically and groups municipalities by a county-to-region
 mapping:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/explode_state.html">explode_state</a></span><span class="op">(</span></span>
-<span>  state_fips <span class="op">=</span> <span class="st">"34"</span>, crs <span class="op">=</span> <span class="fl">32118</span>,</span>
+<span>  state_fips <span class="op">=</span> <span class="st">"34"</span>, crs <span class="op">=</span> <span class="fl">32111</span>,</span>
 <span>  region_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    North   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Bergen"</span>, <span class="st">"Essex"</span>, <span class="st">"Hudson"</span>, <span class="st">"Morris"</span>,</span>
 <span>                <span class="st">"Passaic"</span>, <span class="st">"Sussex"</span>, <span class="st">"Union"</span>, <span class="st">"Warren"</span><span class="op">)</span>,</span>

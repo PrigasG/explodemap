@@ -5,7 +5,17 @@ if (!requireNamespace("jsonlite", quietly = TRUE)) {
   stop("Install required package: jsonlite", call. = FALSE)
 }
 
-drag_cases_env <- Sys.getenv("EXPLODEMAP_DRAG_CASES", "NJ,PA,OH,MI,KY,IL,ND,NC,VA,TN,GA,MN,CA,CO")
+drag_cases_env <- Sys.getenv(
+  "EXPLODEMAP_DRAG_CASES",
+  paste(
+    c(
+      "NJ", "PA", "OH", "MI", "KY", "IL", "ND", "NC", "VA", "TN", "GA", "MN",
+      "CA", "CO", "TX", "FL", "AZ", "IN", "MA", "MO", "NV", "NY", "OR",
+      "SC", "UT", "WA"
+    ),
+    collapse = ","
+  )
+)
 drag_cases <- trimws(strsplit(drag_cases_env, ",", fixed = TRUE)[[1]])
 drag_cases <- drag_cases[nzchar(drag_cases)]
 

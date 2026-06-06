@@ -15,7 +15,7 @@
 - [Grouped layouts and anchor
   placement](https://prigasg.github.io/explodemap/articles/grouped-layouts.md):
 
-### Paper replication
+### Paper replication and drag helpers
 
 - [Reproducing the paper
   examples](https://prigasg.github.io/explodemap/articles/reproducing-paper-examples.md):

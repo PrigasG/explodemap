@@ -35,6 +35,49 @@ make_cluster_region_map <- function(fips, crs, centers, label_fun, seed = 2026) 
   split(counties$NAME, labels)
 }
 
+make_geographic_cluster_region_map <- function(fips, crs, labels, seed = 2026) {
+  counties <- download_state_counties_for_registry(fips, crs)
+  xy <- sf::st_coordinates(sf::st_point_on_surface(sf::st_geometry(counties)))
+  set.seed(seed)
+  fit <- stats::kmeans(scale(xy), centers = length(labels), nstart = 50)
+  centers <- data.frame(
+    cluster = seq_along(labels),
+    x = tapply(xy[, 1], fit$cluster, mean),
+    y = tapply(xy[, 2], fit$cluster, mean)
+  )
+
+  remaining <- centers$cluster
+  assigned <- character(nrow(centers))
+  center_x <- mean(centers$x)
+  center_y <- mean(centers$y)
+  score_for <- function(label, candidates) {
+    rows <- match(candidates, centers$cluster)
+    switch(
+      label,
+      North = centers$y[rows],
+      South = -centers$y[rows],
+      East = centers$x[rows],
+      West = -centers$x[rows],
+      Northeast = centers$x[rows] + centers$y[rows],
+      Northwest = -centers$x[rows] + centers$y[rows],
+      Southeast = centers$x[rows] - centers$y[rows],
+      Southwest = -centers$x[rows] - centers$y[rows],
+      Central = -sqrt((centers$x[rows] - center_x)^2 + (centers$y[rows] - center_y)^2),
+      -seq_along(rows)
+    )
+  }
+
+  for (label in labels) {
+    scores <- score_for(label, remaining)
+    chosen <- remaining[which.max(scores)]
+    assigned[match(chosen, centers$cluster)] <- label
+    remaining <- setdiff(remaining, chosen)
+  }
+
+  cluster_labels <- stats::setNames(assigned, centers$cluster)
+  split(counties$NAME, cluster_labels[as.character(fit$cluster)])
+}
+
 label_texas_clusters <- function(centers) {
   remaining <- centers$cluster
   labels <- character(nrow(centers))
@@ -519,5 +562,129 @@ paper_state_registry <- list(
     manual_alpha_r = NA_real_,
     manual_alpha_l = NA_real_,
     manual_protocol = NA_character_
+  ),
+
+  # ---------------------------------------------------------------------------
+  # Third wave: county-level drag helpers added for expanded gallery coverage
+  # ---------------------------------------------------------------------------
+
+  AZ = list(
+    name = "Arizona",
+    fips = "04",
+    crs = 32612,
+    region_map = function() make_geographic_cluster_region_map(
+      "04", 32612, c("North", "Central", "South")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  IN = list(
+    name = "Indiana",
+    fips = "18",
+    crs = 32616,
+    region_map = function() make_geographic_cluster_region_map(
+      "18", 32616, c("North", "Central", "South", "East")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  MA = list(
+    name = "Massachusetts",
+    fips = "25",
+    crs = 32619,
+    region_map = function() make_geographic_cluster_region_map(
+      "25", 32619, c("West", "Central", "Northeast", "Southeast")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  MO = list(
+    name = "Missouri",
+    fips = "29",
+    crs = 32615,
+    region_map = function() make_geographic_cluster_region_map(
+      "29", 32615, c("North", "Central", "South", "East", "West")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  NV = list(
+    name = "Nevada",
+    fips = "32",
+    crs = 32611,
+    region_map = function() make_geographic_cluster_region_map(
+      "32", 32611, c("North", "Central", "South")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  NY = list(
+    name = "New York",
+    fips = "36",
+    crs = 32618,
+    region_map = function() make_geographic_cluster_region_map(
+      "36", 32618, c("West", "Central", "North", "Southeast", "East")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  OR = list(
+    name = "Oregon",
+    fips = "41",
+    crs = 32610,
+    region_map = function() make_geographic_cluster_region_map(
+      "41", 32610, c("West", "Central", "East", "South")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  SC = list(
+    name = "South Carolina",
+    fips = "45",
+    crs = 32617,
+    region_map = function() make_geographic_cluster_region_map(
+      "45", 32617, c("Northwest", "Central", "Northeast", "South")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  UT = list(
+    name = "Utah",
+    fips = "49",
+    crs = 32612,
+    region_map = function() make_geographic_cluster_region_map(
+      "49", 32612, c("North", "Central", "South", "East")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
+  ),
+
+  WA = list(
+    name = "Washington",
+    fips = "53",
+    crs = 32610,
+    region_map = function() make_geographic_cluster_region_map(
+      "53", 32610, c("West", "Central", "East", "South")
+    ),
+    manual_alpha_r = NA_real_,
+    manual_alpha_l = NA_real_,
+    manual_protocol = "County groups were generated reproducibly from county centroid k-means clusters."
   )
 )
