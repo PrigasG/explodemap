@@ -1,0 +1,2 @@
+"dataset","stage","n_features","vertex_count","n_regions","w_bar_m","R_local_m","ratio","alpha_r_m","alpha_l_m","p","runtime_seconds"
+"Canada CSDs excluding territories","formula",5054,13647384,5,8685.59414550075,966134.620879857,111.23414296077,22165.2230426639,76145.7134606222,1.25,223.14

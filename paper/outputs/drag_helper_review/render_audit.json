@@ -1,0 +1,452 @@
+[
+  {
+    "state": "ak",
+    "title": "Alaska drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 29,
+    "bytes": 56867,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ak.png"
+  },
+  {
+    "state": "al",
+    "title": "Alabama drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 67,
+    "bytes": 69088,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\al.png"
+  },
+  {
+    "state": "ar",
+    "title": "Arkansas drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 75,
+    "bytes": 83308,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ar.png"
+  },
+  {
+    "state": "az",
+    "title": "Arizona drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 80,
+    "bytes": 74058,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\az.png"
+  },
+  {
+    "state": "ca",
+    "title": "California drag helper",
+    "labels": 5,
+    "regions": 5,
+    "paths": 404,
+    "bytes": 102520,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ca.png"
+  },
+  {
+    "state": "co",
+    "title": "Colorado drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 209,
+    "bytes": 100976,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\co.png"
+  },
+  {
+    "state": "ct",
+    "title": "Connecticut drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 8,
+    "bytes": 47396,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ct.png"
+  },
+  {
+    "state": "de",
+    "title": "Delaware drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 3,
+    "bytes": 35521,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\de.png"
+  },
+  {
+    "state": "fl",
+    "title": "Florida drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 316,
+    "bytes": 80723,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\fl.png"
+  },
+  {
+    "state": "ga",
+    "title": "Georgia drag helper",
+    "labels": 5,
+    "regions": 5,
+    "paths": 586,
+    "bytes": 110497,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ga.png"
+  },
+  {
+    "state": "hi",
+    "title": "Hawaii drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 5,
+    "bytes": 38139,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\hi.png"
+  },
+  {
+    "state": "ia",
+    "title": "Iowa drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 99,
+    "bytes": 77324,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ia.png"
+  },
+  {
+    "state": "id",
+    "title": "Idaho drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 44,
+    "bytes": 59725,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\id.png"
+  },
+  {
+    "state": "il",
+    "title": "Illinois drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 1694,
+    "bytes": 90621,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\il.png"
+  },
+  {
+    "state": "in",
+    "title": "Indiana drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 1010,
+    "bytes": 98158,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\in.png"
+  },
+  {
+    "state": "ks",
+    "title": "Kansas drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 105,
+    "bytes": 75064,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ks.png"
+  },
+  {
+    "state": "ky",
+    "title": "Kentucky drag helper",
+    "labels": 5,
+    "regions": 5,
+    "paths": 493,
+    "bytes": 96780,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ky.png"
+  },
+  {
+    "state": "la",
+    "title": "Louisiana drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 64,
+    "bytes": 79793,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\la.png"
+  },
+  {
+    "state": "ma",
+    "title": "Massachusetts drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 351,
+    "bytes": 94096,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ma.png"
+  },
+  {
+    "state": "md",
+    "title": "Maryland drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 24,
+    "bytes": 57862,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\md.png"
+  },
+  {
+    "state": "me",
+    "title": "Maine drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 16,
+    "bytes": 48940,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\me.png"
+  },
+  {
+    "state": "mi",
+    "title": "Michigan drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 1540,
+    "bytes": 87947,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\mi.png"
+  },
+  {
+    "state": "mn",
+    "title": "Minnesota drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 2756,
+    "bytes": 105122,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\mn.png"
+  },
+  {
+    "state": "mo",
+    "title": "Missouri drag helper",
+    "labels": 5,
+    "regions": 5,
+    "paths": 1423,
+    "bytes": 127709,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\mo.png"
+  },
+  {
+    "state": "ms",
+    "title": "Mississippi drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 82,
+    "bytes": 67594,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ms.png"
+  },
+  {
+    "state": "mt",
+    "title": "Montana drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 56,
+    "bytes": 78062,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\mt.png"
+  },
+  {
+    "state": "nc",
+    "title": "North Carolina drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 1041,
+    "bytes": 94965,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\nc.png"
+  },
+  {
+    "state": "nd",
+    "title": "North Dakota drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 1761,
+    "bytes": 139591,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\nd.png"
+  },
+  {
+    "state": "ne",
+    "title": "Nebraska drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 93,
+    "bytes": 70572,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ne.png"
+  },
+  {
+    "state": "nh",
+    "title": "New Hampshire drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 10,
+    "bytes": 43598,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\nh.png"
+  },
+  {
+    "state": "nj",
+    "title": "New Jersey drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 564,
+    "bytes": 78204,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\nj.png"
+  },
+  {
+    "state": "nm",
+    "title": "New Mexico drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 33,
+    "bytes": 57579,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\nm.png"
+  },
+  {
+    "state": "nv",
+    "title": "Nevada drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 71,
+    "bytes": 60853,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\nv.png"
+  },
+  {
+    "state": "ny",
+    "title": "New York drag helper",
+    "labels": 5,
+    "regions": 5,
+    "paths": 1014,
+    "bytes": 115698,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ny.png"
+  },
+  {
+    "state": "oh",
+    "title": "Ohio drag helper",
+    "labels": 5,
+    "regions": 5,
+    "paths": 1602,
+    "bytes": 127221,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\oh.png"
+  },
+  {
+    "state": "ok",
+    "title": "Oklahoma drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 77,
+    "bytes": 70842,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ok.png"
+  },
+  {
+    "state": "or",
+    "title": "Oregon drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 212,
+    "bytes": 108221,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\or.png"
+  },
+  {
+    "state": "pa",
+    "title": "Pennsylvania drag helper",
+    "labels": 6,
+    "regions": 6,
+    "paths": 2572,
+    "bytes": 165774,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\pa.png"
+  },
+  {
+    "state": "ri",
+    "title": "Rhode Island drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 5,
+    "bytes": 38424,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ri.png"
+  },
+  {
+    "state": "sc",
+    "title": "South Carolina drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 299,
+    "bytes": 110375,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\sc.png"
+  },
+  {
+    "state": "sd",
+    "title": "South Dakota drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 66,
+    "bytes": 73909,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\sd.png"
+  },
+  {
+    "state": "tn",
+    "title": "Tennessee drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 844,
+    "bytes": 81702,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\tn.png"
+  },
+  {
+    "state": "tx",
+    "title": "Texas drag helper",
+    "labels": 6,
+    "regions": 6,
+    "paths": 862,
+    "bytes": 106451,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\tx.png"
+  },
+  {
+    "state": "ut",
+    "title": "Utah drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 93,
+    "bytes": 72276,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\ut.png"
+  },
+  {
+    "state": "va",
+    "title": "Virginia drag helper",
+    "labels": 5,
+    "regions": 5,
+    "paths": 582,
+    "bytes": 88701,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\va.png"
+  },
+  {
+    "state": "vt",
+    "title": "Vermont drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 14,
+    "bytes": 45754,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\vt.png"
+  },
+  {
+    "state": "wa",
+    "title": "Washington drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 242,
+    "bytes": 111561,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\wa.png"
+  },
+  {
+    "state": "wi",
+    "title": "Wisconsin drag helper",
+    "labels": 4,
+    "regions": 4,
+    "paths": 72,
+    "bytes": 69258,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\wi.png"
+  },
+  {
+    "state": "wv",
+    "title": "West Virginia drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 55,
+    "bytes": 68505,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\wv.png"
+  },
+  {
+    "state": "wy",
+    "title": "Wyoming drag helper",
+    "labels": 3,
+    "regions": 3,
+    "paths": 23,
+    "bytes": 56453,
+    "file": "C:\\Users\\priga\\Documents\\ShareBridge\\explodemap\\paper\\outputs\\drag_helper_review\\screenshots\\wy.png"
+  }
+]

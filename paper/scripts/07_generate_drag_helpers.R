@@ -198,6 +198,24 @@ write_drag_helper <- function(layout) {
   labels_json <- jsonlite::toJSON(layout$labels, dataframe = "rows", auto_unbox = TRUE, digits = 12)
   bbox <- sf::st_bbox(layout$states)
   offset_file <- paste0(layout$key, "_drag_offsets.csv")
+  offset_path <- file.path(paper_table_dir, offset_file)
+  if (file.exists(offset_path)) {
+    initial_offsets <- utils::read.csv(offset_path, stringsAsFactors = FALSE, check.names = FALSE)
+    names(initial_offsets) <- tolower(names(initial_offsets))
+    if (all(c("region", "dx_m", "dy_m") %in% names(initial_offsets))) {
+      initial_offsets <- initial_offsets[, c("region", "dx_m", "dy_m")]
+    } else {
+      initial_offsets <- data.frame(region = character(), dx_m = numeric(), dy_m = numeric())
+    }
+  } else {
+    initial_offsets <- data.frame(region = character(), dx_m = numeric(), dy_m = numeric())
+  }
+  initial_offsets_json <- jsonlite::toJSON(
+    initial_offsets,
+    dataframe = "rows",
+    auto_unbox = TRUE,
+    digits = 12
+  )
 
   html <- paste0(
 '<!doctype html>
@@ -249,6 +267,8 @@ const offsetFile = "', offset_file, '";
 const palette = ["#2166ac","#d73027","#1a9850","#984ea3","#ff7f00","#a65628","#f781bf","#999999","#33a02c","#b2df8a","#66c2a5","#fc8d62","#8da0cb","#e78ac3","#a6d854"];
 const svg = document.querySelector("#map");
 const offsets = new Map(labels.map(d => [String(d.region), { px: 0, py: 0 }]));
+const initialOffsetsM = ', initial_offsets_json, ';
+let appliedInitialOffsets = false;
 let regionIds, featureByRegion, m, root, regionGroups, labelGroups, labelLayer;
 let activeRegion = null;
 let activePointer = null;
@@ -268,6 +288,19 @@ function measure() {
 function setupProjectionOnly() {
   m = measure();
   svg.setAttribute("viewBox", `0 0 ${m.width} ${m.height}`);
+}
+
+function applyInitialOffsets() {
+  if (!m || appliedInitialOffsets) return;
+  for (const row of initialOffsetsM) {
+    const region = String(row.region);
+    if (!offsets.has(region)) continue;
+    offsets.set(region, {
+      px: Number(row.dx_m || 0) * m.scale,
+      py: -Number(row.dy_m || 0) * m.scale
+    });
+  }
+  appliedInitialOffsets = true;
 }
 
 function project(coord) {
@@ -387,6 +420,7 @@ function main() {
   regionIds = labels.map(d => String(d.region));
   featureByRegion = groupFeatures(geojson.features);
   setupProjectionOnly();
+  applyInitialOffsets();
 
   root = svgEl("g");
   svg.appendChild(root);

@@ -1,0 +1,3 @@
+"dataset","stage","n_features","vertex_count","n_regions","w_bar_m","R_local_m","ratio","alpha_l_m","p","mode","runtime_seconds"
+"HHS states and territories","auto",56,970511,10,420060.524834643,612466.102449885,1.45804251111428,120000,1.25,"auto",5.87
+"HHS states and territories","auto_collision",56,970511,10,420060.524834643,612466.102449885,1.45804251111428,120000,1.25,"auto_collision",5.53

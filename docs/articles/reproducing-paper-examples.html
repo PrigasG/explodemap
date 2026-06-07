@@ -711,12 +711,21 @@ and the pkgdown gallery. The helpers are not run during package checks,
 but can be regenerated from the repository root:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"paper/scripts/07_generate_drag_helpers.R"</span><span class="op">)</span></span></code></pre></div>
-<p>By default the helper inventory covers 26 U.S. state cases: NJ, PA,
-OH, MI, KY, IL, ND, NC, VA, TN, GA, MN, CA, CO, TX, FL, AZ, IN, MA, MO,
-NV, NY, OR, SC, UT, and WA. Each helper is written to
+<p>The committed helper inventory covers all 50 U.S. states. Each helper
+is written to
 <code>paper/outputs/drag_helpers/&lt;case&gt;/index.html</code> with a
-matching <code>map.geojson</code>; exported offsets are saved as
-<code>paper/outputs/tables/&lt;case&gt;_drag_offsets.csv</code>.</p>
+matching <code>map.geojson</code>. Exported offsets are saved as
+<code>paper/outputs/tables/&lt;case&gt;_drag_offsets.csv</code>; states
+without a manual offset file use the formula-derived helper layout. The
+helper pages initialize from saved offsets, so reopening a helper shows
+the documented layout rather than a zero-offset starting point.</p>
+<p>The review pass also records rendered layouts and audits:</p>
+<ul>
+<li><code>paper/outputs/figures/&lt;case&gt;_dragged_layout.png</code></li>
+<li><code>paper/outputs/tables/&lt;case&gt;_drag_offsets_used.csv</code></li>
+<li><code>paper/outputs/tables/dragged_layout_formula_vs_manual_audit.csv</code></li>
+<li><code>paper/outputs/drag_helper_review</code></li>
+</ul>
 <hr>
 </div>
 <div class="section level2">

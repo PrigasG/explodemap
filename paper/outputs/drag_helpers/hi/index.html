@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hawaii drag helper</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: white; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 340px; min-height: 100vh; }
+.stage { min-width: 0; border-right: 1px solid #d8dee8; background: #fbfcfe; }
+svg { display: block; width: 100%; height: 100vh; cursor: grab; }
+svg:active { cursor: grabbing; }
+.region path { stroke: white; stroke-width: 0.8; vector-effect: non-scaling-stroke; }
+.region.dragging path { stroke: #111827; stroke-width: 1.8; }
+.label circle { fill: white; stroke: #111827; stroke-width: 1.3; }
+.label text { font-size: 11px; font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.side { padding: 18px; background: white; }
+h1 { margin: 0 0 8px; font-size: 20px; line-height: 1.2; }
+p { margin: 0 0 14px; color: #617089; line-height: 1.45; }
+.buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+button { border: 1px solid #d8dee8; background: #f7f8fb; color: #172033; border-radius: 6px; min-height: 36px; font: inherit; cursor: pointer; }
+textarea { width: 100%; height: 360px; resize: vertical; border: 1px solid #d8dee8; border-radius: 6px; padding: 10px; font: 12px/1.35 ui-monospace, SFMono-Regular, Consolas, monospace; }
+code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="stage"><svg id="map" aria-label="Draggable exploded map"></svg></section>
+  <aside class="side">
+    <h1>Hawaii</h1>
+    <p>Drag parent regions to fine-tune the exploded layout. Exported offsets are projected meters from the formula-derived layout.</p>
+    <div class="buttons">
+      <button id="copy">Copy CSV</button>
+      <button id="download">Download CSV</button>
+      <button id="reset">Reset</button>
+    </div>
+    <textarea id="csv" spellcheck="false"></textarea>
+    <p>Save as <code>paper/outputs/tables/hi_drag_offsets.csv</code>, then run <code>08_render_dragged_layouts.R</code>.</p>
+  </aside>
+</main>
+<script>
+const labels = [{"region": "Central", "label": "Central", "x": 651516.99, "y": 2391504.22}, {"region": "East", "label": "East", "x": 926257.15, "y": 2121317.13}, {"region": "West", "label": "West", "x": 370391.17, "y": 2476794.02}];
+const geojson = {"type": "FeatureCollection", "features": [{"id": "0", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Maui", "NAMELSAD": "Maui"}, "geometry": {"type": "MultiPolygon", "coordinates": [[[[688281.6471176181, 2375328.6575383195], [690053.9154927084, 2381919.6697525242], [694081.7482717739, 2387307.241067442], [699297.9720097136, 2387956.076262477], [704197.8386626017, 2384890.3865277753], [708046.1448320925, 2377527.1261511636], [711855.6112177443, 2372828.4420281495], [720776.4516845063, 2375731.2141718674], [727444.3274225282, 2379172.412489046], [737189.1530327046, 2377339.280392953], [737215.4649538683, 2375816.7676678114], [743651.749227277, 2371074.508775524], [747414.1125230935, 2369713.3419856667], [749351.0173835777, 2365940.237222343], [761005.2242888141, 2362630.607246902], [762931.7500271817, 2359619.977354357], [763024.0617134633, 2354671.0876598293], [760106.7097948004, 2350523.3302534767], [755311.310751161, 2346627.790824095], [753060.6244536816, 2346872.7709807735], [746758.7533285475, 2343333.842768469], [741502.0561260508, 2344194.125478307], [730357.7845433886, 2338960.9712954094], [722510.1260806372, 2337976.1965799923], [716107.1083667533, 2340348.597406994], [713174.2572348383, 2360287.2634636695], [710527.7155008242, 2362149.147449117], [705329.4362259099, 2359785.1284604943], [695539.9978342998, 2364396.3828424993], [690602.1686812752, 2369843.2929310217], [688281.6471176181, 2375328.6575383195]]], [[[688518.4650100626, 2332324.9488266744], [691100.0938058072, 2335120.747738036], [701501.63246067, 2340695.8627956063], [705287.3037610005, 2337897.9032357177], [703852.7525880737, 2333689.424289401], [705749.2216056158, 2332100.2507110257], [700908.1126646808, 2330220.030079331], [699014.767806116, 2331619.4484639633], [692306.0504094282, 2329333.896266326], [688518.4650100626, 2332324.9488266744]]], [[[655055.715241592, 2404185.9863702324], [662919.1205106564, 2401527.311285032], [665200.8849651794, 2398132.0797096784], [667411.799248904, 2400159.1383438944], [665144.7636815708, 2402412.6092222123], [670369.0697363701, 2402101.4230834316], [680411.1844120813, 2403952.102625353], [686783.0764185064, 2401664.09923428], [683874.7147407498, 2396389.1132775308], [677228.3030531724, 2391443.5163476006], [669793.7064239691, 2389344.747217117], [656697.4361009385, 2392219.718303474], [646964.1120527376, 2395049.412559868], [641385.767710023, 2393651.7827290837], [630575.7176998137, 2393053.970285154], [624591.5253184357, 2394606.362175318], [626775.6688449018, 2399575.8694158937], [630100.487222398, 2402370.5392866908], [629294.5537319368, 2407878.691613886], [635631.0878055057, 2407759.206358309], [636764.1598967337, 2406440.3734368896], [655055.715241592, 2404185.9863702324]]], [[[650588.0556929136, 2373023.224141452], [653170.6519602864, 2375623.0986376964], [658018.6205001194, 2376158.8079971694], [667750.2131483718, 2374476.0054077175], [674175.4967529832, 2368852.972284883], [677230.145702136, 2364042.074320755], [673949.8224599886, 2357813.6480007307], [666883.1793220538, 2354961.7066973117], [660533.5758126607, 2354405.114116745], [657845.7062159962, 2360079.4068030855], [656638.5557842184, 2367008.965918607], [651371.7669548617, 2369988.5952766174], [650588.0556929136, 2373023.224141452]]]]}}, {"id": "1", "type": "Feature", "properties": {"drag_region": "East", "NAME": "Hawaii", "NAMELSAD": "Hawaii"}, "geometry": {"type": "Polygon", "coordinates": [[[869647.2202118883, 2135945.41155913], [870327.1749401626, 2140145.4931867938], [877348.9995538491, 2147504.0975505984], [881851.6979632318, 2148251.6553916717], [886579.1948119454, 2157192.026864101], [892502.6848486253, 2162253.531836901], [893525.7917718771, 2167795.100254619], [886969.5914618268, 2176621.0766165303], [885387.2503683976, 2180875.769680553], [884825.1031050127, 2190861.8470686697], [887761.0992878383, 2194439.7601592257], [894532.2448029484, 2193712.243896959], [901347.4581614699, 2190798.072595546], [902533.6321743097, 2187774.358640159], [910877.9770673627, 2183750.752862247], [916602.884291178, 2179391.070427814], [921099.1179256445, 2180054.9549020575], [930555.7595551607, 2177205.3801840656], [945372.6625248255, 2170190.903566397], [950300.5353321707, 2168489.899244461], [958705.0068869367, 2162867.20885143], [964848.6002545792, 2157576.593596063], [971414.4722343573, 2150486.8064296213], [970388.6965260111, 2145984.6343367714], [970963.3884732065, 2137422.379152727], [973999.6191612781, 2136539.822486385], [980001.4420951421, 2137823.793196871], [982767.6480206302, 2132457.362415682], [982519.0043845563, 2127019.646411398], [991001.4469690499, 2119406.906419837], [999391.2852444005, 2115892.8657775666], [1001326.9367138295, 2113938.5973206735], [999919.6412277954, 2109710.423611185], [995129.6896052879, 2104733.7377335895], [988817.5538133952, 2100104.0845969953], [983655.4136790918, 2094646.4523273718], [975050.9437639462, 2090827.430100594], [967596.0606620597, 2086181.3707171844], [960077.3886416863, 2084300.4476831148], [954001.4615858605, 2085597.4619961416], [950619.7727777737, 2084667.5874097475], [943951.4270805003, 2078239.9756134578], [937954.1870547476, 2075734.4145347767], [933133.8839320849, 2071064.51244362], [927872.282854136, 2069434.9577969315], [923446.6347977318, 2063728.7769216711], [923886.5425177821, 2060594.946662017], [920929.623697254, 2057013.7966700045], [919146.9180008679, 2051361.13079236], [911692.9864869398, 2045220.2557465222], [905908.3396333788, 2050919.866547372], [897495.4441283332, 2055715.8754101086], [889126.197053892, 2058326.2609737518], [885186.0156772448, 2067299.970951719], [886884.6316158848, 2078086.9567565683], [888137.5459785465, 2092484.0513879482], [884183.4483056082, 2102503.9338834723], [884482.2036296345, 2106888.291205116], [881068.0117289928, 2107969.6961789313], [878990.6924023825, 2118784.8440883853], [876242.2029439748, 2125018.901622935], [872838.6484011484, 2125720.6986631695], [869647.2202118883, 2135945.41155913]]]}}, {"id": "2", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Kalawao", "NAMELSAD": "Kalawao"}, "geometry": {"type": "Polygon", "coordinates": [[[655055.715241592, 2404185.9863702324], [660608.8670088977, 2407205.7046162826], [662151.3428663047, 2403229.8408146366], [665144.7636815708, 2402412.6092222123], [667411.799248904, 2400159.1383438944], [665200.8849651794, 2398132.0797096784], [662919.1205106564, 2401527.311285032], [655055.715241592, 2404185.9863702324]]]}}, {"id": "3", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Honolulu", "NAMELSAD": "Honolulu"}, "geometry": {"type": "Polygon", "coordinates": [[[523682.5134221269, 2446615.3041679515], [539656.5471025854, 2447552.9595893514], [544459.5869906163, 2452240.259878609], [545925.4602664984, 2455577.3282288704], [550724.8443908602, 2460171.609100377], [555913.625968528, 2461631.8322062516], [558158.7633602686, 2459079.3048795867], [560432.9437210081, 2452438.0217959937], [567921.7770184219, 2444503.186613774], [569445.3423398623, 2439569.2658895357], [567968.626787032, 2438131.855903268], [569117.2212014856, 2433670.658082453], [575852.9110330271, 2428491.332017805], [576926.4187583369, 2433920.5255375244], [581391.2454987731, 2433766.123132511], [579952.4850337167, 2427667.887619464], [582947.9402483689, 2425409.7840959607], [582598.3949694467, 2422648.932923429], [588982.9011654833, 2416045.132788091], [584543.7156899621, 2412488.973480102], [580433.2148366215, 2414167.3188728993], [572633.8491074092, 2411348.749670259], [570380.8617823824, 2413804.4549739356], [564029.5826104106, 2416706.597611615], [554715.0171449798, 2417689.7893004343], [543557.6058775447, 2415719.6769101494], [540949.2428567358, 2416085.1758159455], [538299.4227865824, 2424057.986455089], [534189.1666363495, 2427269.012410473], [533801.756355127, 2430214.746463284], [528562.8375785826, 2436559.1820014613], [528534.3432701317, 2442359.4621399497], [523682.5134221269, 2446615.3041679515]]]}}, {"id": "4", "type": "Feature", "properties": {"drag_region": "West", "NAME": "Kauai", "NAMELSAD": "Kauai"}, "geometry": {"type": "MultiPolygon", "coordinates": [[[[350465.38368471595, 2475832.3307427783], [350855.33583034074, 2479634.1407564157], [354946.76162032183, 2483227.2690497222], [356450.1260691064, 2487879.654665631], [368692.44003100414, 2494672.424560814], [371661.7666608468, 2497133.1698461114], [380164.2311268914, 2495391.1564413505], [381281.7689642109, 2497764.8107633446], [387197.1685535294, 2496700.8370173853], [390160.08246896387, 2498023.9544792296], [395704.0388784793, 2496108.3935938594], [399396.10714801226, 2492582.016575196], [401237.87369336706, 2488299.3205475654], [401229.3929339356, 2483925.262195728], [397143.82976828667, 2477943.1391027607], [397492.3831704489, 2467863.101614998], [396003.99441601196, 2465203.949747503], [385603.92537161085, 2457813.937515351], [382641.6221730991, 2459249.1127954978], [369297.01749301306, 2460436.979984205], [362652.27055432904, 2467215.9682071484], [353770.6807369229, 2470014.906897105], [350465.38368471595, 2475832.3307427783]]], [[[302884.24109863525, 2456081.47786266], [304400.764359446, 2460158.84911353], [308883.2959852633, 2464308.188889483], [315958.6673357991, 2468534.609638345], [316726.22715042863, 2472142.9526006514], [320808.29871530656, 2472969.693035941], [321528.8040456603, 2470016.4780559842], [319637.44773616723, 2464608.9305292857], [320354.8726536326, 2461180.2117669294], [312918.7807499499, 2458571.2031815476], [306912.48962985585, 2449392.0288438285], [302482.4358410326, 2452280.4691250646], [302884.24109863525, 2456081.47786266]]]]}}], "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::32604"}}};
+const bounds = {"xmin": 302482.4358410326, "xmax": 1001326.9367138295, "ymin": 2045220.2557465222, "ymax": 2498023.9544792296};
+const offsetFile = "hi_drag_offsets.csv";
+const palette = ["#2166ac", "#d73027", "#1a9850", "#984ea3", "#ff7f00", "#a65628", "#f781bf", "#999999", "#33a02c", "#b2df8a", "#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854"];
+const svg = document.querySelector("#map");
+const offsets = new Map(labels.map(d => [String(d.region), { px: 0, py: 0 }]));
+const initialOffsetsM = [{"region":"Central","dx_m":0,"dy_m":0},{"region":"East","dx_m":0,"dy_m":0},{"region":"West","dx_m":0,"dy_m":0}];
+let appliedInitialOffsets = false;
+let regionIds, featureByRegion, m, root, regionGroups, labelGroups, labelLayer;
+let activeRegion = null;
+let activePointer = null;
+
+function measure() {
+  const width = svg.clientWidth || 900;
+  const height = svg.clientHeight || 700;
+  const pad = 38;
+  const sx = (width - pad * 2) / (bounds.xmax - bounds.xmin);
+  const sy = (height - pad * 2) / (bounds.ymax - bounds.ymin);
+  const scale = Math.min(sx, sy);
+  const tx = pad + (width - pad * 2 - (bounds.xmax - bounds.xmin) * scale) / 2 - bounds.xmin * scale;
+  const ty = pad + (height - pad * 2 + (bounds.ymax - bounds.ymin) * scale) / 2 + bounds.ymin * scale;
+  return { width, height, scale, tx, ty };
+}
+
+function setupProjectionOnly() {
+  m = measure();
+  svg.setAttribute("viewBox", `0 0 ${m.width} ${m.height}`);
+}
+
+function applyInitialOffsets() {
+  if (!m || appliedInitialOffsets) return;
+  for (const row of initialOffsetsM) {
+    const region = String(row.region);
+    if (!offsets.has(region)) continue;
+    offsets.set(region, {
+      px: Number(row.dx_m || 0) * m.scale,
+      py: -Number(row.dy_m || 0) * m.scale
+    });
+  }
+  appliedInitialOffsets = true;
+}
+
+function project(coord) {
+  return [coord[0] * m.scale + m.tx, -coord[1] * m.scale + m.ty];
+}
+
+function ringPath(ring) {
+  if (!ring.length) return "";
+  const first = project(ring[0]);
+  const rest = ring.slice(1).map(coord => {
+    const p = project(coord);
+    return `L${p[0].toFixed(2)},${p[1].toFixed(2)}`;
+  }).join("");
+  return `M${first[0].toFixed(2)},${first[1].toFixed(2)}${rest}Z`;
+}
+
+function geometryPath(geometry) {
+  if (!geometry) return "";
+  if (geometry.type === "Polygon") return geometry.coordinates.map(ringPath).join("");
+  if (geometry.type === "MultiPolygon") return geometry.coordinates.flatMap(poly => poly.map(ringPath)).join("");
+  return "";
+}
+
+function projectedLabel(region) {
+  const label = labels.find(d => String(d.region) === String(region));
+  return project([label.x, label.y]);
+}
+
+function transformFor(region) {
+  const offset = offsets.get(String(region));
+  return `translate(${offset.px},${offset.py})`;
+}
+
+function csvText() {
+  const lines = ["region,dx_m,dy_m"];
+  for (const region of regionIds) {
+    const offset = offsets.get(String(region));
+    const dx = offset.px / m.scale;
+    const dy = -offset.py / m.scale;
+    lines.push(`${csvEscape(region)},${Math.round(dx)},${Math.round(dy)}`);
+  }
+  return lines.join("\n");
+}
+
+function csvEscape(value) {
+  const s = String(value);
+  return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function updateCsv() { document.querySelector("#csv").value = csvText(); }
+
+function renderAll() {
+  regionIds = [...new Set(geojson.features.map(f => String(f.properties.drag_region)))].sort();
+  featureByRegion = new Map(regionIds.map(r => [r, geojson.features.filter(f => String(f.properties.drag_region) === r)]));
+  svg.innerHTML = "";
+  setupProjectionOnly();
+  applyInitialOffsets();
+  root = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  svg.appendChild(root);
+  regionGroups = new Map();
+  regionIds.forEach((region, i) => {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "region");
+    g.setAttribute("data-region", region);
+    g.style.fill = palette[i % palette.length];
+    g.setAttribute("transform", transformFor(region));
+    featureByRegion.get(region).forEach(feat => {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", geometryPath(feat.geometry));
+      g.appendChild(path);
+    });
+    root.appendChild(g);
+    regionGroups.set(region, g);
+  });
+  labelLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  labelGroups = new Map();
+  regionIds.forEach((region, i) => {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "label");
+    g.setAttribute("data-region", region);
+    g.setAttribute("transform", transformFor(region));
+    const [lx, ly] = projectedLabel(region);
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", lx.toFixed(2)); circle.setAttribute("cy", ly.toFixed(2)); circle.setAttribute("r", 12);
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", lx.toFixed(2)); text.setAttribute("y", ly.toFixed(2));
+    text.textContent = region.length > 5 ? region.slice(0, 4) : region;
+    g.appendChild(circle); g.appendChild(text);
+    labelLayer.appendChild(g);
+    labelGroups.set(region, g);
+  });
+  svg.appendChild(labelLayer);
+  updateCsv();
+}
+
+function startDrag(region, e) {
+  activeRegion = region;
+  activePointer = { x: e.clientX, y: e.clientY };
+  regionGroups.get(region).classList.add("dragging");
+  e.preventDefault();
+}
+
+function onPointerMove(e) {
+  if (!activeRegion) return;
+  const dx = e.clientX - activePointer.x;
+  const dy = e.clientY - activePointer.y;
+  activePointer = { x: e.clientX, y: e.clientY };
+  const offset = offsets.get(activeRegion);
+  offset.px += dx; offset.py += dy;
+  const transform = transformFor(activeRegion);
+  regionGroups.get(activeRegion).setAttribute("transform", transform);
+  labelGroups.get(activeRegion).setAttribute("transform", transform);
+  updateCsv();
+}
+
+function endDrag() {
+  if (activeRegion) {
+    regionGroups.get(activeRegion).classList.remove("dragging");
+    activeRegion = null; activePointer = null;
+  }
+}
+
+svg.addEventListener("pointerdown", e => {
+  const regionEl = e.target.closest("[data-region]");
+  if (regionEl) { svg.setPointerCapture(e.pointerId); startDrag(regionEl.dataset.region, e); }
+});
+svg.addEventListener("pointermove", onPointerMove);
+svg.addEventListener("pointerup", endDrag);
+svg.addEventListener("pointercancel", endDrag);
+
+document.querySelector("#copy").addEventListener("click", () => {
+  navigator.clipboard.writeText(csvText()).catch(() => { document.querySelector("#csv").select(); document.execCommand("copy"); });
+});
+document.querySelector("#download").addEventListener("click", () => {
+  const blob = new Blob([csvText()], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = offsetFile; a.click();
+  URL.revokeObjectURL(url);
+});
+document.querySelector("#reset").addEventListener("click", () => {
+  for (const region of regionIds) offsets.set(region, { px: 0, py: 0 });
+  regionIds.forEach(region => {
+    const t = transformFor(region);
+    regionGroups.get(region).setAttribute("transform", t);
+    labelGroups.get(region).setAttribute("transform", t);
+  });
+  updateCsv();
+});
+
+window.addEventListener("resize", renderAll);
+renderAll();
+</script>
+</body>
+</html>

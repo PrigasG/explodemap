@@ -500,12 +500,20 @@ can be regenerated from the repository root:
 source("paper/scripts/07_generate_drag_helpers.R")
 ```
 
-By default the helper inventory covers 26 U.S. state cases: NJ, PA, OH,
-MI, KY, IL, ND, NC, VA, TN, GA, MN, CA, CO, TX, FL, AZ, IN, MA, MO, NV,
-NY, OR, SC, UT, and WA. Each helper is written to
-`paper/outputs/drag_helpers/<case>/index.html` with a matching
-`map.geojson`; exported offsets are saved as
-`paper/outputs/tables/<case>_drag_offsets.csv`.
+The committed helper inventory covers all 50 U.S. states. Each helper is
+written to `paper/outputs/drag_helpers/<case>/index.html` with a
+matching `map.geojson`. Exported offsets are saved as
+`paper/outputs/tables/<case>_drag_offsets.csv`; states without a manual
+offset file use the formula-derived helper layout. The helper pages
+initialize from saved offsets, so reopening a helper shows the
+documented layout rather than a zero-offset starting point.
+
+The review pass also records rendered layouts and audits:
+
+- `paper/outputs/figures/<case>_dragged_layout.png`
+- `paper/outputs/tables/<case>_drag_offsets_used.csv`
+- `paper/outputs/tables/dragged_layout_formula_vs_manual_audit.csv`
+- `paper/outputs/drag_helper_review`
 
 ------------------------------------------------------------------------
 

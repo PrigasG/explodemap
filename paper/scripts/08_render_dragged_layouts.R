@@ -1,7 +1,18 @@
 source(file.path("paper", "scripts", "00_setup.R"))
 write_run_info("08_render_dragged_layouts")
 
-drag_cases_env <- Sys.getenv("EXPLODEMAP_DRAG_CASES", "NJ,PA,OH,MI,KY,IL,ND,NC,VA,TN,GA,MN,CA,CO")
+drag_index_path <- file.path(paper_table_dir, "drag_helper_index.csv")
+default_drag_cases <- if (file.exists(drag_index_path)) {
+  drag_index <- utils::read.csv(drag_index_path, stringsAsFactors = FALSE)
+  drag_index$case[nchar(drag_index$case) == 2]
+} else {
+  c(
+    "NJ", "PA", "OH", "MI", "KY", "IL", "ND", "NC", "VA", "TN", "GA", "MN",
+    "CA", "CO", "TX", "FL", "AZ", "IN", "MA", "MO", "NV", "NY", "OR",
+    "SC", "UT", "WA"
+  )
+}
+drag_cases_env <- Sys.getenv("EXPLODEMAP_DRAG_CASES", paste(default_drag_cases, collapse = ","))
 drag_cases <- tolower(trimws(strsplit(drag_cases_env, ",", fixed = TRUE)[[1]]))
 drag_cases <- drag_cases[nzchar(drag_cases)]
 

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rhode Island drag helper</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: white; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 340px; min-height: 100vh; }
+.stage { min-width: 0; border-right: 1px solid #d8dee8; background: #fbfcfe; }
+svg { display: block; width: 100%; height: 100vh; cursor: grab; }
+svg:active { cursor: grabbing; }
+.region path { stroke: white; stroke-width: 0.8; vector-effect: non-scaling-stroke; }
+.region.dragging path { stroke: #111827; stroke-width: 1.8; }
+.label circle { fill: white; stroke: #111827; stroke-width: 1.3; }
+.label text { font-size: 11px; font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.side { padding: 18px; background: white; }
+h1 { margin: 0 0 8px; font-size: 20px; line-height: 1.2; }
+p { margin: 0 0 14px; color: #617089; line-height: 1.45; }
+.buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+button { border: 1px solid #d8dee8; background: #f7f8fb; color: #172033; border-radius: 6px; min-height: 36px; font: inherit; cursor: pointer; }
+textarea { width: 100%; height: 360px; resize: vertical; border: 1px solid #d8dee8; border-radius: 6px; padding: 10px; font: 12px/1.35 ui-monospace, SFMono-Regular, Consolas, monospace; }
+code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="stage"><svg id="map" aria-label="Draggable exploded map"></svg></section>
+  <aside class="side">
+    <h1>Rhode Island</h1>
+    <p>Drag parent regions to fine-tune the exploded layout. Exported offsets are projected meters from the formula-derived layout.</p>
+    <div class="buttons">
+      <button id="copy">Copy CSV</button>
+      <button id="download">Download CSV</button>
+      <button id="reset">Reset</button>
+    </div>
+    <textarea id="csv" spellcheck="false"></textarea>
+    <p>Save as <code>paper/outputs/tables/ri_drag_offsets.csv</code>, then run <code>08_render_dragged_layouts.R</code>.</p>
+  </aside>
+</main>
+<script>
+const labels = [{"region": "Central", "label": "Central", "x": 352111.12, "y": 4592624.77}, {"region": "North", "label": "North", "x": 279616.75, "y": 4673063.15}, {"region": "South", "label": "South", "x": 268940.59, "y": 4553882.16}];
+const geojson = {"type": "FeatureCollection", "features": [{"id": "0", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Newport", "NAMELSAD": "Newport"}, "geometry": {"type": "MultiPolygon", "coordinates": [[[[356998.91710662167, 4598037.379730791], [362334.6148952922, 4596185.401076727], [362788.24371280335, 4578136.215230079], [356684.81677684106, 4573898.207117854], [355135.26175941003, 4583672.871231304], [355890.114531165, 4589761.984927331], [352953.3316330719, 4591937.549487051], [353158.7953423242, 4576756.315869695], [348069.3091063461, 4577080.595966045], [347381.0396736872, 4573758.199062943], [344364.86519763654, 4573170.991110969], [344207.16898133885, 4578425.091123884], [349240.9130659434, 4587358.017624293], [351804.5825970442, 4593781.0368136], [356998.91710662167, 4598037.379730791]]], [[[342911.2691300266, 4596787.624566645], [344423.7550322709, 4597414.456444263], [347578.1147587107, 4592365.713951276], [346064.92186449666, 4591738.195448196], [342911.2691300266, 4596787.624566645]]], [[[339304.6271441139, 4574645.975016758], [341237.1984202387, 4579460.759324272], [340099.6335168091, 4581687.646725725], [341746.6685758539, 4587083.138382383], [342891.54986781185, 4585142.629843735], [342669.97997943545, 4577035.129032104], [339304.6271441139, 4574645.975016758]]]]}}, {"id": "1", "type": "Feature", "properties": {"drag_region": "North", "NAME": "Kent", "NAMELSAD": "Kent"}, "geometry": {"type": "Polygon", "coordinates": [[[261219.42021014472, 4650432.977511239], [288410.9459846029, 4650367.115362983], [290283.3167186421, 4653177.671893844], [294756.833951585, 4652956.670522266], [296426.70844693657, 4648519.481829204], [295692.87200564553, 4643575.902365611], [289165.30200463557, 4645381.488303385], [292646.17479967535, 4641560.342551956], [287502.1361703479, 4639510.276178345], [286204.5520483191, 4636015.3938409975], [260756.25660419802, 4636124.767081334], [261219.42021014472, 4650432.977511239]]]}}, {"id": "2", "type": "Feature", "properties": {"drag_region": "North", "NAME": "Providence", "NAMELSAD": "Providence"}, "geometry": {"type": "Polygon", "coordinates": [[[262840.73520469194, 4700680.868545998], [287840.6538553997, 4700957.321465621], [297356.50393022946, 4700876.856813664], [296966.4781605217, 4686854.738366986], [300555.48501094914, 4687328.688962817], [299748.6824605885, 4679618.612458758], [301976.35830727255, 4673735.302285563], [298336.20647110057, 4671638.8603508985], [291776.41055695823, 4672012.907222002], [289904.03982291906, 4669202.350691141], [262712.5140484609, 4669268.212839397], [262507.0989539975, 4690473.924997729], [262840.73520469194, 4700680.868545998]]]}}, {"id": "3", "type": "Feature", "properties": {"drag_region": "South", "NAME": "Washington", "NAMELSAD": "Washington"}, "geometry": {"type": "MultiPolygon", "coordinates": [[[[248747.47540164817, 4537952.353492485], [251241.4089015403, 4540639.6213234095], [250578.27441640184, 4547918.372410204], [254203.34235500896, 4548564.134919899], [255746.71613219552, 4568470.781780001], [281195.01157631655, 4568361.408539664], [282492.5956983454, 4571856.290877012], [287636.63432767283, 4573906.3572506225], [287736.0487011032, 4566744.201545205], [284115.99033978616, 4565795.924346918], [286368.24687753286, 4560673.111262354], [286176.0529624259, 4553805.561653342], [283056.95088475716, 4549597.8138725525], [280457.9874821379, 4542703.388816222], [276872.26133871224, 4543379.819391223], [268715.43622533215, 4541903.809085027], [260506.813773411, 4538910.71855143], [248997.65878682415, 4536416.300175361], [248747.47540164817, 4537952.353492485]]], [[[268944.68357490125, 4519557.404413685], [272483.4137809147, 4527089.073921836], [273948.44749673735, 4525709.362192724], [274036.6938370973, 4518451.676239118], [268944.68357490125, 4519557.404413685]]]]}}, {"id": "4", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Bristol", "NAMELSAD": "Bristol"}, "geometry": {"type": "Polygon", "coordinates": [[[339726.60977651185, 4624085.044046703], [343366.7616126838, 4626181.4859813675], [348069.7332736253, 4623383.592978596], [350935.7012585561, 4618727.33203983], [349928.3936838301, 4614458.273160828], [345641.3808306177, 4610657.325882438], [343954.83233159804, 4614711.235932611], [345238.9341532442, 4618017.766474752], [339726.60977651185, 4624085.044046703]]]}}], "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::32619"}}};
+const bounds = {"xmin": 248747.47540164817, "xmax": 362788.24371280335, "ymin": 4518451.676239118, "ymax": 4700957.321465621};
+const offsetFile = "ri_drag_offsets.csv";
+const palette = ["#2166ac", "#d73027", "#1a9850", "#984ea3", "#ff7f00", "#a65628", "#f781bf", "#999999", "#33a02c", "#b2df8a", "#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854"];
+const svg = document.querySelector("#map");
+const offsets = new Map(labels.map(d => [String(d.region), { px: 0, py: 0 }]));
+const initialOffsetsM = [{"region":"Central","dx_m":0,"dy_m":0},{"region":"North","dx_m":0,"dy_m":0},{"region":"South","dx_m":0,"dy_m":0}];
+let appliedInitialOffsets = false;
+let regionIds, featureByRegion, m, root, regionGroups, labelGroups, labelLayer;
+let activeRegion = null;
+let activePointer = null;
+
+function measure() {
+  const width = svg.clientWidth || 900;
+  const height = svg.clientHeight || 700;
+  const pad = 38;
+  const sx = (width - pad * 2) / (bounds.xmax - bounds.xmin);
+  const sy = (height - pad * 2) / (bounds.ymax - bounds.ymin);
+  const scale = Math.min(sx, sy);
+  const tx = pad + (width - pad * 2 - (bounds.xmax - bounds.xmin) * scale) / 2 - bounds.xmin * scale;
+  const ty = pad + (height - pad * 2 + (bounds.ymax - bounds.ymin) * scale) / 2 + bounds.ymin * scale;
+  return { width, height, scale, tx, ty };
+}
+
+function setupProjectionOnly() {
+  m = measure();
+  svg.setAttribute("viewBox", `0 0 ${m.width} ${m.height}`);
+}
+
+function applyInitialOffsets() {
+  if (!m || appliedInitialOffsets) return;
+  for (const row of initialOffsetsM) {
+    const region = String(row.region);
+    if (!offsets.has(region)) continue;
+    offsets.set(region, {
+      px: Number(row.dx_m || 0) * m.scale,
+      py: -Number(row.dy_m || 0) * m.scale
+    });
+  }
+  appliedInitialOffsets = true;
+}
+
+function project(coord) {
+  return [coord[0] * m.scale + m.tx, -coord[1] * m.scale + m.ty];
+}
+
+function ringPath(ring) {
+  if (!ring.length) return "";
+  const first = project(ring[0]);
+  const rest = ring.slice(1).map(coord => {
+    const p = project(coord);
+    return `L${p[0].toFixed(2)},${p[1].toFixed(2)}`;
+  }).join("");
+  return `M${first[0].toFixed(2)},${first[1].toFixed(2)}${rest}Z`;
+}
+
+function geometryPath(geometry) {
+  if (!geometry) return "";
+  if (geometry.type === "Polygon") return geometry.coordinates.map(ringPath).join("");
+  if (geometry.type === "MultiPolygon") return geometry.coordinates.flatMap(poly => poly.map(ringPath)).join("");
+  return "";
+}
+
+function projectedLabel(region) {
+  const label = labels.find(d => String(d.region) === String(region));
+  return project([label.x, label.y]);
+}
+
+function transformFor(region) {
+  const offset = offsets.get(String(region));
+  return `translate(${offset.px},${offset.py})`;
+}
+
+function csvText() {
+  const lines = ["region,dx_m,dy_m"];
+  for (const region of regionIds) {
+    const offset = offsets.get(String(region));
+    const dx = offset.px / m.scale;
+    const dy = -offset.py / m.scale;
+    lines.push(`${csvEscape(region)},${Math.round(dx)},${Math.round(dy)}`);
+  }
+  return lines.join("\n");
+}
+
+function csvEscape(value) {
+  const s = String(value);
+  return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function updateCsv() { document.querySelector("#csv").value = csvText(); }
+
+function renderAll() {
+  regionIds = [...new Set(geojson.features.map(f => String(f.properties.drag_region)))].sort();
+  featureByRegion = new Map(regionIds.map(r => [r, geojson.features.filter(f => String(f.properties.drag_region) === r)]));
+  svg.innerHTML = "";
+  setupProjectionOnly();
+  applyInitialOffsets();
+  root = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  svg.appendChild(root);
+  regionGroups = new Map();
+  regionIds.forEach((region, i) => {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "region");
+    g.setAttribute("data-region", region);
+    g.style.fill = palette[i % palette.length];
+    g.setAttribute("transform", transformFor(region));
+    featureByRegion.get(region).forEach(feat => {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", geometryPath(feat.geometry));
+      g.appendChild(path);
+    });
+    root.appendChild(g);
+    regionGroups.set(region, g);
+  });
+  labelLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  labelGroups = new Map();
+  regionIds.forEach((region, i) => {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "label");
+    g.setAttribute("data-region", region);
+    g.setAttribute("transform", transformFor(region));
+    const [lx, ly] = projectedLabel(region);
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", lx.toFixed(2)); circle.setAttribute("cy", ly.toFixed(2)); circle.setAttribute("r", 12);
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", lx.toFixed(2)); text.setAttribute("y", ly.toFixed(2));
+    text.textContent = region.length > 5 ? region.slice(0, 4) : region;
+    g.appendChild(circle); g.appendChild(text);
+    labelLayer.appendChild(g);
+    labelGroups.set(region, g);
+  });
+  svg.appendChild(labelLayer);
+  updateCsv();
+}
+
+function startDrag(region, e) {
+  activeRegion = region;
+  activePointer = { x: e.clientX, y: e.clientY };
+  regionGroups.get(region).classList.add("dragging");
+  e.preventDefault();
+}
+
+function onPointerMove(e) {
+  if (!activeRegion) return;
+  const dx = e.clientX - activePointer.x;
+  const dy = e.clientY - activePointer.y;
+  activePointer = { x: e.clientX, y: e.clientY };
+  const offset = offsets.get(activeRegion);
+  offset.px += dx; offset.py += dy;
+  const transform = transformFor(activeRegion);
+  regionGroups.get(activeRegion).setAttribute("transform", transform);
+  labelGroups.get(activeRegion).setAttribute("transform", transform);
+  updateCsv();
+}
+
+function endDrag() {
+  if (activeRegion) {
+    regionGroups.get(activeRegion).classList.remove("dragging");
+    activeRegion = null; activePointer = null;
+  }
+}
+
+svg.addEventListener("pointerdown", e => {
+  const regionEl = e.target.closest("[data-region]");
+  if (regionEl) { svg.setPointerCapture(e.pointerId); startDrag(regionEl.dataset.region, e); }
+});
+svg.addEventListener("pointermove", onPointerMove);
+svg.addEventListener("pointerup", endDrag);
+svg.addEventListener("pointercancel", endDrag);
+
+document.querySelector("#copy").addEventListener("click", () => {
+  navigator.clipboard.writeText(csvText()).catch(() => { document.querySelector("#csv").select(); document.execCommand("copy"); });
+});
+document.querySelector("#download").addEventListener("click", () => {
+  const blob = new Blob([csvText()], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = offsetFile; a.click();
+  URL.revokeObjectURL(url);
+});
+document.querySelector("#reset").addEventListener("click", () => {
+  for (const region of regionIds) offsets.set(region, { px: 0, py: 0 });
+  regionIds.forEach(region => {
+    const t = transformFor(region);
+    regionGroups.get(region).setAttribute("transform", t);
+    labelGroups.get(region).setAttribute("transform", t);
+  });
+  updateCsv();
+});
+
+window.addEventListener("resize", renderAll);
+renderAll();
+</script>
+</body>
+</html>

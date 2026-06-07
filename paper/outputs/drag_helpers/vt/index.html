@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vermont drag helper</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: white; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 340px; min-height: 100vh; }
+.stage { min-width: 0; border-right: 1px solid #d8dee8; background: #fbfcfe; }
+svg { display: block; width: 100%; height: 100vh; cursor: grab; }
+svg:active { cursor: grabbing; }
+.region path { stroke: white; stroke-width: 0.8; vector-effect: non-scaling-stroke; }
+.region.dragging path { stroke: #111827; stroke-width: 1.8; }
+.label circle { fill: white; stroke: #111827; stroke-width: 1.3; }
+.label text { font-size: 11px; font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.side { padding: 18px; background: white; }
+h1 { margin: 0 0 8px; font-size: 20px; line-height: 1.2; }
+p { margin: 0 0 14px; color: #617089; line-height: 1.45; }
+.buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+button { border: 1px solid #d8dee8; background: #f7f8fb; color: #172033; border-radius: 6px; min-height: 36px; font: inherit; cursor: pointer; }
+textarea { width: 100%; height: 360px; resize: vertical; border: 1px solid #d8dee8; border-radius: 6px; padding: 10px; font: 12px/1.35 ui-monospace, SFMono-Regular, Consolas, monospace; }
+code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="stage"><svg id="map" aria-label="Draggable exploded map"></svg></section>
+  <aside class="side">
+    <h1>Vermont</h1>
+    <p>Drag parent regions to fine-tune the exploded layout. Exported offsets are projected meters from the formula-derived layout.</p>
+    <div class="buttons">
+      <button id="copy">Copy CSV</button>
+      <button id="download">Download CSV</button>
+      <button id="reset">Reset</button>
+    </div>
+    <textarea id="csv" spellcheck="false"></textarea>
+    <p>Save as <code>paper/outputs/tables/vt_drag_offsets.csv</code>, then run <code>08_render_dragged_layouts.R</code>.</p>
+  </aside>
+</main>
+<script>
+const labels = [{"region": "Central", "label": "Central", "x": 626770.5, "y": 4995972.55}, {"region": "North", "label": "North", "x": 781482.88, "y": 4994846.51}, {"region": "South", "label": "South", "x": 662959.45, "y": 4717524.45}];
+const geojson = {"type": "FeatureCollection", "features": [{"id": "0", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Lamoille", "NAMELSAD": "Lamoille"}, "geometry": {"type": "Polygon", "coordinates": [[[669750.277400195, 5049082.771685058], [682737.9114261649, 5042891.77802276], [677925.3727743509, 5032902.411644354], [686901.6429658271, 5028505.402264469], [686644.4087533432, 5027637.391413436], [682073.5087609575, 5018799.555747441], [677792.495157528, 5009401.676533951], [669321.3358540325, 5015450.794705105], [665014.3402524896, 5006252.858085409], [652847.5292701, 5011931.28255858], [649971.5687763289, 5012618.593424705], [652685.9929060339, 5017942.948749101], [650373.0895302917, 5019027.072786753], [650551.7906954159, 5023042.45859743], [642626.3313008253, 5031812.23143527], [645404.0800737176, 5034557.216643595], [648375.725807591, 5040650.891812942], [652697.1975579837, 5038665.539785509], [653689.1956048266, 5044040.319131166], [656390.703770746, 5049176.061933243], [666846.1824687063, 5051193.620381447], [669750.277400195, 5049082.771685058]]]}}, {"id": "1", "type": "Feature", "properties": {"drag_region": "South", "NAME": "Windham", "NAMELSAD": "Windham"}, "geometry": {"type": "Polygon", "coordinates": [[[675463.9528332744, 4669190.951844702], [688695.0781889653, 4665152.755369899], [699730.6857491997, 4666899.546788733], [709066.0340509677, 4666893.215856877], [707849.9090078535, 4658929.898926785], [709574.9080411451, 4650292.563513291], [707040.4156707048, 4647064.219954328], [708945.3914446398, 4642156.405116116], [706734.3369981293, 4637792.404975015], [702957.2508338329, 4636724.983532543], [702824.6981364251, 4631278.399092574], [700390.1154649782, 4624236.937633253], [704196.7009636938, 4614609.103766961], [705930.5038057676, 4615615.301781762], [708725.7193073033, 4610638.215355611], [670196.1476064348, 4610922.054468408], [670268.4321410261, 4631828.915736718], [663231.6561506401, 4631945.011531357], [663614.2324847706, 4652763.433735398], [674136.4655095333, 4652641.152297598], [674459.742854376, 4662864.28033075], [675463.9528332744, 4669190.951844702]]]}}, {"id": "2", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Franklin", "NAMELSAD": "Franklin"}, "geometry": {"type": "Polygon", "coordinates": [[[603796.5548518524, 5098965.082628172], [644517.6652917074, 5100195.596237963], [653873.6095378709, 5099707.053874343], [655534.3394988404, 5091638.317413087], [656446.3089593368, 5080299.471830783], [652928.7550304679, 5074462.718363044], [650024.6600989791, 5076573.567059432], [639569.1814010189, 5074556.008611228], [636867.6732350994, 5069420.265809151], [635875.6751882565, 5064045.486463495], [631554.2034378638, 5066030.838490928], [628582.5577039905, 5059937.163321581], [625804.8089310982, 5057192.178113256], [616931.072360595, 5058977.571409402], [601674.6696890759, 5066552.213238402], [598997.9849511792, 5072031.762983939], [602850.1042625932, 5077748.3137957165], [604056.3355022257, 5087322.607101986], [599992.341985866, 5091720.599238491], [603796.5548518524, 5098965.082628172]]]}}, {"id": "3", "type": "Feature", "properties": {"drag_region": "South", "NAME": "Windsor", "NAMELSAD": "Windsor"}, "geometry": {"type": "Polygon", "coordinates": [[[686301.4834945396, 4817663.615200525], [687262.8173317602, 4814060.987209541], [713501.9796728479, 4804789.841255148], [734244.5700179131, 4797913.347543195], [728890.8443145414, 4793627.365110333], [726425.8195790818, 4789343.9787132], [724745.0560901379, 4778592.1854197765], [720779.3966042153, 4775600.61374948], [719551.2476760098, 4768494.625945897], [721107.1181173804, 4765200.79256565], [718603.8217039625, 4752229.718816027], [720527.6420133027, 4746559.499350267], [717598.2580732966, 4737587.401336667], [708262.9097715287, 4737593.732268523], [697227.3022112943, 4735846.940849689], [686346.6928719417, 4739182.3452154705], [685928.4601800242, 4744040.451109988], [682138.6797743518, 4744133.588023136], [683102.0440926116, 4751986.768500021], [685401.088458898, 4753096.517251337], [690714.134839284, 4750277.419755918], [692986.1740924264, 4763037.506194828], [687971.8667719417, 4765862.30087996], [689136.4383835043, 4776586.929347088], [690305.7371928262, 4776236.485626391], [694648.4009547738, 4786953.966672404], [684714.2054583053, 4790409.3776944075], [687634.1141454962, 4800225.875882317], [686998.0214168809, 4802404.938709795], [680315.4129966366, 4803948.261444244], [679972.9169311391, 4806039.95050367], [673425.5212540663, 4802342.42777476], [671542.2620586699, 4808501.802432246], [673581.9256192769, 4807692.737738055], [679845.3376454648, 4811001.505877881], [680828.43832207, 4806443.906964233], [686301.4834945396, 4817663.615200525]]]}}, {"id": "4", "type": "Feature", "properties": {"drag_region": "South", "NAME": "Rutland", "NAMELSAD": "Rutland"}, "geometry": {"type": "Polygon", "coordinates": [[[602797.1669850852, 4792212.13605366], [615480.5212450384, 4793906.6271517435], [614156.6324035658, 4801705.515110673], [629425.4220363991, 4803101.835132238], [630689.3796641529, 4798549.593685193], [641797.359174819, 4804744.852728275], [642139.8552403164, 4802653.163668849], [648822.4636605608, 4801109.8409343995], [649458.556389176, 4798930.778106922], [646538.6477019852, 4789114.279919012], [656472.8431984535, 4785658.868897009], [652130.179436506, 4774941.387850996], [650960.8806271842, 4775291.831571693], [649796.3090156214, 4764567.203104565], [654810.6163361063, 4761742.408419433], [652538.5770829639, 4748982.321980523], [647225.5307025779, 4751801.419475942], [644926.4863362915, 4750691.670724626], [643963.1220180315, 4742838.490247741], [612488.5191296441, 4743635.347300866], [612511.1335244265, 4770266.056023277], [608685.4137554117, 4772954.570316365], [608002.4713890466, 4777999.39853837], [602500.408190775, 4777889.171071753], [600594.9300765798, 4771552.707202787], [597649.5765150478, 4773978.016258523], [599469.020088735, 4784893.305601943], [602797.1669850852, 4792212.13605366]]]}}, {"id": "5", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Grand Isle", "NAMELSAD": "Grand Isle"}, "geometry": {"type": "Polygon", "coordinates": [[[565621.3383549202, 5092640.177863979], [577494.0658360152, 5093180.699321085], [573689.8529700288, 5085936.215931403], [577753.8464863885, 5081538.223794899], [576547.615246756, 5071963.930488629], [572695.495935342, 5066247.379676851], [575372.1806732387, 5060767.829931315], [574979.4931521771, 5052644.268901633], [572555.903427667, 5046100.393995279], [565209.9180768414, 5042893.698033839], [562771.3493511104, 5050863.948735334], [563851.0689623585, 5053844.737213628], [564244.1385383931, 5062635.31644236], [566978.086609255, 5067941.44948061], [563178.4402680583, 5073306.142552825], [564192.0431818068, 5079340.902133263], [566117.3887234033, 5082244.086980963], [565621.3383549202, 5092640.177863979]]]}}, {"id": "6", "type": "Feature", "properties": {"drag_region": "South", "NAME": "Bennington", "NAMELSAD": "Bennington"}, "geometry": {"type": "Polygon", "coordinates": [[[607626.5203756224, 4637875.281261277], [608232.8050776485, 4679119.262978594], [643497.1883717084, 4678229.269012321], [643915.421063626, 4673371.163117804], [641564.9050472876, 4674073.955226825], [640560.6950683892, 4667747.283712873], [640237.4177235465, 4657524.155679721], [629715.1846987838, 4657646.437117521], [629332.6083646533, 4636828.01491348], [636369.3843550393, 4636711.919118841], [636297.099820448, 4615805.057850531], [608957.4580365352, 4615951.858748985], [606481.7143401885, 4622104.674231572], [607583.5979314308, 4625658.267487536], [607626.5203756224, 4637875.281261277]]]}}, {"id": "7", "type": "Feature", "properties": {"drag_region": "North", "NAME": "Orleans", "NAMELSAD": "Orleans"}, "geometry": {"type": "Polygon", "coordinates": [[[738600.0975366348, 5072856.806634261], [758135.7157032741, 5072903.2037091525], [790361.4692638847, 5074629.470375523], [788525.7070041153, 5063282.410884888], [792908.3549796344, 5060009.397026035], [785343.685771545, 5049688.4328223765], [788255.0305210836, 5047886.218993661], [782577.6844971646, 5039839.284124022], [774415.4874893208, 5045182.283241299], [776663.8113720659, 5038000.694089704], [772035.7324110232, 5040034.407796639], [763539.2658147458, 5021781.778080179], [754549.3743823799, 5026167.09085134], [754806.6085948639, 5027035.1017023735], [745830.3384033877, 5031432.111082259], [750642.8770552017, 5041421.477460664], [737655.2430292318, 5047612.471122962], [741172.7969581007, 5053449.224590702], [740260.8274976043, 5064788.070173006], [738600.0975366348, 5072856.806634261]]]}}, {"id": "8", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Chittenden", "NAMELSAD": "Chittenden"}, "geometry": {"type": "Polygon", "coordinates": [[[583765.5922355504, 5010071.771765689], [591111.577586376, 5013278.467727129], [593535.1673108861, 5019822.342633483], [593927.8548319477, 5027945.903663165], [609184.2575034668, 5020371.261834165], [618057.99407397, 5018585.868538018], [625983.4534685606, 5009816.095700178], [625804.7523034364, 5005800.709889501], [628117.6556791785, 5004716.585851849], [625403.2315494736, 4999392.230527453], [628279.1920432447, 4998704.919661328], [625567.0281847608, 4993189.765656044], [628463.6130635698, 4991834.503801259], [626839.556816606, 4988353.529087944], [624533.8038342413, 4988961.128100591], [620193.620094348, 4979587.007510969], [621356.3740578028, 4978948.336335943], [617376.484157252, 4966148.841705488], [615294.0285822335, 4980705.309921309], [597318.7735828939, 4977326.183549124], [588157.2554325799, 4976845.093088412], [586194.1250096583, 4988832.939394874], [589466.4336434315, 4996537.330776108], [588187.5129415012, 5003097.733993678], [585514.6238788979, 5008197.877406197], [583765.5922355504, 5010071.771765689]]]}}, {"id": "9", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Washington", "NAMELSAD": "Washington"}, "geometry": {"type": "Polygon", "coordinates": [[[644765.0773581392, 4951073.871667905], [648744.96725869, 4963873.36629836], [647582.2132952352, 4964512.037473386], [651922.3970351286, 4973886.1580630075], [654228.1500174932, 4973278.559050361], [655852.206264457, 4976759.533763676], [652955.621385648, 4978114.7956184605], [655667.7852441319, 4983629.949623745], [667834.5962265214, 4977951.525150574], [672141.5918280644, 4987149.46177027], [680612.7511315598, 4981100.343599116], [684893.7647349894, 4990498.222812606], [702035.5522562194, 4981983.625805254], [702373.1806513895, 4980466.562851768], [698633.257299449, 4972507.114110903], [694780.4454861875, 4967699.1221268745], [695160.4924185919, 4964845.849995445], [691108.3219481988, 4957072.974083098], [687033.2802077418, 4958853.993543151], [685343.837866558, 4948581.319600796], [676044.4801610172, 4952023.567087918], [673756.9599193445, 4951669.5416199025], [666466.7709757055, 4935130.292017121], [661813.6889522478, 4936815.527724798], [648461.3404194383, 4941237.159832175], [646195.2382116584, 4951300.634106812], [644765.0773581392, 4951073.871667905]]]}}, {"id": "10", "type": "Feature", "properties": {"drag_region": "North", "NAME": "Orange", "NAMELSAD": "Orange"}, "geometry": {"type": "Polygon", "coordinates": [[[716560.7374062856, 4892341.250162076], [720385.8359444576, 4899988.235693558], [725038.9179679152, 4898302.999985881], [732329.1069115542, 4914842.249588663], [734616.6271532269, 4915196.275056678], [743915.9848587677, 4911754.027569557], [745605.4271999515, 4922026.701511911], [749680.4689404086, 4920245.682051858], [754917.8572534148, 4918122.992781416], [765209.8750313348, 4919519.60585318], [776247.6287422508, 4916086.706025255], [775291.0876046589, 4910701.916248286], [777090.3210121512, 4908664.653277469], [773876.1814356048, 4901957.247501657], [770571.503738865, 4897637.168478323], [770854.9026164768, 4889526.664836831], [765597.625596993, 4882944.82935497], [766094.194983006, 4876848.038252251], [764503.8239296591, 4872590.982504746], [743761.2335845939, 4879467.476216699], [717522.0712435062, 4888738.622171092], [716560.7374062856, 4892341.250162076]]]}}, {"id": "11", "type": "Feature", "properties": {"drag_region": "North", "NAME": "Essex", "NAMELSAD": "Essex"}, "geometry": {"type": "Polygon", "coordinates": [[[816608.6239565158, 5068568.761688342], [847980.1025517853, 5070421.613307665], [844991.4340991202, 5067424.900612111], [849037.465335003, 5059089.886699309], [844241.2937363089, 5051714.088546905], [843364.5423462593, 5045558.6224315725], [839311.8067747069, 5040418.068607578], [842845.6546723632, 5030814.92132662], [845844.890773203, 5027308.61744319], [845569.5903235051, 5020318.403527936], [842485.9613542987, 5018946.305170419], [844432.7058812855, 5013387.761719876], [839953.8579752345, 5011098.562020011], [838131.4602398331, 5006722.400250261], [834282.6079606885, 5002838.614961029], [829732.7378603553, 5002083.67957875], [827476.194521829, 5001230.299887667], [826240.2222652351, 4996212.4412679095], [824267.295601192, 4995371.418432394], [816442.4352569653, 5005394.183901491], [822205.8523655705, 5011729.266045346], [817708.5929025528, 5017291.404608333], [822852.335108961, 5024560.331477412], [817289.0336568657, 5028360.817542897], [822681.3669005053, 5036308.875967687], [814502.1852137147, 5041825.51030648], [811590.8404641761, 5043627.724135196], [819155.5096722655, 5053948.688338854], [814772.8616967464, 5057221.702197707], [816608.6239565158, 5068568.761688342]]]}}, {"id": "12", "type": "Feature", "properties": {"drag_region": "Central", "NAME": "Addison", "NAMELSAD": "Addison"}, "geometry": {"type": "Polygon", "coordinates": [[[581898.988594465, 4935722.575922349], [591060.506744779, 4936203.666383061], [609035.7617441185, 4939582.792755246], [611118.2173191371, 4925026.324539425], [612548.3781726563, 4925253.086978332], [614814.4803804362, 4915189.612703695], [628166.8289132457, 4910767.980596318], [624341.7303750737, 4903120.995064836], [618868.6852026042, 4891901.286828544], [617885.5845259989, 4896458.885742192], [611622.172499811, 4893150.117602366], [609582.508939204, 4893959.182296556], [611465.7681346004, 4887799.807639071], [606905.1843010072, 4885302.071324899], [605641.2266732533, 4889854.312771944], [590372.4370404201, 4888457.992750379], [591696.3258818927, 4880659.104791449], [579012.9716219394, 4878964.613693366], [580128.8830350221, 4880991.193630854], [577737.4854200695, 4885048.239808151], [577879.8881598599, 4892496.1061459975], [574873.1210570834, 4898832.7309967335], [574971.4051299002, 4908666.015498689], [572333.595936879, 4911192.702377603], [574488.5178634474, 4918774.583540427], [575758.6391635301, 4927294.646476799], [581898.988594465, 4935722.575922349]]]}}, {"id": "13", "type": "Feature", "properties": {"drag_region": "North", "NAME": "Caledonia", "NAMELSAD": "Caledonia"}, "geometry": {"type": "Polygon", "coordinates": [[[762171.5625703001, 5001633.198404078], [771161.4540026659, 4997247.885632917], [779657.9205989434, 5015500.515349377], [784285.999559986, 5013466.801642442], [782037.675677241, 5020648.390794037], [790199.8726850847, 5015305.39167676], [795877.2187090038, 5023352.326546399], [804056.4003957943, 5017835.692207606], [798664.0671521547, 5009887.633782815], [804227.36860425, 5006087.147717331], [799083.6263978418, 4998818.220848251], [803580.8858608595, 4993256.0822852645], [797817.4687522544, 4986921.000141409], [805642.3290964811, 4976898.234672313], [794240.8916822864, 4975321.334247184], [790304.0658678378, 4973266.494918396], [787650.0246812645, 4967342.697208567], [789485.7150555684, 4964160.043193823], [787960.252606799, 4958659.367026832], [790382.3795929662, 4955211.137981972], [779344.6258820501, 4958644.037809897], [769052.6081041301, 4957247.424738132], [763815.2197911239, 4959370.114008575], [767867.3902615169, 4967142.989920923], [767487.3433291125, 4969996.262052352], [771340.155142374, 4974804.25403638], [775080.0784943146, 4982763.702777245], [774742.4500991445, 4984280.765730731], [757600.6625779144, 4992795.362738083], [762171.5625703001, 5001633.198404078]]]}}], "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::32618"}}};
+const bounds = {"xmin": 562771.3493511104, "xmax": 849037.465335003, "ymin": 4610638.215355611, "ymax": 5100195.596237963};
+const offsetFile = "vt_drag_offsets.csv";
+const palette = ["#2166ac", "#d73027", "#1a9850", "#984ea3", "#ff7f00", "#a65628", "#f781bf", "#999999", "#33a02c", "#b2df8a", "#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854"];
+const svg = document.querySelector("#map");
+const offsets = new Map(labels.map(d => [String(d.region), { px: 0, py: 0 }]));
+const initialOffsetsM = [{"region":"Central","dx_m":0,"dy_m":0},{"region":"North","dx_m":0,"dy_m":0},{"region":"South","dx_m":0,"dy_m":0}];
+let appliedInitialOffsets = false;
+let regionIds, featureByRegion, m, root, regionGroups, labelGroups, labelLayer;
+let activeRegion = null;
+let activePointer = null;
+
+function measure() {
+  const width = svg.clientWidth || 900;
+  const height = svg.clientHeight || 700;
+  const pad = 38;
+  const sx = (width - pad * 2) / (bounds.xmax - bounds.xmin);
+  const sy = (height - pad * 2) / (bounds.ymax - bounds.ymin);
+  const scale = Math.min(sx, sy);
+  const tx = pad + (width - pad * 2 - (bounds.xmax - bounds.xmin) * scale) / 2 - bounds.xmin * scale;
+  const ty = pad + (height - pad * 2 + (bounds.ymax - bounds.ymin) * scale) / 2 + bounds.ymin * scale;
+  return { width, height, scale, tx, ty };
+}
+
+function setupProjectionOnly() {
+  m = measure();
+  svg.setAttribute("viewBox", `0 0 ${m.width} ${m.height}`);
+}
+
+function applyInitialOffsets() {
+  if (!m || appliedInitialOffsets) return;
+  for (const row of initialOffsetsM) {
+    const region = String(row.region);
+    if (!offsets.has(region)) continue;
+    offsets.set(region, {
+      px: Number(row.dx_m || 0) * m.scale,
+      py: -Number(row.dy_m || 0) * m.scale
+    });
+  }
+  appliedInitialOffsets = true;
+}
+
+function project(coord) {
+  return [coord[0] * m.scale + m.tx, -coord[1] * m.scale + m.ty];
+}
+
+function ringPath(ring) {
+  if (!ring.length) return "";
+  const first = project(ring[0]);
+  const rest = ring.slice(1).map(coord => {
+    const p = project(coord);
+    return `L${p[0].toFixed(2)},${p[1].toFixed(2)}`;
+  }).join("");
+  return `M${first[0].toFixed(2)},${first[1].toFixed(2)}${rest}Z`;
+}
+
+function geometryPath(geometry) {
+  if (!geometry) return "";
+  if (geometry.type === "Polygon") return geometry.coordinates.map(ringPath).join("");
+  if (geometry.type === "MultiPolygon") return geometry.coordinates.flatMap(poly => poly.map(ringPath)).join("");
+  return "";
+}
+
+function projectedLabel(region) {
+  const label = labels.find(d => String(d.region) === String(region));
+  return project([label.x, label.y]);
+}
+
+function transformFor(region) {
+  const offset = offsets.get(String(region));
+  return `translate(${offset.px},${offset.py})`;
+}
+
+function csvText() {
+  const lines = ["region,dx_m,dy_m"];
+  for (const region of regionIds) {
+    const offset = offsets.get(String(region));
+    const dx = offset.px / m.scale;
+    const dy = -offset.py / m.scale;
+    lines.push(`${csvEscape(region)},${Math.round(dx)},${Math.round(dy)}`);
+  }
+  return lines.join("\n");
+}
+
+function csvEscape(value) {
+  const s = String(value);
+  return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function updateCsv() { document.querySelector("#csv").value = csvText(); }
+
+function renderAll() {
+  regionIds = [...new Set(geojson.features.map(f => String(f.properties.drag_region)))].sort();
+  featureByRegion = new Map(regionIds.map(r => [r, geojson.features.filter(f => String(f.properties.drag_region) === r)]));
+  svg.innerHTML = "";
+  setupProjectionOnly();
+  applyInitialOffsets();
+  root = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  svg.appendChild(root);
+  regionGroups = new Map();
+  regionIds.forEach((region, i) => {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "region");
+    g.setAttribute("data-region", region);
+    g.style.fill = palette[i % palette.length];
+    g.setAttribute("transform", transformFor(region));
+    featureByRegion.get(region).forEach(feat => {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", geometryPath(feat.geometry));
+      g.appendChild(path);
+    });
+    root.appendChild(g);
+    regionGroups.set(region, g);
+  });
+  labelLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  labelGroups = new Map();
+  regionIds.forEach((region, i) => {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "label");
+    g.setAttribute("data-region", region);
+    g.setAttribute("transform", transformFor(region));
+    const [lx, ly] = projectedLabel(region);
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", lx.toFixed(2)); circle.setAttribute("cy", ly.toFixed(2)); circle.setAttribute("r", 12);
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", lx.toFixed(2)); text.setAttribute("y", ly.toFixed(2));
+    text.textContent = region.length > 5 ? region.slice(0, 4) : region;
+    g.appendChild(circle); g.appendChild(text);
+    labelLayer.appendChild(g);
+    labelGroups.set(region, g);
+  });
+  svg.appendChild(labelLayer);
+  updateCsv();
+}
+
+function startDrag(region, e) {
+  activeRegion = region;
+  activePointer = { x: e.clientX, y: e.clientY };
+  regionGroups.get(region).classList.add("dragging");
+  e.preventDefault();
+}
+
+function onPointerMove(e) {
+  if (!activeRegion) return;
+  const dx = e.clientX - activePointer.x;
+  const dy = e.clientY - activePointer.y;
+  activePointer = { x: e.clientX, y: e.clientY };
+  const offset = offsets.get(activeRegion);
+  offset.px += dx; offset.py += dy;
+  const transform = transformFor(activeRegion);
+  regionGroups.get(activeRegion).setAttribute("transform", transform);
+  labelGroups.get(activeRegion).setAttribute("transform", transform);
+  updateCsv();
+}
+
+function endDrag() {
+  if (activeRegion) {
+    regionGroups.get(activeRegion).classList.remove("dragging");
+    activeRegion = null; activePointer = null;
+  }
+}
+
+svg.addEventListener("pointerdown", e => {
+  const regionEl = e.target.closest("[data-region]");
+  if (regionEl) { svg.setPointerCapture(e.pointerId); startDrag(regionEl.dataset.region, e); }
+});
+svg.addEventListener("pointermove", onPointerMove);
+svg.addEventListener("pointerup", endDrag);
+svg.addEventListener("pointercancel", endDrag);
+
+document.querySelector("#copy").addEventListener("click", () => {
+  navigator.clipboard.writeText(csvText()).catch(() => { document.querySelector("#csv").select(); document.execCommand("copy"); });
+});
+document.querySelector("#download").addEventListener("click", () => {
+  const blob = new Blob([csvText()], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = offsetFile; a.click();
+  URL.revokeObjectURL(url);
+});
+document.querySelector("#reset").addEventListener("click", () => {
+  for (const region of regionIds) offsets.set(region, { px: 0, py: 0 });
+  regionIds.forEach(region => {
+    const t = transformFor(region);
+    regionGroups.get(region).setAttribute("transform", t);
+    labelGroups.get(region).setAttribute("transform", t);
+  });
+  updateCsv();
+});
+
+window.addEventListener("resize", renderAll);
+renderAll();
+</script>
+</body>
+</html>
