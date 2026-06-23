@@ -18,3 +18,9 @@ print(x, ...)
 - ...:
 
   Ignored
+
+## Value
+
+Invisibly returns `x`, the original `exploded_map` object. The method is
+called for its side effect of printing a compact diagnostic overview of
+units, regions, derived parameters, and optional refinement information.

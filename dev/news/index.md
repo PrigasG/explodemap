@@ -2,6 +2,8 @@
 
 ## explodemap 0.2.0
 
+CRAN release: 2026-05-27
+
 ### New features
 
 - Added a three-level grouped layout engine via
@@ -92,6 +94,12 @@
   solver controls.
 - Shiny workflows now have quieter geometry builders, automatic plot
   suppression safeguards, and selection events for linked side panels.
+- Public-facing dashboard examples now show clear Shiny validation
+  messages for failed boundary downloads, empty data, map-generation
+  failures, and widget-rendering failures.
+- TIGER/Line downloads and TopoJSON export now fail with clearer,
+  actionable error messages when external services, files, or tools are
+  unavailable.
 - [`validate_input()`](https://prigasg.github.io/explodemap/dev/reference/validate_input.md)
   now returns visibly, making repaired geometries less fragile in
   internal workflows.

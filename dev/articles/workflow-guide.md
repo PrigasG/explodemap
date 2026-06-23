@@ -59,7 +59,7 @@ subdivision data for a state:
 
 result <- explode_state(
   state_fips = "34",
-  crs = 32118,
+  crs = 32111,
   region_map = nj_regions,
   plot = FALSE,
   quiet = TRUE
@@ -237,6 +237,8 @@ Interactive examples that download public data:
 
 ``` r
 
-shiny::runApp(system.file("examples/focusmap_munis_app.R", package = "explodemap"))
-shiny::runApp(system.file("examples/focusmap_counties_app.R", package = "explodemap"))
+if (interactive()) {
+  shiny::runApp(system.file("examples/focusmap_munis_app.R", package = "explodemap"))
+  shiny::runApp(system.file("examples/focusmap_counties_app.R", package = "explodemap"))
+}
 ```

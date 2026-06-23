@@ -15,6 +15,22 @@ The methodology implemented here is described in:
 > Exploded-View Cartography: Centroid-Driven Spatial Displacement for
 > Dense Administrative Maps.*
 
+## Live demo
+
+Try the package in your browser — no install required — via the
+interactive gallery hosted on Hugging Face Spaces:
+
+**🤗 [explodemap
+gallery](https://huggingface.co/spaces/Prigas89/explodemap-gallery)**
+
+The gallery showcases focus maps of U.S. counties and municipalities,
+the
+[`explode_section()`](https://prigasg.github.io/explodemap/dev/reference/explode_section.md)
+drill-down workflow, the national HHS grouped layout, and an interactive
+parameter lab. Its source, data-prep script, and Dockerfile live in
+[`inst/huggingface/`](https://prigasg.github.io/explodemap/dev/inst/huggingface)
+and can be redeployed to any Docker host.
+
 ## Installation
 
 ``` r
@@ -102,6 +118,37 @@ result <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
 focus_map(result, label_col = "id", group_col = "region")
 ```
 
+## Public dashboards
+
+For public Shiny dashboards, pre-cache or cache boundary downloads where
+possible, and keep map computation out of automatic plotting paths:
+
+``` r
+
+result <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
+```
+
+When a dashboard downloads live TIGER/Line or `tigris` data, wrap the
+load and map-generation steps in Shiny validation so users see a plain
+message instead of a stack trace:
+
+``` r
+
+safe_map <- reactive({
+  tryCatch(
+    explode_sf(x(), region_col = "region", plot = FALSE, quiet = TRUE),
+    error = function(e) {
+      validate(need(FALSE, conditionMessage(e)))
+    }
+  )
+})
+```
+
+Installed example apps in `inst/examples/` include this pattern.
+TopoJSON export is optional and requires the external `mapshaper`
+command-line tool; apps deployed to managed services should check for it
+before offering exports.
+
 ## Core entry points
 
 ### Explode any projected `sf` object
@@ -113,10 +160,17 @@ result <- explode_sf(my_sf, region_col = "district")
 
 ### Explode a US state from TIGER/Line
 
+[`explode_state()`](https://prigasg.github.io/explodemap/dev/reference/explode_state.md)
+supports two boundary levels via the `level` argument.
+
+**County subdivision level** (`level = "cousub"`, default) — best for
+northeastern and midwestern states where municipalities tile the state
+completely:
+
 ``` r
 
 nj <- explode_state(
-  state_fips = "34", crs = 32118,
+  state_fips = "34", crs = 32111,
   region_map = list(
     North   = c("Bergen","Essex","Hudson","Morris","Passaic","Sussex","Union","Warren"),
     Central = c("Hunterdon","Mercer","Middlesex","Monmouth","Somerset"),
@@ -124,6 +178,55 @@ nj <- explode_state(
                 "Gloucester","Ocean","Salem")
   ),
   label = "New Jersey"
+)
+```
+
+**County level** (`level = "county"`) — works for all 50 states. Pass
+`n_regions` for automatic k-means region assignment, or supply a named
+`region_map`:
+
+``` r
+
+# Automatic k-means regions
+tn <- explode_state(
+  state_fips = "47", crs = 32136,
+  level = "county", n_regions = 3,
+  label = "Tennessee"
+)
+
+# Named region map at county level
+co <- explode_state(
+  state_fips = "08", crs = 26913,
+  level = "county",
+  region_map = list(
+    East         = c("Logan","Morgan","Washington","Yuma","Phillips","Sedgwick",
+                     "Kit Carson","Cheyenne","Lincoln","Kiowa","Baca","Bent",
+                     "Prowers","Crowley","Otero","Las Animas","Huerfano","Pueblo",
+                     "Custer","Saguache","Mineral","Rio Grande","Alamosa",
+                     "Conejos","Costilla"),
+    `Front Range` = c("Weld","Larimer","Boulder","Broomfield","Adams","Jefferson",
+                      "Denver","Arapahoe","Douglas","El Paso","Elbert","Teller",
+                      "Park","Fremont","Chaffee","Lake","Clear Creek","Gilpin"),
+    West         = c("Moffat","Routt","Jackson","Grand","Summit","Eagle","Garfield",
+                     "Rio Blanco","Mesa","Delta","Montrose","Ouray","San Miguel",
+                     "Dolores","Montezuma","Archuleta","La Plata","San Juan",
+                     "Hinsdale","Gunnison","Pitkin")
+  ),
+  label = "Colorado"
+)
+```
+
+**User-supplied shapefile** — skip the TIGER download entirely with
+`sf_data`:
+
+``` r
+
+my_counties <- sf::st_read("my_counties.gpkg")
+
+result <- explode_state(
+  sf_data = my_counties,
+  level = "county", n_regions = 4,
+  label = "Custom County Dataset"
 )
 ```
 
@@ -406,7 +509,7 @@ For app code, all main geometry workflows accept `quiet = TRUE`:
 
 explode_sf(my_sf, "district", plot = FALSE, quiet = TRUE)
 explode_sf_with_lookup(my_sf, "GEOID", lookup, plot = FALSE, quiet = TRUE)
-explode_state("34", crs = 32118, region_map = regions, plot = FALSE, quiet = TRUE)
+explode_state("34", crs = 32111, region_map = regions, plot = FALSE, quiet = TRUE)
 explode_grouped(my_sf, "district", mode = "auto_collision", plot = FALSE, quiet = TRUE)
 layout_regions(my_sf, "district", mode = "auto_collision", quiet = TRUE)
 ```
@@ -438,8 +541,10 @@ Interactive focus-map examples are installed as app scripts:
 
 ``` r
 
-shiny::runApp(system.file("examples/focusmap_munis_app.R", package = "explodemap"))
-shiny::runApp(system.file("examples/focusmap_counties_app.R", package = "explodemap"))
+if (interactive()) {
+  shiny::runApp(system.file("examples/focusmap_munis_app.R", package = "explodemap"))
+  shiny::runApp(system.file("examples/focusmap_counties_app.R", package = "explodemap"))
+}
 ```
 
 ## Export

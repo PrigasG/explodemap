@@ -23,6 +23,8 @@ non-blocking information cards.
   [`focusmapOutput()`](https://prigasg.github.io/explodemap/dev/reference/focus_map.md)
   [`renderFocusmap()`](https://prigasg.github.io/explodemap/dev/reference/focus_map.md)
   : Interactive focus-map viewer
+- [`focus_map_preset()`](https://prigasg.github.io/explodemap/dev/reference/focus_map_preset.md)
+  : Focus-map option presets
 
 ## Grouped layouts
 
@@ -54,6 +56,10 @@ Optional export helpers and cache management utilities.
 
 - [`export_topojson()`](https://prigasg.github.io/explodemap/dev/reference/export_topojson.md)
   : Export an exploded map as TopoJSON
+- [`apply_region_offsets()`](https://prigasg.github.io/explodemap/dev/reference/apply_region_offsets.md)
+  : Apply documented display offsets by region
+- [`read_drag_offsets()`](https://prigasg.github.io/explodemap/dev/reference/read_drag_offsets.md)
+  : Read drag-helper offset CSVs into a region offset data frame
 - [`cache_list()`](https://prigasg.github.io/explodemap/dev/reference/cache_list.md)
   : List cached datasets
 - [`cache_clear()`](https://prigasg.github.io/explodemap/dev/reference/cache_clear.md)

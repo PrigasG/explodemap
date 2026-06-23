@@ -21,6 +21,7 @@ focus_map(
   context_fill = "#cfd9df",
   context_opacity = 0.18,
   context_clickable = FALSE,
+  focus_preset = c("none", "municipal", "drilldown", "municipal_drilldown"),
   simplify = TRUE,
   fill = "#2d6ea3",
   fill_opacity = 0.58,
@@ -111,6 +112,14 @@ renderFocusmap(expr, env = parent.frame(), quoted = FALSE)
 - context_clickable:
 
   Should context features remain clickable? Default `FALSE`.
+
+- focus_preset:
+
+  Optional named preset for common interactive workflows. `"municipal"`
+  tunes small-area focus, source cues, drag zoom, and dense layer
+  performance. `"drilldown"` tunes context fading and source cues for
+  selected-section maps. `"municipal_drilldown"` combines both. Explicit
+  arguments supplied by the user override preset defaults.
 
 - simplify:
 
@@ -295,11 +304,25 @@ automatically.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-focus_map(nj_counties, label_col = "NAME")
+# \donttest{
+poly <- function(xmin, ymin, xmax, ymax) {
+  sf::st_polygon(list(rbind(
+    c(xmin, ymin), c(xmax, ymin), c(xmax, ymax),
+    c(xmin, ymax), c(xmin, ymin)
+  )))
+}
 
-result <- explode_sf(nj_counties, region_col = "region")
-focus_map(result)
-focus_map(result, group_col = "region")
-} # }
+counties <- sf::st_sf(
+  NAME = c("A", "B"),
+  region = c("North", "South"),
+  geometry = sf::st_sfc(
+    poly(-74.2, 40.0, -74.0, 40.2),
+    poly(-73.9, 40.0, -73.7, 40.2),
+    crs = 4326
+  )
+)
+
+focus_map(counties, label_col = "NAME", group_col = "region")
+
+{"x":{"geojson_str":"{\n\"type\": \"FeatureCollection\",\n\"name\": \"file1dab7b777caa\",\n\"features\": [\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"1\", \"id\": \"1\", \"NAME\": \"A\", \"group\": \"North\", \"info_title\": \"A\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -74.2, 40.0 ], [ -74.0, 40.0 ], [ -74.0, 40.2 ], [ -74.2, 40.2 ], [ -74.2, 40.0 ] ] ] } },\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"2\", \"id\": \"2\", \"NAME\": \"B\", \"group\": \"South\", \"info_title\": \"B\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -73.9, 40.0 ], [ -73.7, 40.0 ], [ -73.7, 40.2 ], [ -73.9, 40.2 ], [ -73.9, 40.0 ] ] ] } }\n]\n}","options":{"fill":"#2d6ea3","groupPalette":null,"contextMode":"fade","contextValues":["context"],"contextFill":"#cfd9df","contextOpacity":0.18,"contextClickable":false,"focusPreset":"none","fillOpacity":0.58,"stroke":"#ffffff","liftScale":1.16,"focusPadding":40,"focusSize":0.76,"minFocusWidth":0,"minFocusHeight":0,"tinyFeatureThreshold":48,"tinyFeatureBoost":1,"maxZoom":null,"originContext":"none","originContextPosition":"bottom-left","focusContextOpacity":0.3,"showDragZoom":false,"fontSize":14,"showLabels":true,"performanceMode":null,"showInfoCard":false,"infoPosition":"top-right","infoCols":null,"infoKeys":[],"infoLabels":null,"infoTitle":"NAME","infoCardScale":1,"areaMin":5000,"widthMin":95,"heightMin":28,"hasGroups":true}},"evals":[],"jsHooks":[]}# }
 ```

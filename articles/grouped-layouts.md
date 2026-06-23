@@ -31,7 +31,8 @@ guarantees of Propositions 1–3 apply strictly at Level 1.
 ``` r
 
 library(sf)
-#> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
+#> Warning: package 'sf' was built under R version 4.5.2
+#> Linking to GEOS 3.13.1, GDAL 3.11.4, PROJ 9.7.0; sf_use_s2() is TRUE
 library(explodemap)
 ```
 
