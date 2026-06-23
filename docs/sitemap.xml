@@ -19,8 +19,10 @@
 <url><loc>https://prigasg.github.io/explodemap/reference/compute_stats.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/derive_params.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-as_export_sf.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/dot-attach_regions_county.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-attach_regions_tiger.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-build_mapshaper_args.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/dot-download_counties_state.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-download_cousub.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-find_mapshaper.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/dot-generate_anchors.html</loc></url>
@@ -48,6 +50,7 @@
 <url><loc>https://prigasg.github.io/explodemap/reference/plot.grouped_exploded_map.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/print.exploded_map.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/print.grouped_exploded_map.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/read_drag_offsets.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/summary.exploded_map.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/summary.grouped_exploded_map.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/validate_input.html</loc></url>

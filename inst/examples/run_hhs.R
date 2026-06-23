@@ -77,3 +77,4 @@ run_hhs <- function(mode = "auto_collision") {
 
 # Run with collision-aware anchors
 hhs <- run_hhs("auto_collision")
+

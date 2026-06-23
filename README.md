@@ -2,26 +2,29 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/PrigasG/explodemap)
-[![License:
-MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/PrigasG/explodemap) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Live%20demo-ffcc4d)](https://huggingface.co/spaces/Prigas89/explodemap-gallery)
 
 <!-- badges: end -->
 
-`explodemap` provides tools for hierarchical exploded-view cartography
-of dense administrative boundary data.
+`explodemap` provides tools for hierarchical exploded-view cartography of dense administrative boundary data.
 
-The package generates exploded maps by applying rigid-body translations
-to polygon geometries, separating units within and across regions while
-preserving each feature's internal geometry exactly. It supports both
-the two-level core workflow described in the paper and a three-level
-grouped layout extension for larger multi-region or national displays.
+The package generates exploded maps by applying rigid-body translations to polygon geometries, separating units within and across regions while preserving each feature's internal geometry exactly. It supports both the two-level core workflow described in the paper and a three-level grouped layout extension for larger multi-region or national displays.
 
 The methodology implemented here is described in:
 
-> Arthur, G. *A Hierarchical Vector-Based Framework for Multi-Scale
-> Exploded-View Cartography: Centroid-Driven Spatial Displacement for
-> Dense Administrative Maps.*
+> Arthur, G. *A Hierarchical Vector-Based Framework for Multi-Scale Exploded-View Cartography: Centroid-Driven Spatial Displacement for Dense Administrative Maps.*
+
+## Live demo
+
+Try the package in your browser — no install required — via the interactive
+gallery hosted on Hugging Face Spaces:
+
+**🤗 [explodemap gallery](https://huggingface.co/spaces/Prigas89/explodemap-gallery)**
+
+The gallery showcases focus maps of U.S. counties and municipalities, the
+`explode_section()` drill-down workflow, the national HHS grouped layout, and an
+interactive parameter lab. Its source, data-prep script, and Dockerfile live in
+[`inst/huggingface/`](inst/huggingface) and can be redeployed to any Docker host.
 
 ## Installation
 
@@ -38,22 +41,13 @@ install.packages("explodemap_0.2.0.tar.gz", repos = NULL, type = "source")
 `explodemap` supports four main workflows:
 
 -   explode any projected sf polygon dataset using a grouping column
--   explode U.S. municipal or county subdivision data directly from
-    TIGER/Line via `explode_state()`
--   generate three-level grouped layouts for national or multi-region
-    displays using `explode_grouped()`
--   add interactive selected-area focus, labels, and information cards
-    using `focus_map()` in htmlwidgets or Shiny
+-   explode U.S. municipal or county subdivision data directly from TIGER/Line via `explode_state()`
+-   generate three-level grouped layouts for national or multi-region displays using `explode_grouped()`
+-   add interactive selected-area focus, labels, and information cards using `focus_map()` in htmlwidgets or Shiny
 
-The package also includes analytical parameter derivation, cross-dataset
-calibration helpers, optional bounded collision refinement for dense
-municipal cores, and optional TopoJSON export for downstream tools such
-as Power BI. Shiny workflows are supported with `focusmapOutput()`,
-`renderFocusmap()`, stable selection events, information cards, and
-`quiet = TRUE` options on geometry builders to keep server logs clean.
+The package also includes analytical parameter derivation, cross-dataset calibration helpers, optional bounded collision refinement for dense municipal cores, and optional TopoJSON export for downstream tools such as Power BI. Shiny workflows are supported with `focusmapOutput()`, `renderFocusmap()`, stable selection events, information cards, and `quiet = TRUE` options on geometry builders to keep server logs clean.
 
-For a compact overview, see the
-[workflow guide](https://prigasg.github.io/explodemap/articles/workflow-guide.html).
+For a compact overview, see the [workflow guide](https://prigasg.github.io/explodemap/articles/workflow-guide.html).
 
 ## Quick start
 
@@ -93,8 +87,7 @@ print(result)
 plot(result, "both")
 ```
 
-Inside Shiny, keep geometry computation quiet and render the returned
-object explicitly:
+Inside Shiny, keep geometry computation quiet and render the returned object explicitly:
 
 ``` r
 result <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
@@ -103,16 +96,13 @@ focus_map(result, label_col = "id", group_col = "region")
 
 ## Public dashboards
 
-For public Shiny dashboards, pre-cache or cache boundary downloads where
-possible, and keep map computation out of automatic plotting paths:
+For public Shiny dashboards, pre-cache or cache boundary downloads where possible, and keep map computation out of automatic plotting paths:
 
 ``` r
 result <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
 ```
 
-When a dashboard downloads live TIGER/Line or `tigris` data, wrap the load
-and map-generation steps in Shiny validation so users see a plain message
-instead of a stack trace:
+When a dashboard downloads live TIGER/Line or `tigris` data, wrap the load and map-generation steps in Shiny validation so users see a plain message instead of a stack trace:
 
 ``` r
 safe_map <- reactive({
@@ -125,10 +115,7 @@ safe_map <- reactive({
 })
 ```
 
-Installed example apps in `inst/examples/` include this pattern. TopoJSON
-export is optional and requires the external `mapshaper` command-line tool;
-apps deployed to managed services should check for it before offering
-exports.
+Installed example apps in `inst/examples/` include this pattern. TopoJSON export is optional and requires the external `mapshaper` command-line tool; apps deployed to managed services should check for it before offering exports.
 
 ## Core entry points
 
@@ -140,6 +127,11 @@ result <- explode_sf(my_sf, region_col = "district")
 
 ### Explode a US state from TIGER/Line
 
+`explode_state()` supports two boundary levels via the `level` argument.
+
+**County subdivision level** (`level = "cousub"`, default) — best for northeastern
+and midwestern states where municipalities tile the state completely:
+
 ``` r
 nj <- explode_state(
   state_fips = "34", crs = 32111,
@@ -150,6 +142,51 @@ nj <- explode_state(
                 "Gloucester","Ocean","Salem")
   ),
   label = "New Jersey"
+)
+```
+
+**County level** (`level = "county"`) — works for all 50 states. Pass `n_regions`
+for automatic k-means region assignment, or supply a named `region_map`:
+
+``` r
+# Automatic k-means regions
+tn <- explode_state(
+  state_fips = "47", crs = 32136,
+  level = "county", n_regions = 3,
+  label = "Tennessee"
+)
+
+# Named region map at county level
+co <- explode_state(
+  state_fips = "08", crs = 26913,
+  level = "county",
+  region_map = list(
+    East         = c("Logan","Morgan","Washington","Yuma","Phillips","Sedgwick",
+                     "Kit Carson","Cheyenne","Lincoln","Kiowa","Baca","Bent",
+                     "Prowers","Crowley","Otero","Las Animas","Huerfano","Pueblo",
+                     "Custer","Saguache","Mineral","Rio Grande","Alamosa",
+                     "Conejos","Costilla"),
+    `Front Range` = c("Weld","Larimer","Boulder","Broomfield","Adams","Jefferson",
+                      "Denver","Arapahoe","Douglas","El Paso","Elbert","Teller",
+                      "Park","Fremont","Chaffee","Lake","Clear Creek","Gilpin"),
+    West         = c("Moffat","Routt","Jackson","Grand","Summit","Eagle","Garfield",
+                     "Rio Blanco","Mesa","Delta","Montrose","Ouray","San Miguel",
+                     "Dolores","Montezuma","Archuleta","La Plata","San Juan",
+                     "Hinsdale","Gunnison","Pitkin")
+  ),
+  label = "Colorado"
+)
+```
+
+**User-supplied shapefile** — skip the TIGER download entirely with `sf_data`:
+
+``` r
+my_counties <- sf::st_read("my_counties.gpkg")
+
+result <- explode_state(
+  sf_data = my_counties,
+  level = "county", n_regions = 4,
+  label = "Custom County Dataset"
 )
 ```
 
@@ -166,10 +203,7 @@ result <- explode_sf_with_lookup(
 
 ### Filter a visible section before exploding
 
-In Shiny dashboards and drill-down maps, it is often clearer to filter the
-section the user selected before calling `explode_sf()`. The selected
-subset can then use a more local grouping column while the all-region view
-continues to use the broader region groups.
+In Shiny dashboards and drill-down maps, it is often clearer to filter the section the user selected before calling `explode_sf()`. The selected subset can then use a more local grouping column while the all-region view continues to use the broader region groups.
 
 ``` r
 selected_region <- input$region_focus
@@ -208,14 +242,11 @@ focus_map(
 )
 ```
 
-This pattern keeps a compact, focused map for section filters while still
-using the same `explode_sf()` and `focus_map()` workflow as the full map.
-Future package helpers may wrap this filter-first workflow directly.
+This pattern keeps a compact, focused map for section filters while still using the same `explode_sf()` and `focus_map()` workflow as the full map. Future package helpers may wrap this filter-first workflow directly.
 
 ## Grouped layouts
 
-For larger layouts where region blocks need to be separated at an
-additional level, use `explode_grouped()`:
+For larger layouts where region blocks need to be separated at an additional level, use `explode_grouped()`:
 
 ``` r
 result <- explode_grouped(
@@ -228,14 +259,12 @@ result <- explode_grouped(
 Anchor modes:
 
 -   `"auto"`: radial anchor placement
--   `"auto_collision"`: radial placement with iterative collision-aware
-    refinement
+-   `"auto_collision"`: radial placement with iterative collision-aware refinement
 -   `"manual"`: user-supplied positions
 
 ## Working with results
 
-Two-level outputs are returned as exploded_map objects. Grouped layouts
-are returned as grouped_exploded_map objects.
+Two-level outputs are returned as exploded_map objects. Grouped layouts are returned as grouped_exploded_map objects.
 
 Common methods and helpers include:
 
@@ -255,10 +284,7 @@ plot(result, "all")       # original + local + grouped
 
 ## Interactive focus maps
 
-`focus_map()` accepts raw `sf`, `exploded_map`, and
-`grouped_exploded_map` objects. For exploded objects it automatically
-uses the WGS84 displaced geometry, so the same result can be plotted,
-exported, or rendered as an interactive focus map.
+`focus_map()` accepts raw `sf`, `exploded_map`, and `grouped_exploded_map` objects. For exploded objects it automatically uses the WGS84 displaced geometry, so the same result can be plotted, exported, or rendered as an interactive focus map.
 
 ``` r
 focus_map(
@@ -272,9 +298,7 @@ focus_map(
 )
 ```
 
-In Shiny, use the exported widget helpers. The widget emits a selection
-value at `input$<outputId>_selected` containing the selected feature ID,
-label, group, and properties.
+In Shiny, use the exported widget helpers. The widget emits a selection value at `input$<outputId>_selected` containing the selected feature ID, label, group, and properties.
 
 ``` r
 ui <- fluidPage(
@@ -291,12 +315,9 @@ server <- function(input, output, session) {
 }
 ```
 
-Use `group_palette` when a dashboard legend or data category already has
-meaningful colours. Unmatched groups fall back to the built-in palette, so
-apps can provide partial palettes while still rendering all groups.
+Use `group_palette` when a dashboard legend or data category already has meaningful colours. Unmatched groups fall back to the built-in palette, so apps can provide partial palettes while still rendering all groups.
 
-For drill-down dashboards, use `explode_section()` to explode only the
-selected section while keeping the rest of the geography as muted context:
+For drill-down dashboards, use `explode_section()` to explode only the selected section while keeping the rest of the geography as muted context:
 
 ``` r
 focused <- explode_section(
@@ -320,12 +341,9 @@ focus_map(
 )
 ```
 
-This pattern supports the "click a region, explode that region, keep the
-state as context" workflow without forcing app code to manually stitch
-focus and background geometries back together.
+This pattern supports the "click a region, explode that region, keep the state as context" workflow without forcing app code to manually stitch focus and background geometries back together.
 
-For dense municipal maps, tiny polygons can opt into a closer focus without
-changing the default county-scale behavior:
+For dense municipal maps, tiny polygons can opt into a closer focus without changing the default county-scale behavior:
 
 ``` r
 focus_map(
@@ -345,8 +363,7 @@ focus_map(
 
 ## Mathematical guarantees
 
-For the two-level core workflow, the package implements the analytical
-parameter formulas described in the paper:
+For the two-level core workflow, the package implements the analytical parameter formulas described in the paper:
 
 -   alpha_r = gamma_r \* w_bar / (2 \* sin(pi / n_regions))
 -   alpha_l = gamma_l \* 2 \* R_local / sqrt(n_bar)
@@ -357,41 +374,30 @@ Default coefficients are:
 -   gamma_l = 1.136
 -   p = 1.25
 
-All geometric quantities other than the gamma coefficients are computed
-from the dataset itself. The gamma coefficients are dimensionless
-legibility constants calibrated on New Jersey and validated across
-multiple U.S. states and a Canada example.
+All geometric quantities other than the gamma coefficients are computed from the dataset itself. The gamma coefficients are dimensionless legibility constants calibrated on New Jersey and validated across multiple U.S. states and a Canada example.
 
 For the two-level core, the paper states three key properties:
 
 | Property | Guarantee | Scope |
-|--------------------------|----------------------------|------------------|
+|----|----|----|
 | **Proposition 1** | Internal geometry preserved exactly (rigid translation) | Per feature |
 | **Proposition 2** | Radial ordering within regions preserved | Per region |
 | **Proposition 3** | Max displacement bounded by α_r + α_l | Global |
 
-The grouped three-level extension preserves structural grouping and
-directional correspondence at higher levels rather than topological
-coverage.
+The grouped three-level extension preserves structural grouping and directional correspondence at higher levels rather than topological coverage.
 
 ## Parameters
 
 Two-level parameters derived automatically via Analytical Results 1–2:
 
--   `alpha_r = gamma_r * w_bar / (2 * sin(pi / n_regions))` — regional
-    separation
+-   `alpha_r = gamma_r * w_bar / (2 * sin(pi / n_regions))` — regional separation
 -   `alpha_l = gamma_l * 2 * R_local / sqrt(n_bar)` — local expansion
 
 Defaults: `gamma_r = 3.0`, `gamma_l = 1.136`, `p = 1.25`
 
-All quantities except `gamma_r` and `gamma_l` are computed from the
-dataset geometry. The gamma coefficients are dimensionless legibility
-constants calibrated from the paper examples and intended as practical
-defaults. You can override `alpha_r` and `alpha_l` independently when a
-particular map needs more or less visual separation.
+All quantities except `gamma_r` and `gamma_l` are computed from the dataset geometry. The gamma coefficients are dimensionless legibility constants calibrated from the paper examples and intended as practical defaults. You can override `alpha_r` and `alpha_l` independently when a particular map needs more or less visual separation.
 
-For very dense municipal cores, you can add a bounded collision-refinement
-pass after the analytical displacement:
+For very dense municipal cores, you can add a bounded collision-refinement pass after the analytical displacement:
 
 ``` r
 refined <- explode_sf(
@@ -403,9 +409,7 @@ refined <- explode_sf(
 )
 ```
 
-This optional layer nudges close same-region neighbors apart while capping
-the extra correction per feature. Use `refine_within = "all"` if the
-remaining crowding crosses region boundaries.
+This optional layer nudges close same-region neighbors apart while capping the extra correction per feature. Use `refine_within = "all"` if the remaining crowding crosses region boundaries.
 
 For app code, all main geometry workflows accept `quiet = TRUE`:
 
@@ -419,8 +423,7 @@ layout_regions(my_sf, "district", mode = "auto_collision", quiet = TRUE)
 
 ## Examples
 
-Small examples that run without external downloads are installed with
-the package:
+Small examples that run without external downloads are installed with the package:
 
 ``` r
 source(system.file("examples/basic_explode_sf.R", package = "explodemap"))
@@ -429,27 +432,13 @@ source(system.file("examples/lookup_workflow.R", package = "explodemap"))
 source(system.file("examples/manual_parameter_tuning.R", package = "explodemap"))
 ```
 
-Paper-scale examples that download public boundary data are also
-available:
+Paper-scale examples that download public boundary data are also available:
 
 ``` r
 source(system.file("examples/run_calibration.R", package = "explodemap"))
 source(system.file("examples/run_canada.R", package = "explodemap"))
 source(system.file("examples/run_hhs.R", package = "explodemap"))
 ```
-
-The repository's paper workflow also includes interactive drag helpers
-under `paper/outputs/drag_helpers`. The committed helper inventory covers
-all 50 U.S. states, with each state stored as
-`paper/outputs/drag_helpers/<state>/index.html` and `map.geojson`.
-Manual display offsets, when needed, are stored as
-`paper/outputs/tables/<state>_drag_offsets.csv`; states without a manual
-offset file are considered acceptable at the formula-derived helper
-layout. The helper pages initialize from those saved CSV offsets, so
-reviewers can reopen the same documented layout that was used for the
-rendered figures. Review screenshots, contact sheets, and formula-vs-
-manual overlap audits are stored in `paper/outputs/drag_helper_review`
-and `paper/outputs/tables`.
 
 Interactive focus-map examples are installed as app scripts:
 
@@ -462,15 +451,13 @@ if (interactive()) {
 
 ## Export
 
-`explodemap` can optionally export `TopoJSON` through the external
-`mapshaper` command-line tool:
+`explodemap` can optionally export `TopoJSON` through the external `mapshaper` command-line tool:
 
 ``` r
 export_topojson(result, "exploded.topojson")
 ```
 
-This is useful for downstream tools such as Power BI. To use it, install
-mapshaper separately:
+This is useful for downstream tools such as Power BI. To use it, install mapshaper separately:
 
 ``` bash
 npm install -g mapshaper
@@ -487,5 +474,4 @@ vignette("grouped-layouts", package = "explodemap")
 
 If you use this package in academic work, please cite:
 
-> Arthur, G. (2026). A hierarchical vector-based framework for
-> multi-scale exploded-view cartography. *Working paper*.
+> Arthur, G. (2026). A hierarchical vector-based framework for multi-scale exploded-view cartography. *Working paper*.

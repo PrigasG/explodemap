@@ -6,13 +6,20 @@
 \alias{explodemap-package}
 \title{explodemap: Hierarchical Exploded-View Cartography}
 \description{
-Internal package declarations for NSE checks.
+Tools for hierarchical exploded-view cartography of dense administrative
+boundary data, including deterministic exploded layouts, grouped layouts,
+and interactive selected-feature focus maps for htmlwidgets and Shiny.
+}
+\details{
+A live browser demo is available at
+\url{https://huggingface.co/spaces/Prigas89/explodemap-gallery}.
 }
 \seealso{
 Useful links:
 \itemize{
   \item \url{https://prigasg.github.io/explodemap/}
   \item \url{https://github.com/PrigasG/explodemap}
+  \item \url{https://huggingface.co/spaces/Prigas89/explodemap-gallery}
   \item Report bugs at \url{https://github.com/PrigasG/explodemap/issues}
 }
 

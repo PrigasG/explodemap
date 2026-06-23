@@ -18,7 +18,8 @@ Description: Tools for generating hierarchical exploded-view maps from
     Cartography".
 License: MIT + file LICENSE
 URL: https://prigasg.github.io/explodemap/,
-    https://github.com/PrigasG/explodemap
+    https://github.com/PrigasG/explodemap,
+    https://huggingface.co/spaces/Prigas89/explodemap-gallery
 BugReports: https://github.com/PrigasG/explodemap/issues
 Depends: 
     R (>= 4.1.0)
@@ -31,6 +32,8 @@ Imports:
     sf,
     utils
 Suggests:
+    bslib,
+    ggiraph,
     knitr,
     rmarkdown,
     shiny,

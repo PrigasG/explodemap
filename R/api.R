@@ -4,13 +4,45 @@
 
 #' Explode a US state from TIGER/Line data
 #'
-#' Downloads municipal boundaries automatically, groups by county-to-region
-#' mapping, derives parameters via Analytical Results 1-2, and returns an
+#' Downloads administrative boundaries automatically, groups them into regions,
+#' derives displacement parameters via Analytical Results 1-2, and returns an
 #' `exploded_map` S3 object.
 #'
-#' @param state_fips 2-digit FIPS code (e.g. "34" for NJ)
-#' @param crs Projected CRS EPSG code (metric units)
-#' @param region_map Named list: region_name -> character vector of county names
+#' Two boundary levels are supported via the `level` argument:
+#'
+#' * `"cousub"` (default) — Census county subdivision (COUSUB) units.
+#'   Best for the northeastern and midwestern states where municipalities
+#'   tile the state completely.  Requires a named `region_map`.
+#'
+#' * `"county"` — county-level boundaries.
+#'   Works well for all 50 states.  `region_map` is optional: when omitted,
+#'   regions are assigned automatically by k-means clustering on county
+#'   centroids.  Pass `n_regions` to override the automatic cluster count.
+#'
+#' You can bypass the TIGER/Line download entirely by passing a pre-projected
+#' `sf` object via `sf_data`.  The `state_fips` argument is then only used for
+#' the default `label`; it may be omitted if you supply your own label.
+#'
+#' @param state_fips 2-digit FIPS code (e.g. `"34"` for NJ).  Required for
+#'   automatic downloads; optional when `sf_data` is supplied.
+#' @param crs Projected CRS EPSG code (metric units, e.g. `32111`).  Required
+#'   for automatic downloads; when `sf_data` is supplied the data must already
+#'   be in a projected metric CRS and `crs` is used only for re-projection if
+#'   the current CRS differs.
+#' @param region_map Named list mapping region labels to county/COUSUB name
+#'   vectors (e.g. `list(North = c("Bergen", "Essex"), South = c(...))`.
+#'   For `level = "county"` this is optional; omit it to use automatic k-means
+#'   region assignment.  For `level = "cousub"` it is required.
+#' @param level Boundary level: `"cousub"` (county subdivisions, default) or
+#'   `"county"` (county polygons).
+#' @param n_regions For `level = "county"` with automatic k-means assignment:
+#'   integer number of regions.  If `NULL` (default), the count is derived
+#'   automatically as `max(2, min(6, round(sqrt(n_counties / 8))))`.  Ignored
+#'   when `region_map` is supplied.
+#' @param sf_data Optional pre-projected `sf` polygon object to use instead of
+#'   downloading from TIGER/Line.  Must already have a metric projected CRS.
+#'   For `level = "county"` with named `region_map`, the object must contain a
+#'   `NAME` column with county names.
 #' @param gamma_r Regional clearance coefficient (default 3.0)
 #' @param gamma_l Local clearance coefficient (default 1.136)
 #' @param p Distance scaling exponent (default 1.25)
@@ -30,7 +62,7 @@
 #'   `"all"` features.
 #' @param allow_other If TRUE, permits units mapped to "Other"
 #' @param fix_invalid If TRUE, auto-repairs invalid geometries
-#' @param centroid_fun "centroid" (default) or "point_on_surface"
+#' @param centroid_fun `"centroid"` (default) or `"point_on_surface"`
 #' @param plot Print plots on return (default TRUE). Automatically suppressed
 #'   when called inside a live Shiny session; use [plot.exploded_map()] inside
 #'   `renderPlot()` instead.
@@ -41,46 +73,94 @@
 #'   Default `FALSE`.
 #' @return An `exploded_map` S3 object
 #' @export
-explode_state <- function(state_fips,
-                          crs,
-                          region_map,
-                          gamma_r      = 3.0,
-                          gamma_l      = 1.136,
-                          p            = 1.25,
-                          alpha_r      = NULL,
-                          alpha_l      = NULL,
-                          refine       = FALSE,
-                          refine_min_gap = NULL,
-                          refine_max_shift = NULL,
-                          refine_max_iter = 20,
-                          refine_step  = 0.5,
-                          refine_within = c("region", "all"),
-                          allow_other  = FALSE,
-                          fix_invalid  = TRUE,
-                          centroid_fun = c("centroid", "point_on_surface"),
-                          plot         = TRUE,
-                          export       = NULL,
-                          label        = paste0("FIPS ", state_fips),
-                          quiet        = FALSE) {
+explode_state <- function(state_fips    = NULL,
+                          crs           = NULL,
+                          region_map    = NULL,
+                          level         = c("cousub", "county"),
+                          n_regions     = NULL,
+                          sf_data       = NULL,
+                          gamma_r       = 3.0,
+                          gamma_l       = 1.136,
+                          p             = 1.25,
+                          alpha_r       = NULL,
+                          alpha_l       = NULL,
+                          refine        = FALSE,
+                          refine_min_gap    = NULL,
+                          refine_max_shift  = NULL,
+                          refine_max_iter   = 20,
+                          refine_step       = 0.5,
+                          refine_within     = c("region", "all"),
+                          allow_other   = FALSE,
+                          fix_invalid   = TRUE,
+                          centroid_fun  = c("centroid", "point_on_surface"),
+                          plot          = TRUE,
+                          export        = NULL,
+                          label         = if (!is.null(state_fips))
+                                            paste0("FIPS ", state_fips)
+                                          else "Custom Dataset",
+                          quiet         = FALSE) {
 
-  if (!quiet) message("Downloading TIGER/Line data (FIPS ", state_fips, ")...")
-  sf_raw <- .download_cousub(state_fips, crs)
+  level <- match.arg(level)
 
+  # ── Input validation ────────────────────────────────────────────────────────
+  if (is.null(sf_data)) {
+    if (is.null(state_fips))
+      stop("Provide `state_fips` for automatic download, or supply `sf_data`.",
+           call. = FALSE)
+    if (is.null(crs))
+      stop("`crs` is required when downloading from TIGER/Line.", call. = FALSE)
+  }
+
+  if (level == "cousub" && is.null(region_map))
+    stop("`region_map` is required for level = \"cousub\". ",
+         "For automatic region assignment use level = \"county\".",
+         call. = FALSE)
+
+  # ── Data acquisition ────────────────────────────────────────────────────────
+  if (!is.null(sf_data)) {
+    # User-supplied sf: re-project if crs is given and differs
+    sf_raw <- sf_data
+    if (!is.null(crs)) {
+      cur_epsg <- sf::st_crs(sf_raw)$epsg
+      if (!identical(cur_epsg, as.integer(crs)))
+        sf_raw <- sf::st_transform(sf_raw, crs)
+    }
+    if (!quiet) message("Using supplied sf_data (", nrow(sf_raw), " features).")
+  } else if (level == "cousub") {
+    if (!quiet) message("Downloading TIGER/Line COUSUB data (FIPS ", state_fips, ")...")
+    sf_raw <- .download_cousub(state_fips, crs)
+  } else {
+    if (!quiet) message("Downloading TIGER/Line county data (FIPS ", state_fips, ")...")
+    sf_raw <- .download_counties_state(state_fips, crs)
+  }
+
+  # ── Region assignment ───────────────────────────────────────────────────────
   if (!quiet) message("Assigning regions...")
-  sf_reg <- .attach_regions_tiger(sf_raw, state_fips, region_map, quiet = quiet)
 
+  if (level == "cousub") {
+    sf_reg <- .attach_regions_tiger(sf_raw, state_fips, region_map, quiet = quiet)
+  } else {
+    sf_reg <- .attach_regions_county(sf_raw, n_regions = n_regions,
+                                     region_map = region_map, quiet = quiet)
+  }
+
+  # ── Region checks ───────────────────────────────────────────────────────────
   n_other   <- sum(sf_reg$region == "Other", na.rm = TRUE)
-  n_regions <- dplyr::n_distinct(sf_reg$region[sf_reg$region != "Other"])
+  n_reg_cnt <- dplyr::n_distinct(sf_reg$region[sf_reg$region != "Other"])
 
-  if (n_regions < 2)
-    stop("Fewer than 2 regions matched. Check county names in region_map.",
+  if (n_reg_cnt < 2)
+    stop("Fewer than 2 regions found. ",
+         if (level == "cousub") "Check county names in region_map."
+         else if (!is.null(region_map)) "Check county names in region_map."
+         else paste0("Try increasing n_regions (current n_counties = ", nrow(sf_raw), ")."),
          call. = FALSE)
+
   if (n_other > 0 && !allow_other)
-    stop(n_other, " units mapped to 'Other'. Fix region_map or pass allow_other = TRUE.",
+    stop(n_other, " units mapped to 'Other'. ",
+         "Fix region_map or pass allow_other = TRUE.",
          call. = FALSE)
 
-  sf_reg <- validate_input(sf_reg, "region", allow_other, fix_invalid)
-
+  sf_reg       <- validate_input(sf_reg, "region", allow_other, fix_invalid)
   sf_for_stats <- if (allow_other && n_other > 0)
     sf_reg[sf_reg$region != "Other", ] else sf_reg
 

@@ -74,5 +74,42 @@ state_registry <- list(
                        "Chautauqua","Erie","Niagara","Orleans","Genesee","Wyoming")
     ),
     known_alpha_r = NA, known_alpha_l = NA
+  ),
+
+  # ── County-level states (level = "county", auto k-means regions) ───────────
+
+  TN = list(
+    name = "Tennessee", fips = "47", crs = 32136,
+    level = "county", n_regions = 3,
+    region_map = NULL,
+    known_alpha_r = NA, known_alpha_l = NA
+  ),
+
+  GA = list(
+    name = "Georgia", fips = "13", crs = 26916,
+    level = "county", n_regions = 5,
+    region_map = NULL,
+    known_alpha_r = NA, known_alpha_l = NA
+  ),
+
+  MN = list(
+    name = "Minnesota", fips = "27", crs = 26915,
+    level = "county", n_regions = 4,
+    region_map = NULL,
+    known_alpha_r = NA, known_alpha_l = NA
+  ),
+
+  CA = list(
+    name = "California", fips = "06", crs = 26910,
+    level = "county", n_regions = 5,
+    region_map = NULL,
+    known_alpha_r = NA, known_alpha_l = NA
+  ),
+
+  CO = list(
+    name = "Colorado", fips = "08", crs = 26913,
+    level = "county", n_regions = 3,
+    region_map = NULL,
+    known_alpha_r = NA, known_alpha_l = NA
   )
 )

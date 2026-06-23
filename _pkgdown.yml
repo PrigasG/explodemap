@@ -11,7 +11,7 @@ template:
 home:
   title: explodemap
   description: |
-    Tools for hierarchical exploded-view cartography of dense administrative boundary data. The package supports deterministic two-level exploded maps, grouped multi-region layouts, analytical parameter derivation, and export workflows for downstream mapping.
+    Tools for hierarchical exploded-view cartography of dense administrative boundary data. The package supports deterministic two-level exploded maps, grouped multi-region layouts, analytical parameter derivation, export workflows for downstream mapping, and a live Hugging Face demo at https://huggingface.co/spaces/Prigas89/explodemap-gallery.
   sidebar:
     structure:
     - links
@@ -31,6 +31,7 @@ navbar:
     - gallery
     - news
     right:
+    - demo
     - search
     - github
   components:
@@ -58,6 +59,11 @@ navbar:
     news:
       text: News
       href: news/index.html
+    demo:
+      icon: fas fa-rocket
+      text: Live demo
+      href: https://huggingface.co/spaces/Prigas89/explodemap-gallery
+      aria-label: Live demo on Hugging Face Spaces
     github:
       icon: fab fa-github
       href: https://github.com/PrigasG/explodemap
@@ -99,6 +105,7 @@ reference:
   contents:
   - export_topojson
   - apply_region_offsets
+  - read_drag_offsets
   - cache_list
   - cache_clear
 - title: Methods

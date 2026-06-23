@@ -1,6 +1,11 @@
 #' explodemap: Hierarchical Exploded-View Cartography
 #'
-#' Internal package declarations for NSE checks.
+#' Tools for hierarchical exploded-view cartography of dense administrative
+#' boundary data, including deterministic exploded layouts, grouped layouts,
+#' and interactive selected-feature focus maps for htmlwidgets and Shiny.
+#'
+#' A live browser demo is available at
+#' <https://huggingface.co/spaces/Prigas89/explodemap-gallery>.
 #'
 #' @keywords internal
 #' @importFrom rlang .data :=

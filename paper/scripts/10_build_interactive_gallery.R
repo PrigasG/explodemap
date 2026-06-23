@@ -25,14 +25,25 @@ copy_if_exists <- function(from, to_dir) {
   file.copy(path, file.path(to_dir, basename(path)), overwrite = TRUE)
 }
 
+# All 50 US state abbreviations (lower-case) in alphabetical order.
+us_state_abbrs <- c(
+  "ak", "al", "ar", "az", "ca", "co", "ct", "de", "fl", "ga",
+  "hi", "ia", "id", "il", "in", "ks", "ky", "la", "ma", "md",
+  "me", "mi", "mn", "mo", "ms", "mt", "nc", "nd", "ne", "nh",
+  "nj", "nm", "nv", "ny", "oh", "ok", "or", "pa", "ri", "sc",
+  "sd", "tn", "tx", "ut", "va", "vt", "wa", "wi", "wv", "wy"
+)
+
 figures <- c(
+  # NJ and PA have dedicated gallery cards with formula-derived outputs.
   "nj_formula_derived.png", "nj_dragged_layout.png",
   "pa_original.png", "pa_formula_derived.png", "pa_dragged_layout.png",
   "pa_displacement_vectors.png",
-  "oh_dragged_layout.png", "mi_dragged_layout.png", "ky_dragged_layout.png",
-  "il_dragged_layout.png", "nd_dragged_layout.png", "nc_dragged_layout.png",
-  "va_dragged_layout.png", "tx_dragged_layout.png", "fl_dragged_layout.png",
+  # All 50 US states — display-offset drag-helper layouts.
+  paste0(us_state_abbrs, "_dragged_layout.png"),
+  # International examples.
   "canada_dragged_layout.png", "germany_dragged_layout.png",
+  # HHS national grouped layout.
   "hhs_dragged_layout.png", "hhs_display_offsets.png"
 )
 invisible(vapply(file.path(fig_dir, figures), copy_if_exists, logical(1), to_dir = asset_fig_dir))
@@ -53,7 +64,19 @@ if (nrow(metrics)) {
     "New Jersey" = "nj", "Pennsylvania" = "pa", "Ohio" = "oh",
     "Michigan" = "mi", "Kentucky" = "ky", "Illinois" = "il",
     "North Dakota" = "nd", "North Carolina" = "nc", "Virginia" = "va",
-    "Texas" = "tx", "Florida" = "fl", "Canada" = "canada"
+    "Texas" = "tx", "Florida" = "fl", "Canada" = "canada",
+    "Alabama" = "al", "Alaska" = "ak", "Arizona" = "az", "Arkansas" = "ar",
+    "California" = "ca", "Colorado" = "co", "Connecticut" = "ct",
+    "Delaware" = "de", "Georgia" = "ga", "Hawaii" = "hi", "Idaho" = "id",
+    "Indiana" = "in", "Iowa" = "ia", "Kansas" = "ks", "Louisiana" = "la",
+    "Maine" = "me", "Maryland" = "md", "Massachusetts" = "ma",
+    "Minnesota" = "mn", "Mississippi" = "ms", "Missouri" = "mo",
+    "Montana" = "mt", "Nebraska" = "ne", "Nevada" = "nv",
+    "New Hampshire" = "nh", "New Mexico" = "nm", "New York" = "ny",
+    "Oklahoma" = "ok", "Oregon" = "or", "Rhode Island" = "ri",
+    "South Carolina" = "sc", "South Dakota" = "sd", "Tennessee" = "tn",
+    "Utah" = "ut", "Vermont" = "vt", "Washington" = "wa",
+    "West Virginia" = "wv", "Wisconsin" = "wi", "Wyoming" = "wy"
   )
   state_param_rows <- paste0(
     apply(metrics, 1, function(row) {
@@ -86,6 +109,42 @@ card <- function(title, body, images, links = character()) {
   }
   sprintf("<section class=\"card\"><h2>%s</h2><p>%s</p><div class=\"figure-grid\">%s</div>%s</section>", title, body, image_html, link_html)
 }
+
+# -----------------------------------------------------------------------------
+# Build the dynamic "All 50 US States" figure grid
+# (NJ and PA have their own dedicated calibration cards)
+# -----------------------------------------------------------------------------
+state_full_names <- c(
+  ak = "Alaska",       al = "Alabama",       ar = "Arkansas",      az = "Arizona",
+  ca = "California",   co = "Colorado",      ct = "Connecticut",   de = "Delaware",
+  fl = "Florida",      ga = "Georgia",       hi = "Hawaii",        ia = "Iowa",
+  id = "Idaho",        il = "Illinois",      `in` = "Indiana",     ks = "Kansas",
+  ky = "Kentucky",     la = "Louisiana",     ma = "Massachusetts", md = "Maryland",
+  me = "Maine",        mi = "Michigan",      mn = "Minnesota",     mo = "Missouri",
+  ms = "Mississippi",  mt = "Montana",       nc = "North Carolina",nd = "North Dakota",
+  ne = "Nebraska",     nh = "New Hampshire", nm = "New Mexico",    nv = "Nevada",
+  ny = "New York",     oh = "Ohio",          ok = "Oklahoma",      or = "Oregon",
+  ri = "Rhode Island", sc = "South Carolina",sd = "South Dakota",  tn = "Tennessee",
+  tx = "Texas",        ut = "Utah",          va = "Virginia",      vt = "Vermont",
+  wa = "Washington",   wi = "Wisconsin",     wv = "West Virginia", wy = "Wyoming"
+)
+
+grid_abbrs <- us_state_abbrs[!us_state_abbrs %in% c("nj", "pa")]
+
+state_fig_html <- paste(
+  vapply(grid_abbrs, function(ab) {
+    full  <- state_full_names[[ab]]
+    if (is.null(full) || is.na(full)) full <- toupper(ab)
+    fname <- paste0(ab, "_dragged_layout.png")
+    fpath <- file.path(asset_fig_dir, fname)
+    if (!file.exists(fpath)) return("")   # skip silently if not yet built
+    sprintf(
+      "<figure><img src=\"assets/figures/%s\" alt=\"%s display-offset layout\"><figcaption>%s</figcaption></figure>",
+      fname, full, full
+    )
+  }, character(1)),
+  collapse = "\n"
+)
 
 page <- paste0(
 '<!doctype html>
@@ -130,7 +189,7 @@ th { background:#edf4fb; }
 <div><strong>Date accessed</strong><br>May 26, 2026</div>
 </div>
 <nav class="nav">
-<a href="#nj">New Jersey</a><a href="#pa">Pennsylvania</a><a href="#states">Extended U.S. states</a><a href="#world">Canada/Germany</a><a href="#hhs">HHS grouped layout</a><a href="#downloads">Download data/code</a>
+<a href="#nj">New Jersey</a><a href="#pa">Pennsylvania</a><a href="#states">All 50 states</a><a href="#world">Canada/Germany</a><a href="#hhs">HHS grouped layout</a><a href="#downloads">Download data/code</a>
 </nav>
 </header>
 <main>
@@ -158,19 +217,11 @@ card("Pennsylvania", "The Pennsylvania case includes the original geography, the
           list(file="pa_displacement_vectors.png", alt="Pennsylvania displacement vector diagnostic", caption="Displacement vectors")),
      c("<a href=\"assets/tables/pa_drag_offsets_used.csv\">Display offset CSV</a>", "<a href=\"assets/tables/cross_state_metrics.csv\">Validation metrics CSV</a>")),
 '<section id="states" class="card">
-<h2>Extended U.S. States</h2>
-<p>Additional state examples show where the same analytical parameter derivation remains stable and where documented display offsets improve publication readability.</p>
-<div class="figure-grid">
-<figure><img src="assets/figures/oh_dragged_layout.png" alt="Ohio display-offset layout"><figcaption>Ohio display-offset layout</figcaption></figure>
-<figure><img src="assets/figures/mi_dragged_layout.png" alt="Michigan display-offset layout"><figcaption>Michigan display-offset layout</figcaption></figure>
-<figure><img src="assets/figures/ky_dragged_layout.png" alt="Kentucky display-offset layout"><figcaption>Kentucky display-offset layout</figcaption></figure>
-<figure><img src="assets/figures/il_dragged_layout.png" alt="Illinois display-offset layout"><figcaption>Illinois display-offset layout</figcaption></figure>
-<figure><img src="assets/figures/nd_dragged_layout.png" alt="North Dakota display-offset layout"><figcaption>North Dakota display-offset layout</figcaption></figure>
-<figure><img src="assets/figures/nc_dragged_layout.png" alt="North Carolina display-offset layout"><figcaption>North Carolina display-offset layout</figcaption></figure>
-<figure><img src="assets/figures/va_dragged_layout.png" alt="Virginia display-offset layout"><figcaption>Virginia display-offset layout</figcaption></figure>
-<figure><img src="assets/figures/tx_dragged_layout.png" alt="Texas display-offset layout"><figcaption>Texas display-offset layout</figcaption></figure>
-<figure><img src="assets/figures/fl_dragged_layout.png" alt="Florida display-offset layout"><figcaption>Florida display-offset layout</figcaption></figure>
-</div>
+<h2>All 50 U.S. States</h2>
+<p>Display-offset drag-helper layouts for all 50 states. NJ and PA have dedicated calibration cards above; the remaining 48 appear here. Each layout was produced with the documented drag-helper offsets for publication figures and web review.</p>
+<div class="figure-grid">',
+state_fig_html,
+'</div>
 <h3>Formula-Derived Validation Parameters</h3>
 <table>
 <thead><tr><th>Case</th><th>alpha_r (km)</th><th>alpha_l (km)</th><th>Units</th><th>Manual offsets in metrics?</th><th>Offset CSV</th></tr></thead>

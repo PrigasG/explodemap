@@ -881,7 +881,12 @@ HTMLWidgets.widget({
       try {
         await flyTo(toT, dur);
       } catch (e) {
+        // flyTo rejects when svgEl.interrupt() is called (e.g. by resize or a
+        // rapid re-render). The resize handler usually resets S.mode already,
+        // but that path is not guaranteed — reset defensively here so the
+        // widget never gets permanently stuck in "flying_to".
         setFlightRenderMode(false);
+        S.mode = "idle";
         return;
       }
 
@@ -1084,6 +1089,10 @@ HTMLWidgets.widget({
             fitProjection();
             renderPaths();
             svgEl.call(zoomBehaviour.transform, d3.zoomIdentity);
+            // Re-anchor S.currentTransform after layout so any stale flyTo
+            // animation that resolved on the old (now-orphaned) SVG cannot
+            // leave the new widget in a zoomed-in state.
+            S.currentTransform = d3.zoomIdentity;
             setShinyInput(el.id + "_status", "ready");
           });
         });
@@ -1093,6 +1102,9 @@ HTMLWidgets.widget({
         S.pendingFeature = null;
         S.currentTransform = d3.zoomIdentity;
         lastTargetFeature = null;
+        // Reset drag-zoom state so stale S.dragZoomActive / S.dragZooming
+        // from a previous render never bleeds into the newly built DOM.
+        setDragZoomActive(false);
       },
 
       resize: function (w, h) {

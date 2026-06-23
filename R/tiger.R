@@ -200,6 +200,178 @@
 }
 
 
+#' Download TIGER/Line county boundaries for a single state
+#' @param fips 2-digit state FIPS code
+#' @param crs Target projected CRS (EPSG integer)
+#' @return Projected sf object with county polygons
+#' @keywords internal
+.download_counties_state <- function(fips, crs) {
+  if (!is.character(fips) || length(fips) != 1 || !grepl("^[0-9]{2}$", fips)) {
+    stop("`state_fips` must be a 2-digit character string, such as \"47\" for Tennessee.",
+         call. = FALSE)
+  }
+
+  key <- paste0("county_", fips)
+  if (.cache_exists(key)) {
+    obj <- .cache_load(key)
+    if (!identical(sf::st_crs(obj)$epsg, as.integer(crs)))
+      obj <- sf::st_transform(obj, crs)
+    return(obj)
+  }
+
+  url <- paste0("https://www2.census.gov/geo/tiger/TIGER2024/COUNTY/",
+                "tl_2024_", fips, "_county.zip")
+  tmp <- tempfile(fileext = ".zip")
+  .download_file_or_stop(url, tmp, paste0("county boundaries for FIPS ", fips))
+
+  dir <- file.path(tempdir(), paste0("county_", fips, "_", Sys.getpid()))
+  dir.create(dir, showWarnings = FALSE)
+  tryCatch(
+    utils::unzip(tmp, exdir = dir),
+    error = function(e) {
+      stop(
+        "Could not unzip county data for FIPS ", fips, ". ",
+        "The downloaded file may be incomplete. Please try again. ",
+        "Details: ", conditionMessage(e),
+        call. = FALSE
+      )
+    }
+  )
+
+  shp <- list.files(dir, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+  if (!length(shp)) {
+    stop(
+      "County data for FIPS ", fips, " did not contain a shapefile. ",
+      "The Census download may have changed or failed.",
+      call. = FALSE
+    )
+  }
+
+  obj <- sf::st_read(shp[1], quiet = TRUE) |>
+    sf::st_transform(crs)
+  .cache_save(key, obj)
+}
+
+
+#' Assign regions to county-level sf data
+#'
+#' Two modes:
+#'   - Named `region_map` (list of region -> county names): explicit assignment
+#'   - `region_map = NULL`: automatic k-means clustering on projected centroids
+#'
+#' @param sf_obj Projected sf object with county polygons
+#' @param n_regions Number of k-means regions (used only when region_map is NULL)
+#' @param region_map Named list mapping region labels to county NAME vectors, or NULL
+#' @param quiet Suppress messages
+#' @return sf_obj with a `region` column added
+#' @keywords internal
+.attach_regions_county <- function(sf_obj, n_regions = NULL, region_map = NULL,
+                                   quiet = FALSE) {
+
+  # ── Named mapping path ─────────────────────────────────────────────────────
+  if (!is.null(region_map)) {
+    region_df <- dplyr::bind_rows(lapply(names(region_map), function(r)
+      data.frame(NAME = region_map[[r]], region = r, stringsAsFactors = FALSE)))
+
+    # sf_obj should have a NAME column from TIGER county download
+    name_col <- if ("NAME" %in% names(sf_obj)) "NAME" else
+      stop("County sf must have a NAME column for named region_map assignment.",
+           call. = FALSE)
+
+    sf_result <- sf_obj |>
+      dplyr::left_join(region_df, by = "NAME")
+
+    n_matched <- sum(!is.na(sf_result$region))
+    if (!quiet)
+      message("Region assignment: ", n_matched, " / ", nrow(sf_result),
+              " counties matched.")
+
+    unmatched <- sf_obj$NAME[!sf_obj$NAME %in% region_df$NAME]
+    if (!quiet && length(unmatched) > 0)
+      message("Unmatched counties: ",
+              paste(utils::head(unmatched, 8), collapse = ", "),
+              if (length(unmatched) > 8) paste0("... +", length(unmatched) - 8, " more"))
+
+    sf_result$region[is.na(sf_result$region)] <- "Other"
+    return(sf_result)
+  }
+
+  # ── Auto k-means path ──────────────────────────────────────────────────────
+  n_counties <- nrow(sf_obj)
+
+  # Auto-determine number of regions if not supplied
+  if (is.null(n_regions)) {
+    n_regions <- max(2L, min(6L, as.integer(round(sqrt(n_counties / 8)))))
+    if (!quiet)
+      message("Auto k-means: n_regions = ", n_regions,
+              " (derived from ", n_counties, " counties; override with n_regions)")
+  }
+
+  if (n_regions < 2 || n_regions > n_counties)
+    stop("`n_regions` must be between 2 and the number of counties (", n_counties, ").",
+         call. = FALSE)
+
+  centroids <- suppressWarnings(sf::st_centroid(sf_obj))
+  coords    <- sf::st_coordinates(centroids)          # matrix [n, 2]
+
+  # Scale so x and y contribute equally
+  x_sd <- stats::sd(coords[, 1]); if (x_sd == 0) x_sd <- 1
+  y_sd <- stats::sd(coords[, 2]); if (y_sd == 0) y_sd <- 1
+  scaled <- cbind((coords[, 1] - mean(coords[, 1])) / x_sd,
+                  (coords[, 2] - mean(coords[, 2])) / y_sd)
+
+  rng_exists <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  if (rng_exists) {
+    rng_state <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  }
+  on.exit({
+    if (rng_exists) {
+      assign(".Random.seed", rng_state, envir = .GlobalEnv)
+    } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    }
+  }, add = TRUE)
+
+  set.seed(2026)
+  km <- stats::kmeans(scaled, centers = n_regions, nstart = 50, iter.max = 100)
+
+  # Name clusters by compass direction relative to overall centroid
+  centers       <- km$centers                   # [k, 2] in scaled space
+  overall_x     <- mean(centers[, 1])
+  overall_y     <- mean(centers[, 2])
+  rel_x         <- centers[, 1] - overall_x
+  rel_y         <- centers[, 2] - overall_y
+
+  .compass <- function(dx, dy) {
+    angle <- atan2(dy, dx) * 180 / pi            # -180..180
+    dirs  <- c("East","Northeast","North","Northwest",
+               "West","Southwest","South","Southeast")
+    idx   <- as.integer((angle + 202.5) / 45) %% 8 + 1
+    dirs[idx]
+  }
+
+  raw_names  <- mapply(.compass, rel_x, rel_y)
+  # Disambiguate duplicates by appending 2/3
+  seen       <- table(raw_names)
+  counters   <- integer(length(raw_names))
+  for (nm in names(seen[seen > 1])) {
+    hits <- which(raw_names == nm)
+    for (i in seq_along(hits)) counters[hits[i]] <- i
+  }
+  region_labels <- ifelse(counters > 1,
+                          paste0(raw_names, " ", counters),
+                          raw_names)
+
+  sf_obj$region <- region_labels[km$cluster]
+
+  if (!quiet)
+    message("K-means regions assigned: ",
+            paste(sort(unique(sf_obj$region)), collapse = ", "))
+
+  sf_obj
+}
+
+
 #' Clear explodemap download cache
 #'
 #' @param key Specific cache key to clear, or NULL to clear all

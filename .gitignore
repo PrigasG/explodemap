@@ -19,3 +19,5 @@ inst/doc
 *.synctex.gz
 docs
 *.Rcheck/
+inst/huggingface/data/
+Rplots.pdf

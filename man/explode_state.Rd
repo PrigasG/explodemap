@@ -5,9 +5,12 @@
 \title{Explode a US state from TIGER/Line data}
 \usage{
 explode_state(
-  state_fips,
-  crs,
-  region_map,
+  state_fips = NULL,
+  crs = NULL,
+  region_map = NULL,
+  level = c("cousub", "county"),
+  n_regions = NULL,
+  sf_data = NULL,
   gamma_r = 3,
   gamma_l = 1.136,
   p = 1.25,
@@ -24,16 +27,36 @@ explode_state(
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
-  label = paste0("FIPS ", state_fips),
+  label = if (!is.null(state_fips)) paste0("FIPS ", state_fips) else "Custom Dataset",
   quiet = FALSE
 )
 }
 \arguments{
-\item{state_fips}{2-digit FIPS code (e.g. "34" for NJ)}
+\item{state_fips}{2-digit FIPS code (e.g. \code{"34"} for NJ).  Required for
+automatic downloads; optional when \code{sf_data} is supplied.}
 
-\item{crs}{Projected CRS EPSG code (metric units)}
+\item{crs}{Projected CRS EPSG code (metric units, e.g. \code{32111}).  Required
+for automatic downloads; when \code{sf_data} is supplied the data must already
+be in a projected metric CRS and \code{crs} is used only for re-projection if
+the current CRS differs.}
 
-\item{region_map}{Named list: region_name -> character vector of county names}
+\item{region_map}{Named list mapping region labels to county/COUSUB name
+vectors (e.g. \code{list(North = c("Bergen", "Essex"), South = c(...))}.
+For \code{level = "county"} this is optional; omit it to use automatic k-means
+region assignment.  For \code{level = "cousub"} it is required.}
+
+\item{level}{Boundary level: \code{"cousub"} (county subdivisions, default) or
+\code{"county"} (county polygons).}
+
+\item{n_regions}{For \code{level = "county"} with automatic k-means assignment:
+integer number of regions.  If \code{NULL} (default), the count is derived
+automatically as \code{max(2, min(6, round(sqrt(n_counties / 8))))}.  Ignored
+when \code{region_map} is supplied.}
+
+\item{sf_data}{Optional pre-projected \code{sf} polygon object to use instead of
+downloading from TIGER/Line.  Must already have a metric projected CRS.
+For \code{level = "county"} with named \code{region_map}, the object must contain a
+\code{NAME} column with county names.}
 
 \item{gamma_r}{Regional clearance coefficient (default 3.0)}
 
@@ -67,7 +90,7 @@ If NULL and \code{refine = TRUE}, uses 10\% of \code{alpha_r + alpha_l}.}
 
 \item{fix_invalid}{If TRUE, auto-repairs invalid geometries}
 
-\item{centroid_fun}{"centroid" (default) or "point_on_surface"}
+\item{centroid_fun}{\code{"centroid"} (default) or \code{"point_on_surface"}}
 
 \item{plot}{Print plots on return (default TRUE). Automatically suppressed
 when called inside a live Shiny session; use \code{\link[=plot.exploded_map]{plot.exploded_map()}} inside
@@ -85,7 +108,23 @@ Default \code{FALSE}.}
 An \code{exploded_map} S3 object
 }
 \description{
-Downloads municipal boundaries automatically, groups by county-to-region
-mapping, derives parameters via Analytical Results 1-2, and returns an
+Downloads administrative boundaries automatically, groups them into regions,
+derives displacement parameters via Analytical Results 1-2, and returns an
 \code{exploded_map} S3 object.
+}
+\details{
+Two boundary levels are supported via the \code{level} argument:
+\itemize{
+\item \code{"cousub"} (default) — Census county subdivision (COUSUB) units.
+Best for the northeastern and midwestern states where municipalities
+tile the state completely.  Requires a named \code{region_map}.
+\item \code{"county"} — county-level boundaries.
+Works well for all 50 states.  \code{region_map} is optional: when omitted,
+regions are assigned automatically by k-means clustering on county
+centroids.  Pass \code{n_regions} to override the automatic cluster count.
+}
+
+You can bypass the TIGER/Line download entirely by passing a pre-projected
+\code{sf} object via \code{sf_data}.  The \code{state_fips} argument is then only used for
+the default \code{label}; it may be omitted if you supply your own label.
 }

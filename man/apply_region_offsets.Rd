@@ -15,14 +15,15 @@ apply_region_offsets(
 )
 }
 \arguments{
-\item{x}{An \code{sf}, \code{exploded_map}, or \code{grouped_exploded_map} object.}
+\item{x}{An \code{sf}, \code{exploded_map}, or \code{grouped_exploded_map}
+object.}
 
 \item{offsets}{A data frame, or a path to a CSV file, containing one row per
 region and numeric offset columns.}
 
-\item{region_col}{Name of the region column in \code{x}. For \code{exploded_map} and
-\code{grouped_exploded_map} objects, the value recorded in \code{x$diagnostics} is
-used when this is \code{NULL}.}
+\item{region_col}{Name of the region column in \code{x}. For
+\code{exploded_map} and \code{grouped_exploded_map} objects, the value
+recorded in \code{x$diagnostics} is used when this is \code{NULL}.}
 
 \item{offset_region_col}{Name of the region column in \code{offsets}.}
 
@@ -30,19 +31,21 @@ used when this is \code{NULL}.}
 
 \item{dy_col}{Name of the vertical offset column in \code{offsets}.}
 
-\item{update_plots}{Logical; when \code{TRUE}, rebuild stored ggplot objects for
-exploded map objects.}
+\item{update_plots}{Logical; when \code{TRUE}, rebuild stored ggplot objects
+for exploded map objects.}
 }
 \value{
-For an \code{sf} input, an \code{sf} object with the same attributes and CRS as
-\code{x}; geometries belonging to each listed region are translated by the
-supplied offsets, and the normalized offset table is stored in the
-\code{display_offsets} attribute. For an \code{exploded_map}, returns the same S3
-object structure with \code{sf_exp}, \code{sf_exp_wgs}, stored plots, and
-\code{display_offsets} updated. For a \code{grouped_exploded_map}, returns the same
-S3 object structure with \code{sf_grouped}, \code{sf_grouped_wgs}, stored plots, and
-\code{display_offsets} updated. The offsets are rigid translations, so polygon
-shape, area, and within-region relative geometry are preserved.
+For an \code{sf} input, an \code{sf} object with the same attributes
+and CRS as \code{x}; geometries belonging to each listed region are
+translated by the supplied offsets, and the normalized offset table is
+stored in the \code{display_offsets} attribute. For an
+\code{exploded_map}, returns the same S3 object structure with
+\code{sf_exp}, \code{sf_exp_wgs}, stored plots, and
+\code{display_offsets} updated. For a \code{grouped_exploded_map},
+returns the same S3 object structure with \code{sf_grouped},
+\code{sf_grouped_wgs}, stored plots, and \code{display_offsets} updated.
+The offsets are rigid translations, so polygon shape, area, and
+within-region relative geometry are preserved.
 }
 \description{
 Applies rigid display offsets to all features in each named region. This is
@@ -51,8 +54,9 @@ layouts after an exploded map has already been computed.
 }
 \details{
 Offsets are interpreted in the coordinate units of the projected
-geometry being adjusted. The default column names \code{dx_m} and \code{dy_m} assume a
-metric projected CRS, matching the package's exploded-map workflow.
+geometry being adjusted. The default column names \code{dx_m} and
+\code{dy_m} assume a metric projected CRS, matching the package's
+exploded-map workflow.
 }
 \examples{
 library(sf)

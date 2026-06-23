@@ -1,16 +1,19 @@
 # Explode a US state from TIGER/Line data
 
-Downloads municipal boundaries automatically, groups by county-to-region
-mapping, derives parameters via Analytical Results 1-2, and returns an
-`exploded_map` S3 object.
+Downloads administrative boundaries automatically, groups them into
+regions, derives displacement parameters via Analytical Results 1-2, and
+returns an `exploded_map` S3 object.
 
 ## Usage
 
 ``` r
 explode_state(
-  state_fips,
-  crs,
-  region_map,
+  state_fips = NULL,
+  crs = NULL,
+  region_map = NULL,
+  level = c("cousub", "county"),
+  n_regions = NULL,
+  sf_data = NULL,
   gamma_r = 3,
   gamma_l = 1.136,
   p = 1.25,
@@ -27,7 +30,7 @@ explode_state(
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
-  label = paste0("FIPS ", state_fips),
+  label = if (!is.null(state_fips)) paste0("FIPS ", state_fips) else "Custom Dataset",
   quiet = FALSE
 )
 ```
@@ -36,15 +39,41 @@ explode_state(
 
 - state_fips:
 
-  2-digit FIPS code (e.g. "34" for NJ)
+  2-digit FIPS code (e.g. `"34"` for NJ). Required for automatic
+  downloads; optional when `sf_data` is supplied.
 
 - crs:
 
-  Projected CRS EPSG code (metric units)
+  Projected CRS EPSG code (metric units, e.g. `32111`). Required for
+  automatic downloads; when `sf_data` is supplied the data must already
+  be in a projected metric CRS and `crs` is used only for re-projection
+  if the current CRS differs.
 
 - region_map:
 
-  Named list: region_name -\> character vector of county names
+  Named list mapping region labels to county/COUSUB name vectors (e.g.
+  `list(North = c("Bergen", "Essex"), South = c(...))`. For
+  `level = "county"` this is optional; omit it to use automatic k-means
+  region assignment. For `level = "cousub"` it is required.
+
+- level:
+
+  Boundary level: `"cousub"` (county subdivisions, default) or
+  `"county"` (county polygons).
+
+- n_regions:
+
+  For `level = "county"` with automatic k-means assignment: integer
+  number of regions. If `NULL` (default), the count is derived
+  automatically as `max(2, min(6, round(sqrt(n_counties / 8))))`.
+  Ignored when `region_map` is supplied.
+
+- sf_data:
+
+  Optional pre-projected `sf` polygon object to use instead of
+  downloading from TIGER/Line. Must already have a metric projected CRS.
+  For `level = "county"` with named `region_map`, the object must
+  contain a `NAME` column with county names.
 
 - gamma_r:
 
@@ -106,7 +135,7 @@ explode_state(
 
 - centroid_fun:
 
-  "centroid" (default) or "point_on_surface"
+  `"centroid"` (default) or `"point_on_surface"`
 
 - plot:
 
@@ -133,3 +162,21 @@ explode_state(
 ## Value
 
 An `exploded_map` S3 object
+
+## Details
+
+Two boundary levels are supported via the `level` argument:
+
+- `"cousub"` (default) — Census county subdivision (COUSUB) units. Best
+  for the northeastern and midwestern states where municipalities tile
+  the state completely. Requires a named `region_map`.
+
+- `"county"` — county-level boundaries. Works well for all 50 states.
+  `region_map` is optional: when omitted, regions are assigned
+  automatically by k-means clustering on county centroids. Pass
+  `n_regions` to override the automatic cluster count.
+
+You can bypass the TIGER/Line download entirely by passing a
+pre-projected `sf` object via `sf_data`. The `state_fips` argument is
+then only used for the default `label`; it may be omitted if you supply
+your own label.

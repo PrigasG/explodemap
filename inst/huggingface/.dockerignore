@@ -1,0 +1,9 @@
+# Data is baked at build time by prep_data.R — never copy a local data/ dir.
+data/
+*.rds
+
+# Editor / OS noise
+.DS_Store
+.Rhistory
+.Rproj.user/
+*.Rproj
