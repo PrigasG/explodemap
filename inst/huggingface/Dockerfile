@@ -8,8 +8,7 @@ RUN install2.r --error --skipinstalled \
       ggiraph \
  && rm -rf /tmp/downloaded_packages
 
-ARG EXPLODEMAP_REF=fbd647f
-RUN Rscript -e "remotes::install_github('PrigasG/explodemap@${EXPLODEMAP_REF}', upgrade = 'never', force = TRUE)"
+RUN Rscript -e "remotes::install_github('PrigasG/explodemap@fbd647ff5a53a22cd7cec277e7f82a991898b4df', upgrade = 'never', force = TRUE)"
 RUN Rscript -e "library(explodemap); packageVersion('explodemap')"
 
 WORKDIR /app
