@@ -3,6 +3,12 @@ FROM rocker/geospatial:4.4.2
 RUN install2.r --error --skipinstalled \
       shiny \
       bslib \
+      dplyr \
+      ggplot2 \
+      htmlwidgets \
+      purrr \
+      rlang \
+      sf \
       tigris \
       remotes \
       ggiraph \
