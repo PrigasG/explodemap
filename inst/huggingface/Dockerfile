@@ -14,7 +14,7 @@ RUN install2.r --error --skipinstalled \
       ggiraph \
  && rm -rf /tmp/downloaded_packages
 
-RUN Rscript -e "remotes::install_github('PrigasG/explodemap@fbd647ff5a53a22cd7cec277e7f82a991898b4df', upgrade = 'never', force = TRUE)"
+RUN Rscript -e "remotes::install_github('PrigasG/explodemap@a8ee0146f1b6e9453270d1e1835b3aed072e6850', upgrade = 'never', force = TRUE)"
 
 WORKDIR /app
 ENV APP_DATA_DIR=/app/data
