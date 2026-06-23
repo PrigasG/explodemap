@@ -498,12 +498,20 @@ can be regenerated from the repository root:
 source("paper/scripts/07_generate_drag_helpers.R")
 ```
 
-By default the helper inventory covers 26 U.S. state cases: NJ, PA, OH,
-MI, KY, IL, ND, NC, VA, TN, GA, MN, CA, CO, TX, FL, AZ, IN, MA, MO, NV,
-NY, OR, SC, UT, and WA. Each helper is written to
-`paper/outputs/drag_helpers/<case>/index.html` with a matching
-`map.geojson`; exported offsets are saved as
-`paper/outputs/tables/<case>_drag_offsets.csv`.
+The committed helper inventory covers all 50 U.S. states. Each helper is
+written to `paper/outputs/drag_helpers/<case>/index.html` with a
+matching `map.geojson`. Exported offsets are saved as
+`paper/outputs/tables/<case>_drag_offsets.csv`; states without a manual
+offset file use the formula-derived helper layout. The helper pages
+initialize from saved offsets, so reopening a helper shows the
+documented layout rather than a zero-offset starting point.
+
+The review pass also records rendered layouts and audits:
+
+- `paper/outputs/figures/<case>_dragged_layout.png`
+- `paper/outputs/tables/<case>_drag_offsets_used.csv`
+- `paper/outputs/tables/dragged_layout_formula_vs_manual_audit.csv`
+- `paper/outputs/drag_helper_review`
 
 ------------------------------------------------------------------------
 
@@ -541,7 +549,7 @@ sessionInfo()
 #>  [9] fastmap_1.2.0      R6_2.6.1           generics_0.1.4     classInt_0.4-11   
 #> [13] knitr_1.51         htmlwidgets_1.6.4  tibble_3.3.1       desc_1.4.3        
 #> [17] units_1.0-1        DBI_1.3.0          bslib_0.11.0       pillar_1.11.1     
-#> [21] rlang_1.2.0        cachem_1.1.0       xfun_0.58          fs_2.1.0          
+#> [21] rlang_1.2.0        cachem_1.1.0       xfun_0.59          fs_2.1.0          
 #> [25] sass_0.4.10        otel_0.2.0         cli_3.6.6          pkgdown_2.2.0     
 #> [29] magrittr_2.0.5     class_7.3-23       digest_0.6.39      grid_4.6.0        
 #> [33] lifecycle_1.0.5    vctrs_0.7.3        KernSmooth_2.23-26 proxy_0.4-29      

@@ -58,6 +58,8 @@ Optional export helpers and cache management utilities.
   : Export an exploded map as TopoJSON
 - [`apply_region_offsets()`](https://prigasg.github.io/explodemap/reference/apply_region_offsets.md)
   : Apply documented display offsets by region
+- [`read_drag_offsets()`](https://prigasg.github.io/explodemap/reference/read_drag_offsets.md)
+  : Read drag-helper offset CSVs into a region offset data frame
 - [`cache_list()`](https://prigasg.github.io/explodemap/reference/cache_list.md)
   : List cached datasets
 - [`cache_clear()`](https://prigasg.github.io/explodemap/reference/cache_clear.md)
