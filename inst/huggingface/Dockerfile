@@ -15,14 +15,11 @@ RUN install2.r --error --skipinstalled \
  && rm -rf /tmp/downloaded_packages
 
 RUN Rscript -e "remotes::install_github('PrigasG/explodemap@fbd647ff5a53a22cd7cec277e7f82a991898b4df', upgrade = 'never', force = TRUE)"
-RUN Rscript -e "library(explodemap); packageVersion('explodemap')"
 
 WORKDIR /app
 ENV APP_DATA_DIR=/app/data
 
 COPY app.R prep_data.R /app/
-
-RUN Rscript /app/prep_data.R
 
 EXPOSE 7860
 CMD ["R", "-q", "-e", "shiny::runApp('/app', host = '0.0.0.0', port = 7860)"]
