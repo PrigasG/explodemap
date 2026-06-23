@@ -24,10 +24,6 @@ suppressPackageStartupMessages({
   library(explodemap)
 })
 
-if (!requireNamespace("ggiraph", quietly = TRUE)) {
-  stop("This app needs ggiraph for the HHS reference tab. Install it with install.packages('ggiraph').", call. = FALSE)
-}
-
 # -----------------------------------------------------------------------------
 # Data location + lazy bake for local first-run
 # -----------------------------------------------------------------------------
@@ -850,18 +846,18 @@ ui <- page_navbar(
           selected = "package"
         ),
         checkboxInput("hhs_apply_offsets", "Apply documented display offsets", value = TRUE),
-        checkboxInput("hhs_state_labels", "Show state names on map", value = FALSE),
-        checkboxInput("hhs_territory_labels", "Show territory abbreviations", value = TRUE),
-        helpText("Hover over states for state name and HHS region. Region numbers are a separate group-level layer."),
+        checkboxInput("hhs_drag", "Drag-to-zoom", value = TRUE),
+        checkboxInput("hhs_labels", "Show focus labels", value = TRUE),
+        helpText("Click any state or territory to lift and zoom it. Right-click or Esc resets."),
         downloadButton("hhs_download", "Download GeoJSON", class = "btn-sm btn-outline-primary w-100")
       ),
       uiOutput("hhs_diag"),
       card(
         full_screen = TRUE,
-        class = "hhs-reference-card",
+        class = "focus-map-card",
         card_body(
           padding = 0,
-          ggiraph::girafeOutput("hhs_map", width = "100%", height = "100%")
+          focusmapOutput("hhs_map", width = "100%", height = "100%")
         )
       )
     )
@@ -1111,27 +1107,42 @@ server <- function(input, output, session) {
     }
   })
 
-  output$hhs_map <- ggiraph::renderGirafe({
+  output$hhs_map <- renderFocusmap({
     lay <- hhs_layout_final()
-
-    p <- make_hhs_plot(
-      lay,
-      show_state_labels = isTRUE(input$hhs_state_labels),
-      show_territory_labels = isTRUE(input$hhs_territory_labels)
-    )
-
-    ggiraph::girafe(
-      ggobj = p,
-      width_svg = 9,
-      height_svg = 6,
-      options = list(
-        ggiraph::opts_hover(css = "stroke:#111827;stroke-width:2.5px;"),
-        ggiraph::opts_selection(type = "none"),
-        ggiraph::opts_tooltip(
-          css = "background:white;border:1px solid #cbd5e1;border-radius:6px;padding:6px 8px;color:#111827;"
-        ),
-        ggiraph::opts_sizing(rescale = TRUE)
+    states <- lay$states |>
+      dplyr::mutate(
+        hhs_region_name = hhs_region_names[as.character(.data$hhs_region)]
       )
+
+    tryCatch(
+      focus_map(
+        states,
+        label_col = "state_label",
+        id_col = "state_geoid",
+        group_col = "hhs_region",
+        group_palette = hhs_colors,
+        info_cols = c("state_label", "STUSPS", "hhs_region_name"),
+        info_labels = c(
+          state_label = "State / territory",
+          STUSPS = "Code",
+          hhs_region_name = "HHS region"
+        ),
+        info_title = "state_label",
+        origin_context = "socket",
+        show_drag_zoom = isTRUE(input$hhs_drag),
+        show_labels = isTRUE(input$hhs_labels),
+        area_min = 0,
+        width_min = 0,
+        height_min = 0,
+        focus_size = 0.82,
+        focus_padding = 46,
+        info_card_scale = 1.05,
+        performance_mode = TRUE,
+        simplify = TRUE,
+        width = "100%",
+        height = "100%"
+      ),
+      error = function(e) validate(need(FALSE, app_error("render the HHS focus map", e)))
     )
   })
 
