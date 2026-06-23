@@ -683,7 +683,8 @@ make_hhs_plot <- function(layout, show_state_labels = FALSE, show_territory_labe
 # Reusable focus-map sidebar (counties / municipalities)
 # =============================================================================
 focus_sidebar <- function(prefix, intro, default_preset = "none",
-                         choices = STATE_CHOICES) {
+                         choices = STATE_CHOICES,
+                         default_drag = default_preset %in% c("municipal", "municipal_drilldown")) {
   id <- function(x) paste0(prefix, "_", x)
   sidebar(
     width = 320,
@@ -694,7 +695,7 @@ focus_sidebar <- function(prefix, intro, default_preset = "none",
                  selected = "raw", inline = TRUE),
     selectInput(id("preset"), "Style preset", PRESET_CHOICES, selected = default_preset),
     selectInput(id("origin"), "Source while focused", ORIGIN_CHOICES, selected = "socket"),
-    checkboxInput(id("drag"), "Drag-to-zoom", value = FALSE),
+    checkboxInput(id("drag"), "Drag-to-zoom", value = isTRUE(default_drag)),
     checkboxInput(id("labels"), "Show labels", value = TRUE),
     accordion(
       open = FALSE,
@@ -735,8 +736,14 @@ focus_panel_body <- function(prefix) {
       sprintf("input.%s_mode == 'exploded'", prefix),
       uiOutput(paste0(prefix, "_diag"))
     ),
-    card(full_screen = TRUE,
-         card_body(padding = 0, focusmapOutput(paste0(prefix, "_map"), height = "100%")))
+    card(
+      full_screen = TRUE,
+      class = "focus-map-card",
+      card_body(
+        padding = 0,
+        focusmapOutput(paste0(prefix, "_map"), width = "100%", height = "100%")
+      )
+    )
   )
 }
 
@@ -757,6 +764,20 @@ ui <- page_navbar(
       .card { box-shadow: 0 1px 3px rgba(15,23,42,.08); }
       .shiny-bound-output.recalculating { opacity: .35; transition: opacity .2s ease; }
       .html-widget.recalculating { opacity: .35; }
+      .focus-map-card { height: calc(100vh - 132px); min-height: 520px; min-width: 0; }
+      .focus-map-card .card-body { min-height: 0; height: 100%; display: flex; }
+      .focus-map-card .html-widget,
+      .focus-map-card .html-widget > div,
+      .focus-map-card .html-widget svg {
+        flex: 1 1 auto;
+        min-height: 0;
+        min-width: 0;
+        width: 100% !important;
+        height: 100% !important;
+      }
+      @media (max-width: 767px) {
+        .focus-map-card { height: 70vh; min-height: 420px; }
+      }
       .hhs-reference-card .card-body { min-height: 0; height: 100%; }
       .hhs-reference-card .girafe.html-widget,
       .hhs-reference-card .girafe.html-widget > div,
@@ -797,12 +818,16 @@ ui <- page_navbar(
                     selected = "North"),
         radioButtons("dd_context", "Context",
                      c("Fade" = "fade", "Hide" = "hide"), selected = "fade", inline = TRUE),
+        checkboxInput("dd_drag", "Drag-to-zoom", value = TRUE),
         checkboxInput("dd_labels", "Show labels", value = TRUE),
         downloadButton("dd_download", "Download GeoJSON", class = "btn-sm btn-outline-primary w-100")
       ),
       uiOutput("dd_diag"),
-      card(full_screen = TRUE,
-           card_body(padding = 0, focusmapOutput("dd_map", height = "100%")))
+      card(
+        full_screen = TRUE,
+        class = "focus-map-card",
+        card_body(padding = 0, focusmapOutput("dd_map", width = "100%", height = "100%"))
+      )
     )
   ),
   nav_panel(
@@ -942,6 +967,9 @@ server <- function(input, output, session) {
           origin_context = input[[id("origin")]] %||% "none",
           show_drag_zoom = isTRUE(input[[id("drag")]]),
           show_labels = isTRUE(input[[id("labels")]]),
+          area_min = 0,
+          width_min = 0,
+          height_min = 0,
           font_size   = input[[id("font")]],
           lift_scale  = input[[id("lift")]],
           focus_size  = input[[id("focus_size")]],
@@ -1044,7 +1072,11 @@ server <- function(input, output, session) {
         info_cols = c("muni_label", "county_name"),
         info_labels = c(muni_label = "Subdivision", county_name = "County"),
         info_title = "muni_label",
+        show_drag_zoom = isTRUE(input$dd_drag),
         show_labels = isTRUE(input$dd_labels),
+        area_min = 0,
+        width_min = 0,
+        height_min = 0,
         width = "100%", height = "100%"
       ),
       error = function(e) validate(need(FALSE, app_error("render the drill-down map", e)))
