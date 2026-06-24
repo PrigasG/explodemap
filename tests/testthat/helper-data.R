@@ -67,3 +67,26 @@ make_grouped_sf <- function() {
     geometry = geom
   )
 }
+
+make_hhs_state_sf <- function() {
+  sq <- function(xmin, ymin, size = 100000) {
+    sf::st_polygon(list(matrix(
+      c(
+        xmin, ymin,
+        xmin + size, ymin,
+        xmin + size, ymin + size,
+        xmin, ymin + size,
+        xmin, ymin
+      ),
+      ncol = 2,
+      byrow = TRUE
+    )))
+  }
+
+  sf::st_sf(
+    NAME = c("Maine", "Texas"),
+    STUSPS = c("ME", "TX"),
+    GEOID = c("23", "48"),
+    geometry = sf::st_sfc(sq(0, 0), sq(500000, 0), crs = 5070)
+  )
+}

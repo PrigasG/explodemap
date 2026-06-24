@@ -361,6 +361,26 @@ focus_map(
 )
 ```
 
+### HHS reference maps
+
+The HHS regional lookup, palette, display offsets, and focus-map wrapper are package helpers, not gallery-only code:
+
+``` r
+hhs_regions()
+hhs_palette()
+hhs_region_names()
+hhs_display_offsets()
+
+states_hhs <- as_hhs_states(states_sf)
+layout <- hhs_layout(states_hhs, apply_offsets = TRUE)
+
+hhs_focus_map(
+  states_sf,
+  show_region_labels = TRUE,
+  show_drag_zoom = TRUE
+)
+```
+
 ## Mathematical guarantees
 
 For the two-level core workflow, the package implements the analytical parameter formulas described in the paper:

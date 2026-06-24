@@ -30,65 +30,12 @@ if (!requireNamespace("ggiraph", quietly = TRUE)) {
 # HHS lookup and reference styling
 # -----------------------------------------------------------------------------
 
-hhs_assignments <- data.frame(
-  state = tolower(c(
-    "Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut",
-    "New York", "New Jersey", "Puerto Rico", "United States Virgin Islands",
-    "Pennsylvania", "Delaware", "Maryland", "District of Columbia", "Virginia", "West Virginia",
-    "North Carolina", "South Carolina", "Georgia", "Florida", "Alabama", "Mississippi", "Tennessee", "Kentucky",
-    "Minnesota", "Wisconsin", "Illinois", "Indiana", "Michigan", "Ohio",
-    "Arkansas", "Louisiana", "New Mexico", "Oklahoma", "Texas",
-    "Iowa", "Kansas", "Missouri", "Nebraska",
-    "Colorado", "Montana", "North Dakota", "South Dakota", "Utah", "Wyoming",
-    "Arizona", "California", "Hawaii", "Nevada", "Commonwealth of the Northern Mariana Islands", "American Samoa", "Guam",
-    "Alaska", "Idaho", "Oregon", "Washington"
-  )),
-  STUSPS = c(
-    "ME", "NH", "VT", "MA", "RI", "CT",
-    "NY", "NJ", "PR", "VI",
-    "PA", "DE", "MD", "DC", "VA", "WV",
-    "NC", "SC", "GA", "FL", "AL", "MS", "TN", "KY",
-    "MN", "WI", "IL", "IN", "MI", "OH",
-    "AR", "LA", "NM", "OK", "TX",
-    "IA", "KS", "MO", "NE",
-    "CO", "MT", "ND", "SD", "UT", "WY",
-    "AZ", "CA", "HI", "NV", "MP", "AS", "GU",
-    "AK", "ID", "OR", "WA"
-  ),
-  hhs_region = as.character(c(
-    rep(1, 6), rep(2, 4), rep(3, 6), rep(4, 8), rep(5, 6),
-    rep(6, 5), rep(7, 4), rep(8, 6), rep(9, 7), rep(10, 4)
-  )),
-  stringsAsFactors = FALSE
-)
-
-hhs_colors <- stats::setNames(
-  c(
-    "#A89A83", "#C764A6", "#2B4970", "#DF514F", "#309396",
-    "#70A255", "#F2BE42", "#8459A0", "#872722", "#3579B0"
-  ),
-  as.character(1:10)
-)
-
-hhs_region_names <- stats::setNames(
-  paste0(
-    as.character(1:10),
-    " - ",
-    c(
-      "Boston", "New York", "Philadelphia", "Atlanta", "Chicago",
-      "Dallas", "Kansas City", "Denver", "San Francisco", "Seattle"
-    )
-  ),
-  as.character(1:10)
-)
+hhs_assignments <- explodemap::hhs_regions()
+hhs_colors <- explodemap::hhs_palette()
+hhs_region_names <- explodemap::hhs_region_names()
 
 # These are display nudges for the reference dragged layout.
-hhs_display_offsets <- data.frame(
-  region = as.character(1:10),
-  dx_m = c(-16354, -65414, 0, -228949, -130828, -498782, -245303, -237126, -449721, -327070),
-  dy_m = c(-106298, 32707, -139005, -81768, 16354, 81768, 245303, -24530, -24530, 40884),
-  stringsAsFactors = FALSE
-)
+hhs_display_offsets <- explodemap::hhs_display_offsets()
 
 # Legacy coarse offsets from the pre-explodemap framework.
 legacy_region_offsets <- data.frame(
@@ -147,60 +94,7 @@ move_region <- function(sf_obj, region, dx, dy, region_col = "hhs_region") {
 # -----------------------------------------------------------------------------
 
 standardize_states <- function(states) {
-  stopifnot(inherits(states, "sf"))
-
-  if (!("hhs_region" %in% names(states))) {
-    if ("region" %in% names(states)) {
-      states$hhs_region <- as.character(states$region)
-    } else if ("STUSPS" %in% names(states)) {
-      states <- states |>
-        dplyr::mutate(STUSPS = as.character(.data$STUSPS)) |>
-        dplyr::left_join(
-          hhs_assignments |> dplyr::select(STUSPS, hhs_region),
-          by = "STUSPS"
-        )
-    } else if ("NAME" %in% names(states)) {
-      states <- states |>
-        dplyr::mutate(state = tolower(.data$NAME)) |>
-        dplyr::left_join(
-          hhs_assignments |> dplyr::select(state, hhs_region),
-          by = "state"
-        )
-    }
-  }
-
-  states <- states |> dplyr::filter(!is.na(.data$hhs_region))
-  states$hhs_region <- as.character(states$hhs_region)
-
-  if (!("state_label" %in% names(states))) {
-    if ("NAME" %in% names(states)) {
-      states$state_label <- as.character(states$NAME)
-    } else if ("STUSPS" %in% names(states)) {
-      states$state_label <- as.character(states$STUSPS)
-    } else {
-      states$state_label <- as.character(seq_len(nrow(states)))
-    }
-  }
-
-  if (!("state_geoid" %in% names(states))) {
-    if ("GEOID" %in% names(states)) {
-      states$state_geoid <- as.character(states$GEOID)
-    } else if ("STUSPS" %in% names(states)) {
-      states$state_geoid <- as.character(states$STUSPS)
-    } else {
-      states$state_geoid <- paste0("state_", seq_len(nrow(states)))
-    }
-  }
-
-  if (is.na(sf::st_crs(states))) {
-    sf::st_crs(states) <- 4326
-  }
-
-  if (isTRUE(sf::st_is_longlat(states))) {
-    states <- sf::st_transform(states, 5070)
-  }
-
-  states
+  explodemap::as_hhs_states(states)
 }
 
 standardize_layout <- function(obj, source = "unknown") {
