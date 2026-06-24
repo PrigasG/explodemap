@@ -813,7 +813,7 @@ ui <- page_navbar(
                     c("All regions" = "all", "North", "South", "East", "West"),
                     selected = "North"),
         radioButtons("dd_context", "Context",
-                     c("Fade" = "fade", "Hide" = "hide"), selected = "fade", inline = TRUE),
+                     c("Hide" = "hide", "Fade" = "fade"), selected = "hide", inline = TRUE),
         checkboxInput("dd_drag", "Drag-to-zoom", value = TRUE),
         checkboxInput("dd_labels", "Show labels", value = TRUE),
         downloadButton("dd_download", "Download GeoJSON", class = "btn-sm btn-outline-primary w-100")
@@ -1065,6 +1065,8 @@ server <- function(input, output, session) {
         context_col = ".explodemap_role",
         context_mode = input$dd_context,
         focus_preset = "drilldown",
+        origin_context = "none",
+        focus_context_opacity = 0.08,
         info_cols = c("muni_label", "county_name"),
         info_labels = c(muni_label = "Subdivision", county_name = "County"),
         info_title = "muni_label",
@@ -1138,7 +1140,7 @@ server <- function(input, output, session) {
         focus_padding = 46,
         info_card_scale = 1.05,
         performance_mode = TRUE,
-        simplify = TRUE,
+        simplify = FALSE,
         width = "100%",
         height = "100%"
       ),

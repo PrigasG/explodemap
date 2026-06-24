@@ -327,6 +327,11 @@ focus_map <- function(x,
     }
   }
 
+  # Repair before and after WGS84 conversion. Some display layouts use
+  # translated projected geometries that are valid for planar drawing but trip
+  # s2's spherical loop checks after transformation.
+  sf_obj <- .repair_widget_geometry(sf_obj)
+
   # Ensure WGS 84
   if (is.na(sf::st_crs(sf_obj))) {
     sf_obj <- sf::st_set_crs(sf_obj, 4326)
@@ -334,7 +339,7 @@ focus_map <- function(x,
     sf_obj <- sf::st_transform(sf_obj, 4326)
   }
 
-  sf_obj <- sf::st_make_valid(sf_obj)
+  sf_obj <- .repair_widget_geometry(sf_obj)
   sf_obj <- sf_obj[!sf::st_is_empty(sf_obj), ]
 
   if (nrow(sf_obj) == 0) {
@@ -373,6 +378,7 @@ focus_map <- function(x,
       preserveTopology = TRUE,
       dTolerance = tol
     )
+    sf_obj <- .repair_widget_geometry(sf_obj)
     sf_obj <- sf_obj[!sf::st_is_empty(sf_obj), ]
   } else if (is.numeric(simplify) && length(simplify) == 1 && simplify > 0) {
     sf_obj <- sf::st_simplify(
@@ -380,6 +386,7 @@ focus_map <- function(x,
       preserveTopology = TRUE,
       dTolerance = simplify
     )
+    sf_obj <- .repair_widget_geometry(sf_obj)
     sf_obj <- sf_obj[!sf::st_is_empty(sf_obj), ]
   }
 
@@ -481,6 +488,15 @@ renderFocusmap <- function(expr, env = parent.frame(), quoted = FALSE) {
   stop("x must be an sf, exploded_map, or grouped_exploded_map.", call. = FALSE)
 }
 
+#' Repair widget geometry with planar validity checks
+#' @keywords internal
+.repair_widget_geometry <- function(sf_obj) {
+  old_s2 <- sf::sf_use_s2()
+  on.exit(suppressMessages(sf::sf_use_s2(old_s2)), add = TRUE)
+  suppressMessages(sf::sf_use_s2(FALSE))
+  sf::st_make_valid(sf_obj)
+}
+
 
 #' Fast bulk GeoJSON via a single sf::st_write call
 #'
@@ -527,9 +543,14 @@ renderFocusmap <- function(expr, env = parent.frame(), quoted = FALSE) {
   # clockwise rings (OGC convention), causing D3 to interpret each polygon
   # as its spherical complement — "everything on Earth except this county."
   # That is the blue-square bug.
-  sf::st_write(slim, tmp, driver = "GeoJSON", quiet = TRUE,
-               delete_dsn = TRUE,
-               layer_options = c("RFC7946=YES", "WRITE_BBOX=NO"))
+  old_s2 <- sf::sf_use_s2()
+  on.exit(suppressMessages(sf::sf_use_s2(old_s2)), add = TRUE)
+  suppressMessages(sf::sf_use_s2(FALSE))
+  suppressWarnings(
+    sf::st_write(slim, tmp, driver = "GeoJSON", quiet = TRUE,
+                 delete_dsn = TRUE,
+                 layer_options = c("RFC7946=YES", "WRITE_BBOX=NO"))
+  )
 
   # Return raw JSON string — JS will parse it, not R.
   # encoding = "UTF-8" is required: sf::st_write produces UTF-8 GeoJSON but
