@@ -455,30 +455,7 @@ build_legacy_layout <- function() {
   list(states = shifted, labels = NULL, source = "legacy framework fallback")
 }
 
-build_explodemap_auto_layout <- function() {
-  states <- read_fallback_states() |> standardize_states()
-
-  result <- explodemap::explode_grouped(
-    states,
-    region_col = "hhs_region",
-    mode = "auto_collision",
-    alpha_l = 120000,
-    p = 1.25,
-    kappa = 1.8,
-    padding = 80000,
-    delta = 20000,
-    lambda = 0.18,
-    eta = 0.18,
-    padding_sep = 30000,
-    max_iter = 60,
-    label = "US by HHS region"
-  )
-
-  states_out <- result$sf_grouped %||% result$sf_exp %||% result$sf_grouped_wgs %||% result$sf_exp_wgs
-  standardize_layout(states_out, source = "explode_grouped fallback")
-}
-
-load_reference_layout <- function(source_mode = c("package", "legacy", "explode_grouped")) {
+load_reference_layout <- function(source_mode = c("package", "legacy")) {
   source_mode <- match.arg(source_mode)
 
   if (source_mode == "package") {
@@ -490,8 +467,6 @@ load_reference_layout <- function(source_mode = c("package", "legacy", "explode_
   if (source_mode == "legacy") {
     return(build_legacy_layout())
   }
-
-  build_explodemap_auto_layout()
 }
 
 compute_region_labels <- function(states) {
@@ -760,7 +735,7 @@ ui <- page_navbar(
       .card { box-shadow: 0 1px 3px rgba(15,23,42,.08); }
       .shiny-bound-output.recalculating { opacity: .35; transition: opacity .2s ease; }
       .html-widget.recalculating { opacity: .35; }
-      .focus-map-card { height: calc(100vh - 132px); min-height: 520px; min-width: 0; }
+      .focus-map-card { height: calc(100vh - 132px); min-height: 520px; min-width: 0; position: relative; overflow: hidden; }
       .focus-map-card .card-body { min-height: 0; height: 100%; display: flex; }
       .focus-map-card .html-widget,
       .focus-map-card .html-widget > div,
@@ -770,6 +745,43 @@ ui <- page_navbar(
         min-width: 0;
         width: 100% !important;
         height: 100% !important;
+      }
+      .focus-map-card:has(.recalculating)::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 40;
+        background: rgba(231, 238, 245, .72);
+        backdrop-filter: blur(2px);
+      }
+      .focus-map-card:has(.recalculating)::after {
+        content: 'Loading map...';
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        z-index: 41;
+        padding: .55rem .7rem .55rem 2.05rem;
+        border: 1px solid #c7d8e5;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, .94);
+        color: #16324f;
+        font-weight: 700;
+        font-size: .82rem;
+        box-shadow: 0 10px 26px rgba(15,35,60,.14);
+      }
+      @keyframes focusmap-spin { to { transform: rotate(360deg); } }
+      .focus-map-card .card-body:has(.recalculating)::before {
+        content: '';
+        position: absolute;
+        top: 25px;
+        left: 27px;
+        z-index: 42;
+        width: 13px;
+        height: 13px;
+        border: 2px solid #9eb7cb;
+        border-top-color: #2d6ea3;
+        border-radius: 50%;
+        animation: focusmap-spin .8s linear infinite;
       }
       @media (max-width: 767px) {
         .focus-map-card { height: 70vh; min-height: 420px; }
@@ -807,13 +819,13 @@ ui <- page_navbar(
       sidebar = sidebar(
         width = 320,
         p(class = "text-muted small mb-2",
-          "Explode one region's municipalities while the rest of the state stays as faded context."),
+          "Inspect one region's municipalities in place while the rest of the state stays as context."),
         selectInput("dd_state", "State", STATE_CHOICES, selected = "TX"),
-        selectInput("dd_section", "Region to explode",
+        selectInput("dd_section", "Region to inspect",
                     c("All regions" = "all", "North", "South", "East", "West"),
                     selected = "North"),
         radioButtons("dd_context", "Context",
-                     c("Hide" = "hide", "Fade" = "fade"), selected = "hide", inline = TRUE),
+                     c("Fade" = "fade", "Hide" = "hide"), selected = "fade", inline = TRUE),
         checkboxInput("dd_drag", "Drag-to-zoom", value = TRUE),
         checkboxInput("dd_labels", "Show labels", value = TRUE),
         downloadButton("dd_download", "Download GeoJSON", class = "btn-sm btn-outline-primary w-100")
@@ -833,15 +845,14 @@ ui <- page_navbar(
         width = 320,
         p(
           class = "text-muted small mb-2",
-          "Reference HHS grouped layout. The default source prefers the layout bundled with explodemap, then falls back to the legacy framework."
+          "Reference HHS grouped layout. The default source uses the layout bundled with explodemap, with the legacy framework kept as a comparison."
         ),
         selectInput(
           "hhs_source_mode",
           "Layout source",
           choices = c(
             "Prefer explodemap package layout" = "package",
-            "Legacy pre-explodemap framework" = "legacy",
-            "explode_grouped fallback" = "explode_grouped"
+            "Legacy pre-explodemap framework" = "legacy"
           ),
           selected = "package"
         ),
@@ -908,7 +919,7 @@ server <- function(input, output, session) {
       tags$p(class = "mb-1", tags$b("Tips")),
       tags$ul(
         tags$li("Enable ", tags$b("Drag-to-zoom"), " (or Shift-drag) to marquee into dense clusters."),
-        tags$li("The ", tags$b("Drill-down"), " tab explodes one region and fades the rest as context."),
+        tags$li("The ", tags$b("Drill-down"), " tab focuses one region in place and fades the rest as context."),
         tags$li("Use ", tags$b("Download GeoJSON"), " to export any exploded layout.")
       )
     ))
@@ -1024,41 +1035,29 @@ server <- function(input, output, session) {
     )
   }) |> bindCache(input$dd_state)
 
-  dd_result <- reactive({
+  dd_layer <- reactive({
     x <- dd_munis()
     section <- input$dd_section
 
-    if (section != "all") {
-      n_counties <- x |>
-        sf::st_drop_geometry() |>
-        dplyr::filter(.data$region == section) |>
-        dplyr::distinct(.data$county_name) |>
-        nrow()
-      validate(need(n_counties >= 2,
-                    paste0("The ", section, " region of ", input$dd_state,
-                           " has too few counties to explode. Try another region or All.")))
+    if (identical(section, "all")) {
+      x$.explodemap_role <- "focus"
+      return(x)
     }
 
-    tryCatch(
-      explode_section(
-        x,
-        section_col = "region",
-        section = section,
-        region_col = "county_name",
-        layout = "explode",
-        context = input$dd_context,
-        plot = FALSE, quiet = TRUE,
-        label = paste(input$dd_state, "drill-down:", section)
-      ),
-      error = function(e) validate(need(FALSE, app_error("build the drill-down map", e)))
-    )
+    focus_idx <- as.character(x$region) == section
+    if (!any(focus_idx, na.rm = TRUE)) {
+      validate(need(FALSE, paste0("No subdivisions matched the ", section, " region.")))
+    }
+
+    x$.explodemap_role <- ifelse(focus_idx, "focus", "context")
+    x
   })
 
   output$dd_map <- renderFocusmap({
-    res <- dd_result()
+    x <- dd_layer()
     tryCatch(
       focus_map(
-        res$sf_exp,
+        x,
         label_col = "muni_label",
         id_col = "muni_geoid",
         group_col = "county_name",
@@ -1082,12 +1081,28 @@ server <- function(input, output, session) {
     )
   })
 
-  output$dd_diag <- renderUI(diag_boxes(dd_result()))
+  output$dd_diag <- renderUI({
+    x <- dd_layer()
+    dropped <- sf::st_drop_geometry(x)
+    n_focus <- sum(dropped$.explodemap_role == "focus", na.rm = TRUE)
+    n_context <- sum(dropped$.explodemap_role == "context", na.rm = TRUE)
+    n_counties <- dropped |>
+      dplyr::filter(.data$.explodemap_role == "focus") |>
+      dplyr::distinct(.data$county_name) |>
+      nrow()
+    layout_columns(
+      fill = FALSE, gap = "0.5rem", col_widths = c(3, 3, 3, 3),
+      value_box("Section", input$dd_section, theme = "primary"),
+      value_box("Focus units", format(n_focus, big.mark = ","), theme = "secondary"),
+      value_box("Counties", format(n_counties, big.mark = ","), theme = "secondary"),
+      value_box("Context", format(n_context, big.mark = ","), theme = "secondary")
+    )
+  })
 
   output$dd_download <- downloadHandler(
     filename = function() paste0("drilldown_", input$dd_state, "_", input$dd_section, ".geojson"),
     content = function(file) {
-      sf::st_write(dd_result()$sf_exp_wgs, file, driver = "GeoJSON",
+      sf::st_write(sf::st_transform(dd_layer(), 4326), file, driver = "GeoJSON",
                    delete_dsn = TRUE, quiet = TRUE)
     }
   )
