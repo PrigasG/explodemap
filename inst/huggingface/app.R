@@ -134,19 +134,22 @@ ORIGIN_CHOICES <- c(
 # HHS lookup and reference styling
 # -----------------------------------------------------------------------------
 
+hhs_state_names <- c(
+  "Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut",
+  "New York", "New Jersey", "Puerto Rico", "United States Virgin Islands",
+  "Pennsylvania", "Delaware", "Maryland", "District of Columbia", "Virginia", "West Virginia",
+  "North Carolina", "South Carolina", "Georgia", "Florida", "Alabama", "Mississippi", "Tennessee", "Kentucky",
+  "Minnesota", "Wisconsin", "Illinois", "Indiana", "Michigan", "Ohio",
+  "Arkansas", "Louisiana", "New Mexico", "Oklahoma", "Texas",
+  "Iowa", "Kansas", "Missouri", "Nebraska",
+  "Colorado", "Montana", "North Dakota", "South Dakota", "Utah", "Wyoming",
+  "Arizona", "California", "Hawaii", "Nevada", "Commonwealth of the Northern Mariana Islands", "American Samoa", "Guam",
+  "Alaska", "Idaho", "Oregon", "Washington"
+)
+
 hhs_assignments <- data.frame(
-  state = tolower(c(
-    "Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut",
-    "New York", "New Jersey", "Puerto Rico", "United States Virgin Islands",
-    "Pennsylvania", "Delaware", "Maryland", "District of Columbia", "Virginia", "West Virginia",
-    "North Carolina", "South Carolina", "Georgia", "Florida", "Alabama", "Mississippi", "Tennessee", "Kentucky",
-    "Minnesota", "Wisconsin", "Illinois", "Indiana", "Michigan", "Ohio",
-    "Arkansas", "Louisiana", "New Mexico", "Oklahoma", "Texas",
-    "Iowa", "Kansas", "Missouri", "Nebraska",
-    "Colorado", "Montana", "North Dakota", "South Dakota", "Utah", "Wyoming",
-    "Arizona", "California", "Hawaii", "Nevada", "Commonwealth of the Northern Mariana Islands", "American Samoa", "Guam",
-    "Alaska", "Idaho", "Oregon", "Washington"
-  )),
+  state = tolower(hhs_state_names),
+  state_name = hhs_state_names,
   STUSPS = c(
     "ME", "NH", "VT", "MA", "RI", "CT",
     "NY", "NJ", "PR", "VI",
@@ -185,6 +188,8 @@ hhs_region_names <- stats::setNames(
   ),
   as.character(1:10)
 )
+
+hhs_region_map_labels <- stats::setNames(paste0("HHS ", as.character(1:10)), as.character(1:10))
 
 # These are display nudges for the reference dragged layout.
 hhs_display_offsets <- data.frame(
@@ -783,6 +788,41 @@ ui <- page_navbar(
         border-radius: 50%;
         animation: focusmap-spin .8s linear infinite;
       }
+      .hhs-region-legend {
+        display: grid;
+        gap: .45rem;
+        margin: .25rem 0 .75rem;
+        max-height: 36vh;
+        overflow: auto;
+        padding-right: .15rem;
+      }
+      .hhs-region-item {
+        border: 1px solid #d7e3ef;
+        border-radius: 8px;
+        background: rgba(255,255,255,.78);
+        padding: .48rem .55rem;
+      }
+      .hhs-region-head {
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        color: #16324f;
+        font-size: .82rem;
+        font-weight: 800;
+      }
+      .hhs-region-swatch {
+        width: .8rem;
+        height: .8rem;
+        border: 1px solid rgba(15,35,60,.2);
+        border-radius: 3px;
+        flex: 0 0 auto;
+      }
+      .hhs-state-list {
+        margin-top: .24rem;
+        color: #60758c;
+        font-size: .72rem;
+        line-height: 1.28;
+      }
       @media (max-width: 767px) {
         .focus-map-card { height: 70vh; min-height: 420px; }
       }
@@ -859,6 +899,9 @@ ui <- page_navbar(
         checkboxInput("hhs_apply_offsets", "Apply documented display offsets", value = TRUE),
         checkboxInput("hhs_drag", "Drag-to-zoom", value = TRUE),
         checkboxInput("hhs_labels", "Show focus labels", value = TRUE),
+        checkboxInput("hhs_region_labels", "Show HHS region labels", value = TRUE),
+        checkboxInput("hhs_legend", "Show HHS region legend", value = TRUE),
+        uiOutput("hhs_region_legend"),
         helpText("Click any state or territory to lift and zoom it. Right-click or Esc resets."),
         downloadButton("hhs_download", "Download GeoJSON", class = "btn-sm btn-outline-primary w-100")
       ),
@@ -1125,6 +1168,40 @@ server <- function(input, output, session) {
     }
   })
 
+  output$hhs_region_legend <- renderUI({
+    req(isTRUE(input$hhs_legend))
+
+    rows <- hhs_assignments |>
+      dplyr::mutate(
+        hhs_region = as.character(.data$hhs_region),
+        region_name = hhs_region_names[.data$hhs_region],
+        state_entry = paste0(.data$state_name, " (", .data$STUSPS, ")")
+      ) |>
+      dplyr::arrange(as.integer(.data$hhs_region), .data$state_name)
+
+    tags$div(
+      class = "hhs-region-legend",
+      lapply(split(rows, factor(rows$hhs_region, levels = as.character(1:10))), function(region_rows) {
+        region <- region_rows$hhs_region[[1]]
+        tags$div(
+          class = "hhs-region-item",
+          tags$div(
+            class = "hhs-region-head",
+            tags$span(
+              class = "hhs-region-swatch",
+              style = sprintf("background:%s;", hhs_colors[[region]])
+            ),
+            tags$span(region_rows$region_name[[1]])
+          ),
+          tags$div(
+            class = "hhs-state-list",
+            paste(region_rows$state_entry, collapse = ", ")
+          )
+        )
+      })
+    )
+  })
+
   output$hhs_map <- renderFocusmap({
     lay <- hhs_layout_final()
     states <- lay$states |>
@@ -1150,6 +1227,8 @@ server <- function(input, output, session) {
         origin_context = "socket",
         show_drag_zoom = isTRUE(input$hhs_drag),
         show_labels = isTRUE(input$hhs_labels),
+        show_group_labels = isTRUE(input$hhs_region_labels),
+        group_labels = hhs_region_map_labels,
         area_min = 0,
         width_min = 0,
         height_min = 0,

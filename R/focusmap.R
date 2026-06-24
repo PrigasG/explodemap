@@ -91,6 +91,12 @@
 #'   users can draw a marquee rectangle to zoom into dense clusters while
 #'   ordinary feature clicks continue to focus the map. Shift-drag works as a
 #'   shortcut even when the button is hidden.
+#' @param show_group_labels Show one passive label per \code{group_col} value
+#'   on the base map. Labels do not intercept pointer events, so feature
+#'   click, hover, focus, and drag-zoom behavior are unchanged.
+#' @param group_labels Optional named character vector or list for
+#'   \code{show_group_labels}. Names should match \code{group_col} values;
+#'   unmatched groups use their raw group value.
 #' @param font_size Label font size in px. Default \code{14}.
 #' @param show_labels Show labels on lifted shapes? Default \code{TRUE}.
 #' @param show_sidebar Deprecated and has no effect. Will be removed in a
@@ -170,6 +176,8 @@ focus_map <- function(x,
                       origin_context_position = c("bottom-left", "bottom-right", "top-left", "top-right"),
                       focus_context_opacity = 0.3,
                       show_drag_zoom = FALSE,
+                      show_group_labels = FALSE,
+                      group_labels = NULL,
                       font_size    = 14,
                       show_labels  = TRUE,
                       show_sidebar = TRUE,
@@ -308,6 +316,17 @@ focus_map <- function(x,
       names(group_palette) <- palette_names
     }
   }
+  if (!is.null(group_labels)) {
+    group_labels <- unlist(group_labels, use.names = TRUE)
+    if (is.null(names(group_labels)) || any(!nzchar(names(group_labels)))) {
+      warning("group_labels must be a named character vector/list; ignoring.", call. = FALSE)
+      group_labels <- NULL
+    } else {
+      label_names <- names(group_labels)
+      group_labels <- as.list(unname(as.character(group_labels)))
+      names(group_labels) <- label_names
+    }
+  }
 
   if (is.null(info_title)) {
     info_title <- label_col
@@ -439,6 +458,8 @@ focus_map <- function(x,
       originContextPosition = origin_context_position,
       focusContextOpacity = focus_context_opacity,
       showDragZoom = isTRUE(show_drag_zoom),
+      showGroupLabels = isTRUE(show_group_labels) && !is.null(group_col),
+      groupLabels = group_labels,
       fontSize     = font_size,
       showLabels   = show_labels,
       performanceMode = performance_mode,

@@ -46,6 +46,23 @@ test_that("focus_map accepts partial group palettes", {
   expect_equal(widget$x$options$groupPalette, list(A = "#111111"))
 })
 
+test_that("focus_map carries named group labels into widget options", {
+  x <- make_test_sf()
+  labels <- c(A = "Region A", B = "Region B")
+
+  widget <- focus_map(
+    x,
+    label_col = "id",
+    group_col = "region",
+    group_labels = labels,
+    show_group_labels = TRUE,
+    simplify = FALSE
+  )
+
+  expect_true(widget$x$options$showGroupLabels)
+  expect_equal(widget$x$options$groupLabels, as.list(labels))
+})
+
 test_that("focus_map carries adaptive tiny-feature focus options", {
   x <- make_test_sf()
 

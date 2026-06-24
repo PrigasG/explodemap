@@ -269,6 +269,8 @@ HTMLWidgets.widget({
         ".fm-county.hidden-src{opacity:0;pointer-events:none}",
         ".fm-toast-clone{stroke:#284f76;stroke-width:1.7px;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}",
         ".fm-toast-shadow{fill:#10233a;opacity:.12}",
+        ".fm-group-label{pointer-events:none;font-family:'DM Sans',system-ui,sans-serif;font-weight:800;fill:#12314e;paint-order:stroke;stroke:rgba(255,255,255,.9);stroke-width:3.5px;stroke-linejoin:round;text-anchor:middle;dominant-baseline:middle;opacity:.88}",
+        "#fm-base.fm-has-focus .fm-group-label{opacity:.18}",
         ".fm-focus-label{font-family:'DM Sans',system-ui,sans-serif;font-weight:700;fill:#10233a;paint-order:stroke;stroke:#fff;stroke-width:2.2px;stroke-linejoin:round;letter-spacing:-.01em}",
         "@keyframes fm-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}",
         ".fm-toast-g{pointer-events:none;animation:fm-rise 180ms cubic-bezier(.22,1,.36,1)}",
@@ -426,6 +428,62 @@ HTMLWidgets.widget({
           },
           function (exit) { return exit.remove(); }
         );
+    }
+
+    function groupLabelText(group) {
+      var labels = opts.groupLabels || {};
+      return labels[group] || group;
+    }
+
+    function renderGroupLabels() {
+      baseLayer.selectAll(".fm-group-label").remove();
+      if (!opts.showGroupLabels || !opts.hasGroups) return;
+
+      var groups = {};
+      features.forEach(function (f) {
+        if (isContextFeature(f) || !f.properties || !f.properties.group || !f._s) return;
+        var g = String(f.properties.group);
+        if (!groups[g]) groups[g] = {
+          group: g,
+          x: 0,
+          y: 0,
+          weight: 0,
+          x0: Infinity,
+          y0: Infinity,
+          x1: -Infinity,
+          y1: -Infinity
+        };
+        var area = Math.max((f._s.w || 1) * (f._s.h || 1), 1);
+        groups[g].x += (f._s.ax || 0) * area;
+        groups[g].y += (f._s.ay || 0) * area;
+        groups[g].weight += area;
+        groups[g].x0 = Math.min(groups[g].x0, f._s.x0);
+        groups[g].y0 = Math.min(groups[g].y0, f._s.y0);
+        groups[g].x1 = Math.max(groups[g].x1, f._s.x1);
+        groups[g].y1 = Math.max(groups[g].y1, f._s.y1);
+      });
+
+      var labelData = Object.keys(groups).map(function (g) {
+        var d = groups[g];
+        var w = Math.max(d.weight, 1);
+        var span = Math.max(d.x1 - d.x0, d.y1 - d.y0, 1);
+        return {
+          group: g,
+          label: groupLabelText(g),
+          x: d.x / w,
+          y: d.y / w,
+          size: clamp(span / 7, 11, 18)
+        };
+      });
+
+      baseLayer.selectAll(".fm-group-label")
+        .data(labelData, function (d) { return d.group; })
+        .join("text")
+        .attr("class", "fm-group-label")
+        .attr("x", function (d) { return d.x; })
+        .attr("y", function (d) { return d.y; })
+        .attr("font-size", function (d) { return d.size + "px"; })
+        .text(function (d) { return d.label; });
     }
 
     function applyCameraTransform(t) {
@@ -1099,6 +1157,7 @@ HTMLWidgets.widget({
           requestAnimationFrame(function () {
             fitProjection();
             renderPaths();
+            renderGroupLabels();
             svgEl.call(zoomBehaviour.transform, d3.zoomIdentity);
             // Re-anchor S.currentTransform after layout so any stale flyTo
             // animation that resolved on the old (now-orphaned) SVG cannot
@@ -1145,6 +1204,7 @@ HTMLWidgets.widget({
 
         fitProjection();
         renderPaths();
+        renderGroupLabels();
 
         if (S.mode === "focused" && S.selectedFeature) {
           rebuildFocus(S.selectedFeature);

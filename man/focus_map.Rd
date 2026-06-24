@@ -15,6 +15,7 @@ focus_map(
   context_col = NULL,
   context_values = "context",
   context_mode = c("fade", "hide", "show"),
+  coordinate_system = c("auto", "longlat", "planar"),
   context_fill = "#cfd9df",
   context_opacity = 0.18,
   context_clickable = FALSE,
@@ -35,6 +36,8 @@ focus_map(
   origin_context_position = c("bottom-left", "bottom-right", "top-left", "top-right"),
   focus_context_opacity = 0.3,
   show_drag_zoom = FALSE,
+  show_group_labels = FALSE,
+  group_labels = NULL,
   font_size = 14,
   show_labels = TRUE,
   show_sidebar = TRUE,
@@ -82,6 +85,12 @@ context features. Default \code{"context"}.}
 \item{context_mode}{How context features are drawn: \code{"fade"} keeps them
 visible but muted, \code{"hide"} makes them invisible, and \code{"show"} draws them
 normally.}
+
+\item{coordinate_system}{Coordinate system used by the widget. \code{"longlat"}
+transforms data to WGS84 and renders with a geographic projection.
+\code{"planar"} preserves projected coordinates and renders with a fitted
+planar projection. \code{"auto"} currently uses \code{"longlat"} for backwards
+compatibility.}
 
 \item{context_fill}{Fill colour for context features when
 \code{context_mode = "fade"}.}
@@ -154,6 +163,14 @@ feature is focused. Lower values make tiny selected areas easier to read.}
 users can draw a marquee rectangle to zoom into dense clusters while
 ordinary feature clicks continue to focus the map. Shift-drag works as a
 shortcut even when the button is hidden.}
+
+\item{show_group_labels}{Show one passive label per \code{group_col} value
+on the base map. Labels do not intercept pointer events, so feature
+click, hover, focus, and drag-zoom behavior are unchanged.}
+
+\item{group_labels}{Optional named character vector or list for
+\code{show_group_labels}. Names should match \code{group_col} values;
+unmatched groups use their raw group value.}
 
 \item{font_size}{Label font size in px. Default \code{14}.}
 
