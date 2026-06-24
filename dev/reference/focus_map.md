@@ -18,6 +18,7 @@ focus_map(
   context_col = NULL,
   context_values = "context",
   context_mode = c("fade", "hide", "show"),
+  coordinate_system = c("auto", "longlat", "planar"),
   context_fill = "#cfd9df",
   context_opacity = 0.18,
   context_clickable = FALSE,
@@ -38,6 +39,8 @@ focus_map(
   origin_context_position = c("bottom-left", "bottom-right", "top-left", "top-right"),
   focus_context_opacity = 0.3,
   show_drag_zoom = FALSE,
+  show_group_labels = FALSE,
+  group_labels = NULL,
   font_size = 14,
   show_labels = TRUE,
   show_sidebar = TRUE,
@@ -100,6 +103,13 @@ renderFocusmap(expr, env = parent.frame(), quoted = FALSE)
 
   How context features are drawn: `"fade"` keeps them visible but muted,
   `"hide"` makes them invisible, and `"show"` draws them normally.
+
+- coordinate_system:
+
+  Coordinate system used by the widget. `"longlat"` transforms data to
+  WGS84 and renders with a geographic projection. `"planar"` preserves
+  projected coordinates and renders with a fitted planar projection.
+  `"auto"` currently uses `"longlat"` for backwards compatibility.
 
 - context_fill:
 
@@ -204,6 +214,18 @@ renderFocusmap(expr, env = parent.frame(), quoted = FALSE)
   marquee rectangle to zoom into dense clusters while ordinary feature
   clicks continue to focus the map. Shift-drag works as a shortcut even
   when the button is hidden.
+
+- show_group_labels:
+
+  Show one passive label per `group_col` value on the base map. Labels
+  do not intercept pointer events, so feature click, hover, focus, and
+  drag-zoom behavior are unchanged.
+
+- group_labels:
+
+  Optional named character vector or list for `show_group_labels`. Names
+  should match `group_col` values; unmatched groups use their raw group
+  value.
 
 - font_size:
 
@@ -324,5 +346,5 @@ counties <- sf::st_sf(
 
 focus_map(counties, label_col = "NAME", group_col = "region")
 
-{"x":{"geojson_str":"{\n\"type\": \"FeatureCollection\",\n\"name\": \"file1e5866833936\",\n\"features\": [\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"1\", \"id\": \"1\", \"NAME\": \"A\", \"group\": \"North\", \"info_title\": \"A\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -74.0, 40.0 ], [ -74.0, 40.2 ], [ -74.2, 40.2 ], [ -74.2, 40.0 ], [ -74.0, 40.0 ] ] ] } },\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"2\", \"id\": \"2\", \"NAME\": \"B\", \"group\": \"South\", \"info_title\": \"B\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -73.7, 40.0 ], [ -73.7, 40.2 ], [ -73.9, 40.2 ], [ -73.9, 40.0 ], [ -73.7, 40.0 ] ] ] } }\n]\n}","options":{"fill":"#2d6ea3","coordinateSystem":"longlat","groupPalette":null,"contextMode":"fade","contextValues":["context"],"contextFill":"#cfd9df","contextOpacity":0.18,"contextClickable":false,"focusPreset":"none","fillOpacity":0.58,"stroke":"#ffffff","liftScale":1.16,"focusPadding":40,"focusSize":0.76,"minFocusWidth":0,"minFocusHeight":0,"tinyFeatureThreshold":48,"tinyFeatureBoost":1,"maxZoom":null,"originContext":"none","originContextPosition":"bottom-left","focusContextOpacity":0.3,"showDragZoom":false,"fontSize":14,"showLabels":true,"performanceMode":null,"showInfoCard":false,"infoPosition":"top-right","infoCols":null,"infoKeys":[],"infoLabels":null,"infoTitle":"NAME","infoCardScale":1,"areaMin":5000,"widthMin":95,"heightMin":28,"hasGroups":true}},"evals":[],"jsHooks":[]}# }
+{"x":{"geojson_str":"{\n\"type\": \"FeatureCollection\",\n\"name\": \"file1dff6ea043eb\",\n\"features\": [\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"1\", \"id\": \"1\", \"NAME\": \"A\", \"group\": \"North\", \"info_title\": \"A\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -74.0, 40.0 ], [ -74.0, 40.2 ], [ -74.2, 40.2 ], [ -74.2, 40.0 ], [ -74.0, 40.0 ] ] ] } },\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"2\", \"id\": \"2\", \"NAME\": \"B\", \"group\": \"South\", \"info_title\": \"B\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -73.7, 40.0 ], [ -73.7, 40.2 ], [ -73.9, 40.2 ], [ -73.9, 40.0 ], [ -73.7, 40.0 ] ] ] } }\n]\n}","options":{"fill":"#2d6ea3","coordinateSystem":"longlat","groupPalette":null,"contextMode":"fade","contextValues":["context"],"contextFill":"#cfd9df","contextOpacity":0.18,"contextClickable":false,"focusPreset":"none","fillOpacity":0.58,"stroke":"#ffffff","liftScale":1.16,"focusPadding":40,"focusSize":0.76,"minFocusWidth":0,"minFocusHeight":0,"tinyFeatureThreshold":48,"tinyFeatureBoost":1,"maxZoom":null,"originContext":"none","originContextPosition":"bottom-left","focusContextOpacity":0.3,"showDragZoom":false,"showGroupLabels":false,"groupLabels":null,"fontSize":14,"showLabels":true,"performanceMode":null,"showInfoCard":false,"infoPosition":"top-right","infoCols":null,"infoKeys":[],"infoLabels":null,"infoTitle":"NAME","infoCardScale":1,"areaMin":5000,"widthMin":95,"heightMin":28,"hasGroups":true}},"evals":[],"jsHooks":[]}# }
 ```
