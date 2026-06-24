@@ -13,7 +13,9 @@ app_dir  <- tryCatch(
 DATA_DIR <- Sys.getenv("APP_DATA_DIR", file.path(app_dir, "data"))
 
 ensure_data <- function() {
-  if (file.exists(file.path(DATA_DIR, "states.rds"))) return(invisible(TRUE))
+  has_states <- file.exists(file.path(DATA_DIR, "states.rds"))
+  has_display <- length(list.files(DATA_DIR, pattern = "_display\\.rds$", full.names = TRUE)) > 0
+  if (has_states && has_display) return(invisible(TRUE))
   prep <- file.path(app_dir, "prep_data.R")
   if (file.exists(prep)) {
     message("Data not found -- running prep_data.R (first run only)...")

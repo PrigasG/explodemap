@@ -62,6 +62,27 @@ STATES <- data.frame(
 
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
+read_offsets <- function(path) {
+  if (exists("read_drag_offsets", mode = "function")) {
+    return(read_drag_offsets(path, quiet = TRUE))
+  }
+
+  df <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  names(df) <- tolower(trimws(names(df)))
+  required <- c("region", "dx_m", "dy_m")
+  missing <- setdiff(required, names(df))
+  if (length(missing)) {
+    stop("'", path, "' is missing column(s): ",
+         paste(missing, collapse = ", "), ".", call. = FALSE)
+  }
+  data.frame(
+    region = as.character(df$region),
+    dx_m = suppressWarnings(as.numeric(df$dx_m)),
+    dy_m = suppressWarnings(as.numeric(df$dy_m)),
+    stringsAsFactors = FALSE
+  )
+}
+
 registry_candidates <- c(
   file.path(pkg_root, "inst", "registries", "state_registry.R"),
   file.path(pkg_root, "registries", "state_registry.R")
@@ -91,7 +112,7 @@ offset_path_for <- function(abbr) {
 
 n_regions_from_offsets <- function(path) {
   if (is.na(path) || !file.exists(path)) return(NULL)
-  nrow(read_drag_offsets(path, quiet = TRUE))
+  nrow(read_offsets(path))
 }
 
 case_config <- function(abbr) {
@@ -161,7 +182,7 @@ for (i in seq_len(nrow(STATES))) {
     }
 
     if (!is.na(cfg$offset_path) && file.exists(cfg$offset_path)) {
-      offsets <- read_drag_offsets(cfg$offset_path, quiet = TRUE)
+      offsets <- read_offsets(cfg$offset_path)
       sf_obj <- apply_region_offsets(sf_obj, offsets, region_col = "drag_region")
     } else {
       message("    [warn] no display-offset CSV found; saving formula layout")
