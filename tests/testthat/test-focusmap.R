@@ -122,6 +122,20 @@ test_that("focus_map carries drag zoom visibility option", {
   expect_true(widget$x$options$showDragZoom)
 })
 
+test_that("focus_map carries planar coordinate-system option", {
+  x <- sf::st_transform(make_test_sf(), 3857)
+
+  widget <- focus_map(
+    x,
+    label_col = "id",
+    coordinate_system = "planar",
+    simplify = FALSE
+  )
+
+  expect_s3_class(widget, "htmlwidget")
+  expect_equal(widget$x$options$coordinateSystem, "planar")
+})
+
 test_that("focus_map_preset returns municipal and drilldown options", {
   municipal <- focus_map_preset("municipal")
   expect_equal(municipal$min_focus_width, 260)

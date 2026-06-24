@@ -27,17 +27,34 @@ STATES <- tryCatch(
   readRDS(file.path(DATA_DIR, "states.rds")),
   error = function(e) data.frame(
     name = c("New Jersey", "Pennsylvania", "Texas"),
-    abbr = c("nj", "pa", "tx"),
+    abbr = c("NJ", "PA", "TX"),
     stringsAsFactors = FALSE
   )
 )
+STATES$abbr <- toupper(STATES$abbr)
 
-available <- STATES$abbr[file.exists(file.path(DATA_DIR, paste0(STATES$abbr, "_display.rds")))]
+display_path <- function(abbr) {
+  candidates <- file.path(
+    DATA_DIR,
+    paste0(c(toupper(abbr), tolower(abbr)), "_display.rds")
+  )
+  hit <- candidates[file.exists(candidates)]
+  if (length(hit)) hit[[1]] else candidates[[1]]
+}
+
+available <- STATES$abbr[file.exists(vapply(STATES$abbr, display_path, character(1)))]
 STATES    <- STATES[STATES$abbr %in% available, ]
 STATE_CHOICES <- stats::setNames(STATES$abbr, STATES$name)
+default_state <- if ("NJ" %in% STATE_CHOICES) {
+  "NJ"
+} else if (length(STATE_CHOICES)) {
+  unname(STATE_CHOICES[[1]])
+} else {
+  character(0)
+}
 
 read_display <- function(abbr) {
-  path <- file.path(DATA_DIR, paste0(tolower(abbr), "_display.rds"))
+  path <- display_path(abbr)
   if (!file.exists(path))
     stop("No baked data for '", abbr, "'. Run prep_data.R first.", call. = FALSE)
   readRDS(path)
@@ -75,8 +92,7 @@ ui <- page_navbar(
         p(class = "text-muted small mb-2",
           "Manual display offsets from the paper applied to the formula-derived exploded layout.
           Click any area to zoom in. Right-click or Esc resets."),
-        selectInput("state", "State", STATE_CHOICES,
-                    selected = if ("nj" %in% STATE_CHOICES) "nj" else STATE_CHOICES[[1]]),
+        selectInput("state", "State", STATE_CHOICES, selected = default_state),
         hr(class = "my-2"),
         checkboxInput("labels", "Show labels", value = TRUE),
         sliderInput("font", "Label size", 4, 16, 9, 1),
@@ -121,6 +137,7 @@ server <- function(input, output, session) {
       label_col        = "county_label",
       id_col           = "county_id",
       group_col        = "drag_region",
+      coordinate_system = "planar",
       info_cols        = c("county_label", "drag_region"),
       info_labels      = c(county_label = "Area", drag_region = "Region"),
       info_title       = "county_label",

@@ -307,7 +307,13 @@ HTMLWidgets.widget({
       svgEl.attr("viewBox", "0 0 " + w + " " + h);
 
       var fc = { type: "FeatureCollection", features: features };
-      projection = d3.geoMercator().fitExtent([[10, 10], [w - 10, h - 10]], fc);
+      if (opts.coordinateSystem === "planar") {
+        projection = d3.geoIdentity().reflectY(true)
+          .fitExtent([[10, 10], [w - 10, h - 10]], fc);
+      } else {
+        projection = d3.geoMercator()
+          .fitExtent([[10, 10], [w - 10, h - 10]], fc);
+      }
 
       // 2-decimal precision (0.01px) — imperceptible rounding, ~15% shorter
       // path strings vs default 6-decimal. Keeps shared county borders
@@ -380,7 +386,12 @@ HTMLWidgets.widget({
     }
 
     function featureClass(f) {
-      return "fm-county" + (isContextFeature(f) ? " fm-context" : "");
+      var cls = "fm-county";
+      if (isContextFeature(f)) {
+        cls += " fm-context";
+        if (opts.contextMode === "hide") cls += " hidden-src";
+      }
+      return cls;
     }
 
     function renderPaths() {

@@ -33,6 +33,11 @@
 #' @param context_mode How context features are drawn: `"fade"` keeps them
 #'   visible but muted, `"hide"` makes them invisible, and `"show"` draws them
 #'   normally.
+#' @param coordinate_system Coordinate system used by the widget. `"longlat"`
+#'   transforms data to WGS84 and renders with a geographic projection.
+#'   `"planar"` preserves projected coordinates and renders with a fitted
+#'   planar projection. `"auto"` currently uses `"longlat"` for backwards
+#'   compatibility.
 #' @param context_fill Fill colour for context features when
 #'   `context_mode = "fade"`.
 #' @param context_opacity Fill opacity for faded context features.
@@ -144,6 +149,7 @@ focus_map <- function(x,
                       context_col  = NULL,
                       context_values = "context",
                       context_mode = c("fade", "hide", "show"),
+                      coordinate_system = c("auto", "longlat", "planar"),
                       context_fill = "#cfd9df",
                       context_opacity = 0.18,
                       context_clickable = FALSE,
@@ -210,6 +216,10 @@ focus_map <- function(x,
   sf_obj <- .as_viewer_sf(x)
   info_position <- match.arg(info_position)
   context_mode <- match.arg(context_mode)
+  coordinate_system <- match.arg(coordinate_system)
+  if (identical(coordinate_system, "auto")) {
+    coordinate_system <- "longlat"
+  }
   origin_context <- match.arg(origin_context)
   origin_context_position <- match.arg(origin_context_position)
 
@@ -327,16 +337,18 @@ focus_map <- function(x,
     }
   }
 
-  # Repair before and after WGS84 conversion. Some display layouts use
+  # Repair before and after coordinate conversion. Some display layouts use
   # translated projected geometries that are valid for planar drawing but trip
   # s2's spherical loop checks after transformation.
   sf_obj <- .repair_widget_geometry(sf_obj)
 
-  # Ensure WGS 84
-  if (is.na(sf::st_crs(sf_obj))) {
-    sf_obj <- sf::st_set_crs(sf_obj, 4326)
-  } else if (!identical(sf::st_crs(sf_obj)$epsg, 4326L)) {
-    sf_obj <- sf::st_transform(sf_obj, 4326)
+  if (identical(coordinate_system, "longlat")) {
+    # Ensure WGS 84
+    if (is.na(sf::st_crs(sf_obj))) {
+      sf_obj <- sf::st_set_crs(sf_obj, 4326)
+    } else if (!identical(sf::st_crs(sf_obj)$epsg, 4326L)) {
+      sf_obj <- sf::st_transform(sf_obj, 4326)
+    }
   }
 
   sf_obj <- .repair_widget_geometry(sf_obj)
@@ -397,13 +409,15 @@ focus_map <- function(x,
     group_col = group_col,
     context_col = context_col,
     info_cols = info_cols,
-    info_title = info_title
+    info_title = info_title,
+    rfc7946 = identical(coordinate_system, "longlat")
   )
 
   payload <- list(
     geojson_str = geojson_str,
     options = list(
       fill         = fill,
+      coordinateSystem = coordinate_system,
       groupPalette = group_palette,
       contextMode = context_mode,
       contextValues = as.list(context_values),
@@ -507,7 +521,7 @@ renderFocusmap <- function(expr, env = parent.frame(), quoted = FALSE) {
 #' @keywords internal
 .sf_to_geojson_fast <- function(sf_obj, label_col, id_col = NULL, group_col = NULL,
                                 context_col = NULL, info_cols = NULL,
-                                info_title = label_col) {
+                                info_title = label_col, rfc7946 = TRUE) {
   # Build a slim sf with only the columns the widget needs
   slim <- data.frame(
     feature_id = as.character(seq_len(nrow(sf_obj))),
@@ -546,10 +560,15 @@ renderFocusmap <- function(expr, env = parent.frame(), quoted = FALSE) {
   old_s2 <- sf::sf_use_s2()
   on.exit(suppressMessages(sf::sf_use_s2(old_s2)), add = TRUE)
   suppressMessages(sf::sf_use_s2(FALSE))
+  layer_options <- if (isTRUE(rfc7946)) {
+    c("RFC7946=YES", "WRITE_BBOX=NO")
+  } else {
+    "WRITE_BBOX=NO"
+  }
   suppressWarnings(
     sf::st_write(slim, tmp, driver = "GeoJSON", quiet = TRUE,
                  delete_dsn = TRUE,
-                 layer_options = c("RFC7946=YES", "WRITE_BBOX=NO"))
+                 layer_options = layer_options)
   )
 
   # Return raw JSON string — JS will parse it, not R.

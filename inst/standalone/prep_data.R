@@ -3,13 +3,15 @@ suppressPackageStartupMessages({
   library(explodemap)
 })
 
-script_path <- tryCatch(
-  normalizePath(sys.frame(1)$ofile, mustWork = FALSE),
-  error = function(e) {
-    normalizePath(file.path(getwd(), "inst", "standalone", "prep_data.R"),
-                  mustWork = FALSE)
-  }
-)
+file_arg <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+script_path <- if (length(file_arg)) {
+  sub("^--file=", "", file_arg[[1]])
+} else if (file.exists(file.path(getwd(), "prep_data.R"))) {
+  file.path(getwd(), "prep_data.R")
+} else {
+  file.path(getwd(), "inst", "standalone", "prep_data.R")
+}
+script_path <- normalizePath(script_path, mustWork = FALSE)
 standalone_dir <- dirname(script_path)
 pkg_root <- normalizePath(file.path(standalone_dir, "..", ".."), mustWork = FALSE)
 data_dir <- file.path(standalone_dir, "data")

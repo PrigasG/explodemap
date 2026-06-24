@@ -1058,12 +1058,13 @@ server <- function(input, output, session) {
     res <- dd_result()
     tryCatch(
       focus_map(
-        res,
+        res$sf_exp,
         label_col = "muni_label",
         id_col = "muni_geoid",
         group_col = "county_name",
         context_col = ".explodemap_role",
         context_mode = input$dd_context,
+        coordinate_system = "planar",
         focus_preset = "drilldown",
         origin_context = "none",
         focus_context_opacity = 0.08,
@@ -1122,6 +1123,7 @@ server <- function(input, output, session) {
         label_col = "state_label",
         id_col = "state_geoid",
         group_col = "hhs_region",
+        coordinate_system = "planar",
         group_palette = hhs_colors,
         info_cols = c("state_label", "STUSPS", "hhs_region_name"),
         info_labels = c(
