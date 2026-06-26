@@ -1164,6 +1164,22 @@ HTMLWidgets.widget({
             // leave the new widget in a zoomed-in state.
             S.currentTransform = d3.zoomIdentity;
             setShinyInput(el.id + "_status", "ready");
+
+            // Restore a saved selection (focus_map(restore_selection = TRUE)).
+            // Guarded: only runs when an initialFocus key is present, so default
+            // renders are unaffected. No-op when no feature matches.
+            if (opts.initialFocus != null && opts.initialFocus !== "") {
+              var wanted = String(opts.initialFocus);
+              var target = features.find(function (f) {
+                var p = f.properties || {};
+                // p.id carries the user's stable id_col -- the value Shiny code
+                // and dragmapr_state$selected_feature usually treat as identity.
+                return [p.id, p.feature_id, p.NAME, p.group, p.drag_region].some(function (v) {
+                  return v != null && String(v) === wanted;
+                });
+              });
+              if (target) beginSelection(target);
+            }
           });
         });
 
@@ -1213,8 +1229,47 @@ HTMLWidgets.widget({
         }
       },
 
+      updateFocusLabels: function (value) {
+        opts.showLabels = !(value && value.show === false);
+        if (S.mode === "focused" && S.selectedFeature) rebuildFocus(S.selectedFeature);
+      },
+      updateFocusPalette: function (value) {
+        opts.groupPalette = value || {};
+        buildColorScale();
+        renderPaths();
+        renderGroupLabels();
+        if (S.mode === "focused" && S.selectedFeature) rebuildFocus(S.selectedFeature);
+      },
+      updateFocusData: function (value) {
+        if (!value) return;
+        this.renderValue(value);
+      },
       getState: function () { return S; },
       clearFocus: clearFocus
     };
   }
 });
+
+(function () {
+  if (window.__explodemap_focusmap_proxy_installed) return;
+  window.__explodemap_focusmap_proxy_installed = true;
+
+  function install() {
+    if (!window.Shiny || !window.HTMLWidgets ||
+        typeof Shiny.addCustomMessageHandler !== "function") {
+      return false;
+    }
+    Shiny.addCustomMessageHandler("explodemap-focusmap-proxy", function (msg) {
+      if (!msg || !msg.id || !msg.method) return;
+      var widget = HTMLWidgets.find("#" + msg.id);
+      if (widget && typeof widget[msg.method] === "function") {
+        widget[msg.method](msg.value);
+      }
+    });
+    return true;
+  }
+
+  if (!install()) {
+    document.addEventListener("DOMContentLoaded", install, { once: true });
+  }
+})();

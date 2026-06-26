@@ -65,6 +65,16 @@ test_that("explode_sf errors on missing grouping column", {
   )
 })
 
+test_that("explode_sf gives targeted missing geometry-column error", {
+  x <- make_test_sf()
+  names(x)[names(x) == "geometry"] <- "geom"
+
+  expect_error(
+    explode_sf(x, region_col = "region", plot = FALSE),
+    "active sf geometry column"
+  )
+})
+
 test_that("explode_sf errors on geographic CRS", {
   x <- make_test_sf() |> sf::st_transform(4326)
 

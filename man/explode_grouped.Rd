@@ -9,6 +9,8 @@ explode_grouped(
   region_col,
   mode = c("auto", "auto_collision", "manual"),
   anchors = NULL,
+  initial_layout = NULL,
+  preserve_manual = FALSE,
   alpha_l = NULL,
   p = 1.25,
   gamma_l = 1.136,
@@ -39,6 +41,12 @@ explode_grouped(
 \item{mode}{"auto", "auto_collision", or "manual"}
 
 \item{anchors}{For mode = "manual": data.frame with anchor positions}
+
+\item{initial_layout}{Optional existing/manual anchor layout used when
+\code{preserve_manual = TRUE}.}
+
+\item{preserve_manual}{When \code{TRUE}, use \code{initial_layout} as starting anchors
+so parameter changes refine an existing composition instead of replacing it.}
 
 \item{alpha_l}{Local expansion parameter for Level 1 (metres)}
 

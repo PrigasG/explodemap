@@ -9,6 +9,8 @@ layout_regions(
   region_col,
   mode = c("auto", "auto_collision", "manual"),
   anchors = NULL,
+  initial_layout = NULL,
+  preserve_manual = FALSE,
   kappa = 1.8,
   padding = 50000,
   delta = 15000,
@@ -29,6 +31,13 @@ layout_regions(
 \item{mode}{"auto" (radial only), "auto_collision" (radial + solver), or "manual"}
 
 \item{anchors}{For mode = "manual": data.frame with columns (region_col, anchor_x, anchor_y)}
+
+\item{initial_layout}{Optional data.frame with columns (region_col,
+anchor_x, anchor_y), or a grouped layout object. Used when
+\code{preserve_manual = TRUE}.}
+
+\item{preserve_manual}{If \code{TRUE}, use \code{initial_layout} as starting anchors
+before optional collision refinement.}
 
 \item{kappa}{Radial expansion factor (default 1.8)}
 

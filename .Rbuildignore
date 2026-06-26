@@ -1,4 +1,6 @@
 ^.*\.Rproj$
+^\.git$
+^\.git/
 ^_pkgdown\.yml$
 ^\.Rproj\.user$
 ^\.claude$
@@ -15,3 +17,7 @@
 ^inst/huggingface/data$
 ^inst/huggingface/Dockerfile$
 ^inst/huggingface/\.dockerignore$
+^inst/standalone/data$
+^dev$
+^Rplots\.pdf$
+^tests/testthat/Rplots\.pdf$

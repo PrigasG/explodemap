@@ -25,6 +25,11 @@ non-blocking information cards.
   : Interactive focus-map viewer
 - [`focus_map_preset()`](https://prigasg.github.io/explodemap/reference/focus_map_preset.md)
   : Focus-map option presets
+- [`focusMapProxy()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md)
+  [`update_focus_labels()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md)
+  [`update_focus_palette()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md)
+  [`update_focus_data()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md)
+  : Focus-map Shiny proxy
 
 ## Grouped layouts
 
@@ -37,6 +42,54 @@ optional collision-aware refinement.
   : Compute region anchor positions for grouped layouts
 - [`estimate_block_radii()`](https://prigasg.github.io/explodemap/reference/estimate_block_radii.md)
   : Estimate block radius for each region
+
+## State-first composition (dragmapr bridge)
+
+Hand a computed layout to the dragmapr editor as a reusable
+dragmapr_state, then apply edited compositions back. as_dragmapr_state()
+is the preferred handoff; the resulting state is accepted by
+focus_map(), render_dragged_map(), and update_exploded_layout().
+as_dragmapr() is the legacy low-level handoff.
+
+- [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md)
+  : Convert a grouped layout to a dragmapr editing state
+- [`update_exploded_layout()`](https://prigasg.github.io/explodemap/reference/update_exploded_layout.md)
+  : Update an exploded grouped layout after manual composition
+- [`as_dragmapr()`](https://prigasg.github.io/explodemap/reference/as_dragmapr.md)
+  : Convert a grouped layout to a drag-edit handoff object (legacy)
+
+## Input preparation and app primitives
+
+Reusable validation, simplification, grouping, palette, and fingerprint
+helpers that support Shiny apps, examples, and preprocessing pipelines.
+
+- [`validate_explodemap_input()`](https://prigasg.github.io/explodemap/reference/validate_explodemap_input.md)
+  : Validate explodemap input
+- [`prepare_explodemap_input()`](https://prigasg.github.io/explodemap/reference/prepare_explodemap_input.md)
+  : Prepare input for grouped explodemap layouts
+- [`count_geometry_vertices()`](https://prigasg.github.io/explodemap/reference/count_geometry_vertices.md)
+  : Count geometry vertices
+- [`simplify_to_vertex_budget()`](https://prigasg.github.io/explodemap/reference/simplify_to_vertex_budget.md)
+  : Simplify geometry to a vertex budget
+- [`assign_spatial_groups()`](https://prigasg.github.io/explodemap/reference/assign_spatial_groups.md)
+  : Assign generated spatial groups
+- [`group_palette()`](https://prigasg.github.io/explodemap/reference/group_palette.md)
+  : Create a stable group palette
+- [`explodemap_fingerprint()`](https://prigasg.github.io/explodemap/reference/explodemap_fingerprint.md)
+  : Fingerprint explodemap geometry and grouping
+
+## Layout quality and optimization
+
+Score a grouped layout and search for better region placements.
+
+- [`diagnose_layout()`](https://prigasg.github.io/explodemap/reference/diagnose_layout.md)
+  : Diagnose grouped layout quality
+- [`plot(`*`<layout_quality_report>`*`)`](https://prigasg.github.io/explodemap/reference/plot.layout_quality_report.md)
+  : Plot a grouped-layout diagnostic
+- [`layout_objective()`](https://prigasg.github.io/explodemap/reference/layout_objective.md)
+  : Build layout objective weights
+- [`optimize_grouped_layout()`](https://prigasg.github.io/explodemap/reference/optimize_grouped_layout.md)
+  : Search grouped-layout parameters
 
 ## Statistics and calibration
 
@@ -64,6 +117,26 @@ Optional export helpers and cache management utilities.
   : List cached datasets
 - [`cache_clear()`](https://prigasg.github.io/explodemap/reference/cache_clear.md)
   : Clear explodemap download cache
+
+## HHS reference maps
+
+Ready-made U.S. Department of Health and Human Services region layouts,
+palettes, and a one-call focus map for HHS-style placeholder shapes.
+
+- [`hhs_layout()`](https://prigasg.github.io/explodemap/reference/hhs_layout.md)
+  : Build an HHS reference layout
+- [`hhs_focus_map()`](https://prigasg.github.io/explodemap/reference/hhs_focus_map.md)
+  : Create a focus-map widget for HHS regions
+- [`as_hhs_states()`](https://prigasg.github.io/explodemap/reference/as_hhs_states.md)
+  : Standardize state polygons for HHS reference maps
+- [`hhs_regions()`](https://prigasg.github.io/explodemap/reference/hhs_regions.md)
+  : HHS regional assignments for states and territories
+- [`hhs_region_names()`](https://prigasg.github.io/explodemap/reference/hhs_region_names.md)
+  : HHS region display names
+- [`hhs_display_offsets()`](https://prigasg.github.io/explodemap/reference/hhs_display_offsets.md)
+  : HHS reference-layout display offsets
+- [`hhs_palette()`](https://prigasg.github.io/explodemap/reference/hhs_palette.md)
+  : HHS region colour palette
 
 ## Methods
 

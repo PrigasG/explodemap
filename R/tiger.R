@@ -49,8 +49,9 @@
 }
 
 .download_file_or_stop <- function(url, dest, label) {
+  dl_method <- if (isTRUE(capabilities("libcurl"))) "libcurl" else "auto"
   status <- tryCatch(
-    utils::download.file(url, dest, quiet = TRUE, mode = "wb"),
+    utils::download.file(url, dest, quiet = TRUE, mode = "wb", method = dl_method),
     error = function(e) {
       stop(
         "Could not download ", label, " from the Census TIGER/Line server. ",
@@ -99,8 +100,8 @@
       obj <- sf::st_transform(obj, crs)
     return(obj)
   }
-  url <- paste0("https://www2.census.gov/geo/tiger/TIGER2024/COUSUB/",
-                "tl_2024_", fips, "_cousub.zip")
+  url <- paste0("https://www2.census.gov/geo/tiger/TIGER2025/COUSUB/",
+                "tl_2025_", fips, "_cousub.zip")
   tmp <- tempfile(fileext = ".zip")
   .download_file_or_stop(url, tmp, paste0("county subdivisions for FIPS ", fips))
   dir <- file.path(tempdir(), paste0("cousub_", fips, "_", Sys.getpid()))
@@ -136,7 +137,7 @@
 .get_national_counties <- function() {
   key <- "counties_national"
   if (.cache_exists(key)) return(.cache_load(key))
-  url <- "https://www2.census.gov/geo/tiger/TIGER2024/COUNTY/tl_2024_us_county.zip"
+  url <- "https://www2.census.gov/geo/tiger/TIGER2025/COUNTY/tl_2025_us_county.zip"
   tmp <- tempfile(fileext = ".zip")
   .download_file_or_stop(url, tmp, "national county lookup")
   dir <- file.path(tempdir(), paste0("county_nat_", Sys.getpid()))
@@ -219,37 +220,58 @@
     return(obj)
   }
 
-  url <- paste0("https://www2.census.gov/geo/tiger/TIGER2024/COUNTY/",
-                "tl_2024_", fips, "_county.zip")
-  tmp <- tempfile(fileext = ".zip")
-  .download_file_or_stop(url, tmp, paste0("county boundaries for FIPS ", fips))
-
-  dir <- file.path(tempdir(), paste0("county_", fips, "_", Sys.getpid()))
-  dir.create(dir, showWarnings = FALSE)
-  tryCatch(
-    utils::unzip(tmp, exdir = dir),
-    error = function(e) {
-      stop(
-        "Could not unzip county data for FIPS ", fips, ". ",
-        "The downloaded file may be incomplete. Please try again. ",
-        "Details: ", conditionMessage(e),
-        call. = FALSE
-      )
-    }
-  )
-
-  shp <- list.files(dir, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
-  if (!length(shp)) {
-    stop(
-      "County data for FIPS ", fips, " did not contain a shapefile. ",
-      "The Census download may have changed or failed.",
-      call. = FALSE
+  read_shp_from_zip <- function(zip_path, label) {
+    d <- file.path(tempdir(), paste0("cty_", label, "_", Sys.getpid()))
+    dir.create(d, showWarnings = FALSE)
+    tryCatch(
+      utils::unzip(zip_path, exdir = d),
+      error = function(e) stop("Could not unzip ", label, ": ", conditionMessage(e), call. = FALSE)
     )
+    shp <- list.files(d, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+    if (!length(shp))
+      stop("No shapefile found in ", label, " download.", call. = FALSE)
+    sf::st_read(shp[1], quiet = TRUE)
   }
 
-  obj <- sf::st_read(shp[1], quiet = TRUE) |>
-    sf::st_transform(crs)
+  # Try per-state file first (smaller download)
+  state_url <- paste0("https://www2.census.gov/geo/tiger/TIGER2025/COUNTY/",
+                      "tl_2025_", fips, "_county.zip")
+  tmp <- tempfile(fileext = ".zip")
+  state_ok <- tryCatch({
+    .download_file_or_stop(state_url, tmp, paste0("county boundaries for FIPS ", fips))
+    TRUE
+  }, error = function(e) FALSE)
+
+  if (state_ok) {
+    obj <- tryCatch(
+      read_shp_from_zip(tmp, fips),
+      error = function(e) NULL
+    )
+    if (!is.null(obj)) {
+      obj <- sf::st_transform(obj, crs)
+      .cache_save(key, obj)
+      return(obj)
+    }
+  }
+
+  # Fall back to the national county file filtered by state FIPS
+  nat_key <- "counties_national_geom"
+  if (.cache_exists(nat_key)) {
+    nat <- .cache_load(nat_key)
+  } else {
+    nat_url <- "https://www2.census.gov/geo/tiger/TIGER2025/COUNTY/tl_2025_us_county.zip"
+    nat_tmp <- tempfile(fileext = ".zip")
+    .download_file_or_stop(nat_url, nat_tmp, "national county boundaries")
+    nat <- read_shp_from_zip(nat_tmp, "national")
+    .cache_save(nat_key, nat)
+  }
+
+  obj <- nat[nat$STATEFP == fips, ]
+  if (!nrow(obj))
+    stop("No counties found for FIPS ", fips, " in the national county file.", call. = FALSE)
+  obj <- sf::st_transform(obj, crs)
   .cache_save(key, obj)
+  obj
 }
 
 

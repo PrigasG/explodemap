@@ -16,15 +16,11 @@ The methodology implemented here is described in:
 
 ## Live demo
 
-Try the package in your browser — no install required — via the interactive
-gallery hosted on Hugging Face Spaces:
+Try the package in your browser — no install required — via the interactive gallery hosted on Hugging Face Spaces:
 
 **🤗 [explodemap gallery](https://huggingface.co/spaces/Prigas89/explodemap-gallery)**
 
-The gallery showcases focus maps of U.S. counties and municipalities, the
-`explode_section()` drill-down workflow, the national HHS grouped layout, and an
-interactive parameter lab. Its source, data-prep script, and Dockerfile live in
-[`inst/huggingface/`](inst/huggingface) and can be redeployed to any Docker host.
+The gallery showcases focus maps of U.S. counties and municipalities, the `explode_section()` drill-down workflow, the national HHS grouped layout, and an interactive parameter lab. Its source, data-prep script, and Dockerfile live in [`inst/huggingface/`](inst/huggingface) and can be redeployed to any Docker host.
 
 ## Installation
 
@@ -48,6 +44,10 @@ install.packages("explodemap_0.2.0.tar.gz", repos = NULL, type = "source")
 The package also includes analytical parameter derivation, cross-dataset calibration helpers, optional bounded collision refinement for dense municipal cores, and optional TopoJSON export for downstream tools such as Power BI. Shiny workflows are supported with `focusmapOutput()`, `renderFocusmap()`, stable selection events, information cards, and `quiet = TRUE` options on geometry builders to keep server logs clean.
 
 For a compact overview, see the [workflow guide](https://prigasg.github.io/explodemap/articles/workflow-guide.html).
+
+## Roadmap
+
+The cross-package roadmap for `explodemap`, `dragmapr`, and Pipeline Studio is tracked in [ROADMAP.md](ROADMAP.md). The immediate priority is to promote the proven geometry, validation, palette, fingerprint, and editable-state helpers that emerged from Pipeline Studio into package-tested APIs while keeping upload policy and UI orchestration in the app.
 
 ## Quick start
 
@@ -129,8 +129,7 @@ result <- explode_sf(my_sf, region_col = "district")
 
 `explode_state()` supports two boundary levels via the `level` argument.
 
-**County subdivision level** (`level = "cousub"`, default) — best for northeastern
-and midwestern states where municipalities tile the state completely:
+**County subdivision level** (`level = "cousub"`, default) — best for northeastern and midwestern states where municipalities tile the state completely:
 
 ``` r
 nj <- explode_state(
@@ -145,8 +144,7 @@ nj <- explode_state(
 )
 ```
 
-**County level** (`level = "county"`) — works for all 50 states. Pass `n_regions`
-for automatic k-means region assignment, or supply a named `region_map`:
+**County level** (`level = "county"`) — works for all 50 states. Pass `n_regions` for automatic k-means region assignment, or supply a named `region_map`:
 
 ``` r
 # Automatic k-means regions
@@ -280,6 +278,34 @@ Grouped layouts also support:
 
 ``` r
 plot(result, "all")       # original + local + grouped
+```
+
+## State-first composition (recommended)
+
+A computed layout can be handed to the [dragmapr](https://prigasg.github.io/dragmapr/) editor as a single, reusable **composition object** — a `dragmapr_state`. Keep the two ideas separate: the **layout** is the computed geometry, the **state** is your editorial composition over it. Every step downstream accepts the state via `state =`. The two packages share this exact workflow — the five lines below are identical in both packages' READMEs:
+
+``` r
+# layout = the computed geometry;  state = your editorial composition over it
+library(explodemap)
+library(dragmapr)
+
+layout <- explode_grouped(my_sf, region_col = "region")   # 1. compute
+state  <- as_dragmapr_state(layout)                        # 2. hand off as state
+
+dragmapr_edit(layout, state = state)                       # 3. compose (edit)
+
+focus_map(layout, state = state)                           # 4a. render — interactive
+render_dragged_map(layout$sf_grouped,                      # 4b. render — static
+                   region_col = "region", state = state)
+```
+
+`as_dragmapr_state()` is the preferred handoff (`focus_map()` also takes `restore_selection = TRUE` to reopen on a saved selection). The older `as_dragmapr()` returns a raw `dragmapr_layout` of geometry plus offset tables; it remains a low-level escape hatch but is no longer the recommended entry point. See `inst/examples/state_first_workflow.R` for the full pipeline.
+
+For a stronger cross-package example with diagnostics, label-aware parameter search, JSON state persistence, interactive focus, and static rendering:
+
+``` r
+source(system.file("examples/explodemap_dragmapr_pipeline.R",
+                   package = "explodemap"))
 ```
 
 ## Interactive focus maps

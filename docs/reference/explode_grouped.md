@@ -12,6 +12,8 @@ explode_grouped(
   region_col,
   mode = c("auto", "auto_collision", "manual"),
   anchors = NULL,
+  initial_layout = NULL,
+  preserve_manual = FALSE,
   alpha_l = NULL,
   p = 1.25,
   gamma_l = 1.136,
@@ -52,6 +54,16 @@ explode_grouped(
 - anchors:
 
   For mode = "manual": data.frame with anchor positions
+
+- initial_layout:
+
+  Optional existing/manual anchor layout used when
+  `preserve_manual = TRUE`.
+
+- preserve_manual:
+
+  When `TRUE`, use `initial_layout` as starting anchors so parameter
+  changes refine an existing composition instead of replacing it.
 
 - alpha_l:
 

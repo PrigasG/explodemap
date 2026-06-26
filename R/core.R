@@ -55,6 +55,7 @@ validate_input <- function(sf_obj, region_col,
                            fix_invalid = TRUE) {
   if (!inherits(sf_obj, "sf"))
     stop("`sf_obj` must be an sf object.", call. = FALSE)
+  .validate_sf_geometry_column(sf_obj)
   if (!(region_col %in% names(sf_obj)))
     stop("Column '", region_col, "' not found. Available: ",
          paste(names(sf_obj), collapse = ", "), call. = FALSE)
@@ -92,6 +93,26 @@ validate_input <- function(sf_obj, region_col,
          "Fix your grouping or pass allow_other = TRUE.", call. = FALSE)
 
   sf_obj
+}
+
+.validate_sf_geometry_column <- function(sf_obj) {
+  geom_col <- attr(sf_obj, "sf_column")
+  if (is.null(geom_col) || length(geom_col) != 1L || !nzchar(geom_col)) {
+    stop(
+      "`sf_obj` does not record an active sf geometry column. ",
+      "Set it with st_geometry(x) <- \"geometry_column_name\".",
+      call. = FALSE
+    )
+  }
+  if (!geom_col %in% names(sf_obj)) {
+    stop(
+      "The active sf geometry column is \"", geom_col, "\", but no column with that ",
+      "name exists. The geometry column may have been renamed with names(). ",
+      "Use st_geometry(x) <- \"new_column_name\".",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
 }
 
 

@@ -11,7 +11,8 @@
   group_col = NULL,
   context_col = NULL,
   info_cols = NULL,
-  info_title = label_col
+  info_title = label_col,
+  rfc7946 = TRUE
 )
 }
 \description{

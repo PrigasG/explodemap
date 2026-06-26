@@ -11,7 +11,7 @@ extension from Section 12 of the paper."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">explodemap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,7 @@ extension from Section 12 of the paper."><meta property="og:image" content="http
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Getting started</a></li>
     <li><a class="dropdown-item" href="../articles/workflow-guide.html">Choosing a workflow</a></li>
     <li><a class="dropdown-item" href="../articles/grouped-layouts.html">Grouped layouts and anchor placement</a></li>
+    <li><a class="dropdown-item" href="../articles/state-first-composition.html">State-first composition with dragmapr</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing paper examples and drag helpers</a></li>
   </ul></li>
@@ -60,6 +61,8 @@ extension from Section 12 of the paper.</p>
 <span>  <span class="va">region_col</span>,</span>
 <span>  mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"auto_collision"</span>, <span class="st">"manual"</span><span class="op">)</span>,</span>
 <span>  anchors <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  initial_layout <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  preserve_manual <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  alpha_l <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  p <span class="op">=</span> <span class="fl">1.25</span>,</span>
 <span>  gamma_l <span class="op">=</span> <span class="fl">1.136</span>,</span>
@@ -101,6 +104,16 @@ extension from Section 12 of the paper.</p>
 
 <dt id="arg-anchors">anchors<a class="anchor" aria-label="anchor" href="#arg-anchors"></a></dt>
 <dd><p>For mode = "manual": data.frame with anchor positions</p></dd>
+
+
+<dt id="arg-initial-layout">initial_layout<a class="anchor" aria-label="anchor" href="#arg-initial-layout"></a></dt>
+<dd><p>Optional existing/manual anchor layout used when
+<code>preserve_manual = TRUE</code>.</p></dd>
+
+
+<dt id="arg-preserve-manual">preserve_manual<a class="anchor" aria-label="anchor" href="#arg-preserve-manual"></a></dt>
+<dd><p>When <code>TRUE</code>, use <code>initial_layout</code> as starting anchors
+so parameter changes refine an existing composition instead of replacing it.</p></dd>
 
 
 <dt id="arg-alpha-l">alpha_l<a class="anchor" aria-label="anchor" href="#arg-alpha-l"></a></dt>

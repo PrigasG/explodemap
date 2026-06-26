@@ -1,3 +1,59 @@
+# explodemap 0.3.0
+
+* Release A of the Pipeline Studio extraction adds reusable input-preparation
+  primitives: `count_geometry_vertices()`, `simplify_to_vertex_budget()`,
+  `assign_spatial_groups()`, `validate_explodemap_input()`,
+  `prepare_explodemap_input()`, `group_palette()`, and
+  `explodemap_fingerprint()`. These functions move proven geometry,
+  validation, palette, simplification, grouping, and compatibility helpers out
+  of the app layer while keeping upload policy and UI orchestration in Pipeline
+  Studio.
+* `focus_map()` no longer emits the noisy "st_simplify does not correctly
+  simplify longitude/latitude data" warning when it simplifies its WGS84 widget
+  copy; the simplification is render-only and the warning is now suppressed.
+  (Pass `simplify = FALSE`, or pre-simplify in a projected CRS, when dense
+  layers such as municipalities look over-angular.)
+* New `inst/shiny/pipeline-studio` Shiny app (shipped with both explodemap and
+  dragmapr) demonstrates the full cross-package workflow on real US geography:
+  the national HHS exploded map and a state county drill-down with diagnostics
+  and label-aware search, the dragmapr draggable editor with `dragmapr_state`
+  round-trip, and a combined compute -> compose -> render -> persist studio.
+  Run with `shiny::runApp(system.file("shiny/pipeline-studio", package = "explodemap"))`.
+* Added `inst/examples/explodemap_dragmapr_pipeline.R`, a complete
+  cross-package example covering layout optimization, diagnostics, editable
+  state, JSON persistence, `focus_map()`, and `dragmapr::render_dragged_map()`.
+* `as_dragmapr_state()` is the preferred state-first bridge to `dragmapr`,
+  emitting a `dragmapr::dragmapr_state()` that `state =` arguments accept across
+  `focus_map()`, `render_dragged_map()`, and `update_exploded_layout()`. The
+  older `as_dragmapr()` is now documented as legacy/low-level (still supported,
+  not deprecated).
+* `focus_map()` gains `restore_selection` (default `FALSE`): when `TRUE` and the
+  supplied `state` carries a `selected_feature`, the map opens focused on that
+  feature, reproducing a saved composition's focus. The behavior is fully
+  opt-in, so default renders are unchanged.
+* New `inst/examples/state_first_workflow.R` shows the canonical pipeline:
+  `explode_grouped()` -> `as_dragmapr_state()` -> `dragmapr_edit()` ->
+  `focus_map(state = )` / `render_dragged_map(state = )`.
+* `update_focus_palette()` now preserves the palette's names so the browser can
+  key `groupPalette` by group. Previously the colours were sent as an unnamed
+  array and silently ignored (the map fell back to the automatic palette). The
+  focus-map proxy operations (`update_focus_labels()`, `update_focus_palette()`,
+  `update_focus_data()`) now have regression tests.
+* `update_focus_data()` documents its behavior explicitly: a data swap rebuilds
+  the widget and returns it to the idle view. Pass `state` and
+  `restore_selection = TRUE` through `...` to keep a feature focused across the
+  swap.
+* `plot()` on a `diagnose_layout()` report now draws the region blocks inside
+  the layout's canvas frame (so unused space is visible) and a red segment
+  between every overlapping region pair, instead of plotting bare anchor points.
+* `optimize_grouped_layout()` gains `label_col` / `label_size`. When supplied,
+  the parameter search becomes label-aware -- each candidate is scored for
+  approximate label overlaps via the `label_overlap` objective weight. Left
+  `NULL` (the default) the result is identical to before.
+* `focus_map()` now validates the active sf geometry column up front, so a
+  malformed `sf` fails with the same clear message used by `explode_sf()` and
+  `explode_grouped()` rather than a deep, cryptic error.
+
 # explodemap 0.2.0
 
 ## New features
@@ -20,6 +76,10 @@
 * Added `explode_section()` for drill-down dashboards that explode one
   selected section while keeping the remaining geography as faded or hidden
   context for `focus_map()`.
+* Added the first `dragmapr_state` bridge: `as_dragmapr_state()` exports a
+  grouped layout as a shared editorial composition state, and
+  `update_exploded_layout()` / `focus_map(state = ...)` can consume that state
+  after manual editing.
 
 ## Improvements
 

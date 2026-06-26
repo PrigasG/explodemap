@@ -595,6 +595,14 @@ focus_sidebar <- function(prefix, intro, default_preset = "none",
   )
 }
 
+focus_simplify_value <- function(input, id, default = TRUE) {
+  if (isTRUE(input[[id("simplify")]])) {
+    # convert metres to ~degrees for the WGS84 widget copy
+    return(max(input[[id("simplify_m")]], 1) / 111000)
+  }
+  default
+}
+
 # Main content (diagnostics strip + map card) for the two focus-map tabs.
 focus_panel_body <- function(prefix) {
   tagList(
@@ -859,7 +867,8 @@ server <- function(input, output, session) {
   })
 
   # ----- Generic focus-map tab wiring (counties + municipalities) -----------
-  make_focus_tab <- function(prefix, layer_suffix, label_col, id_col, info_cols, info_labels, info_title) {
+  make_focus_tab <- function(prefix, layer_suffix, label_col, id_col, info_cols,
+                             info_labels, info_title, simplify_default = TRUE) {
     id <- function(x) paste0(prefix, "_", x)
 
     raw_layer <- reactive({
@@ -916,10 +925,7 @@ server <- function(input, output, session) {
           focus_padding = input[[id("focus_pad")]],
           info_card_scale = input[[id("card")]],
           performance_mode = isTRUE(input[[id("perf")]]),
-          simplify = if (isTRUE(input[[id("simplify")]])) {
-            # convert metres to ~degrees for the WGS84 widget copy
-            max(input[[id("simplify_m")]], 1) / 111000
-          } else TRUE,
+          simplify = focus_simplify_value(input, id, simplify_default),
           width = "100%", height = "100%"
         ),
         error = function(e) validate(need(FALSE, app_error("render the map", e)))
@@ -955,7 +961,8 @@ server <- function(input, output, session) {
     info_cols = c("muni_label", "county_name", "muni_geoid"),
     info_labels = c(muni_label = "Subdivision", county_name = "County",
                     region = "Exploded region", muni_geoid = "GEOID"),
-    info_title = "muni_label"
+    info_title = "muni_label",
+    simplify_default = FALSE
   )
 
   # ----- Drill-down tab -----------------------------------------------------

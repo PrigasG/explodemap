@@ -13,6 +13,8 @@ focus_map(
   group_col = NULL,
   group_palette = NULL,
   context_col = NULL,
+  state = NULL,
+  restore_selection = FALSE,
   context_values = "context",
   context_mode = c("fade", "hide", "show"),
   coordinate_system = c("auto", "longlat", "planar"),
@@ -78,6 +80,15 @@ fall back to the widget palette.}
 
 \item{context_col}{Optional column identifying features that should remain
 as geographic context rather than active focus features.}
+
+\item{state}{Optional \code{dragmapr_state} editorial composition. Region offsets
+are applied before the widget data is transformed/simplified.}
+
+\item{restore_selection}{When \code{TRUE} and \code{state} carries a \code{selected_feature},
+the map opens focused on that feature (matched by \code{id_col} value or feature
+name), reproducing a saved composition's focus. Defaults to \code{FALSE} so the
+map opens in its normal idle view. No-op when the selection is empty or the
+feature is not found.}
 
 \item{context_values}{Character vector of values in \code{context_col} that mark
 context features. Default \code{"context"}.}

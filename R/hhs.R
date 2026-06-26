@@ -124,13 +124,13 @@ as_hhs_states <- function(states, crs = 5070) {
     } else if ("STUSPS" %in% names(states)) {
       states <- dplyr::left_join(
         dplyr::mutate(states, STUSPS = as.character(.data$STUSPS)),
-        dplyr::select(lookup, STUSPS, hhs_region),
+        dplyr::select(lookup, dplyr::all_of(c("STUSPS", "hhs_region"))),
         by = "STUSPS"
       )
     } else if ("NAME" %in% names(states)) {
       states <- dplyr::left_join(
         dplyr::mutate(states, state = tolower(.data$NAME)),
-        dplyr::select(lookup, state, hhs_region),
+        dplyr::select(lookup, dplyr::all_of(c("state", "hhs_region"))),
         by = "state"
       )
     } else {
@@ -208,7 +208,7 @@ hhs_layout <- function(states,
       x = .data$x + .data$dx_m,
       y = .data$y + .data$dy_m
     )
-    labels <- dplyr::select(labels, region, x, y)
+    labels <- dplyr::select(labels, dplyr::all_of(c("region", "x", "y")))
   }
 
   list(

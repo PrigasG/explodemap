@@ -50,6 +50,8 @@ navbar:
         href: articles/workflow-guide.html
       - text: Grouped layouts and anchor placement
         href: articles/grouped-layouts.html
+      - text: State-first composition with dragmapr
+        href: articles/state-first-composition.html
       - text: '---'
       - text: Reproducing paper examples and drag helpers
         href: articles/reproducing-paper-examples.html
@@ -85,6 +87,7 @@ reference:
   - focus_map_preset
   - focusmapOutput
   - renderFocusmap
+  - focusMapProxy
 - title: Grouped layouts
   desc: |
     Functions for three-level grouped layouts with anchor placement and optional collision-aware refinement.
@@ -92,6 +95,33 @@ reference:
   - explode_grouped
   - layout_regions
   - estimate_block_radii
+- title: State-first composition (dragmapr bridge)
+  desc: |
+    Hand a computed layout to the dragmapr editor as a reusable dragmapr_state, then apply edited compositions back. as_dragmapr_state() is the preferred handoff; the resulting state is accepted by focus_map(), render_dragged_map(), and update_exploded_layout(). as_dragmapr() is the legacy low-level handoff.
+  contents:
+  - as_dragmapr_state
+  - update_exploded_layout
+  - as_dragmapr
+- title: Input preparation and app primitives
+  desc: |
+    Reusable validation, simplification, grouping, palette, and fingerprint
+    helpers that support Shiny apps, examples, and preprocessing pipelines.
+  contents:
+  - validate_explodemap_input
+  - prepare_explodemap_input
+  - count_geometry_vertices
+  - simplify_to_vertex_budget
+  - assign_spatial_groups
+  - group_palette
+  - explodemap_fingerprint
+- title: Layout quality and optimization
+  desc: |
+    Score a grouped layout and search for better region placements.
+  contents:
+  - diagnose_layout
+  - plot.layout_quality_report
+  - layout_objective
+  - optimize_grouped_layout
 - title: Statistics and calibration
   desc: |
     Tools for computing geometry statistics, deriving parameters, and building calibration summaries across datasets.
@@ -108,6 +138,17 @@ reference:
   - read_drag_offsets
   - cache_list
   - cache_clear
+- title: HHS reference maps
+  desc: |
+    Ready-made U.S. Department of Health and Human Services region layouts, palettes, and a one-call focus map for HHS-style placeholder shapes.
+  contents:
+  - hhs_layout
+  - hhs_focus_map
+  - as_hhs_states
+  - hhs_regions
+  - hhs_region_names
+  - hhs_display_offsets
+  - hhs_palette
 - title: Methods
   desc: |
     S3 methods for printing, plotting, summarising, and extracting tabular results from exploded map objects.
@@ -126,6 +167,8 @@ articles:
   contents: workflow-guide
 - title: Grouped layouts
   contents: grouped-layouts
+- title: State-first composition
+  contents: state-first-composition
 - title: Paper replication and drag helpers
   contents: reproducing-paper-examples
 footer:

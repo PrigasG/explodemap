@@ -221,6 +221,11 @@ estimate_block_radii <- function(sf_obj, region_col,
 #' @param region_col Grouping column name
 #' @param mode "auto" (radial only), "auto_collision" (radial + solver), or "manual"
 #' @param anchors For mode = "manual": data.frame with columns (region_col, anchor_x, anchor_y)
+#' @param initial_layout Optional data.frame with columns (region_col,
+#'   anchor_x, anchor_y), or a grouped layout object. Used when
+#'   `preserve_manual = TRUE`.
+#' @param preserve_manual If `TRUE`, use `initial_layout` as starting anchors
+#'   before optional collision refinement.
 #' @param kappa Radial expansion factor (default 1.8)
 #' @param padding Base padding in map units (default 50000)
 #' @param delta Log-density scaling factor (default 15000)
@@ -236,6 +241,8 @@ estimate_block_radii <- function(sf_obj, region_col,
 layout_regions <- function(sf_obj, region_col,
                            mode = c("auto", "auto_collision", "manual"),
                            anchors = NULL,
+                           initial_layout = NULL,
+                           preserve_manual = FALSE,
                            kappa = 1.8,
                            padding = 50000,
                            delta = 15000,
@@ -248,6 +255,12 @@ layout_regions <- function(sf_obj, region_col,
                            quiet = FALSE) {
   mode <- match.arg(mode)
   centroid_fun <- match.arg(centroid_fun)
+  if (isTRUE(preserve_manual)) {
+    initial_layout <- .coerce_anchor_layout(initial_layout, region_col)
+    if (is.null(initial_layout)) {
+      stop("`preserve_manual = TRUE` requires `initial_layout`.", call. = FALSE)
+    }
+  }
 
   if (mode == "manual") {
     if (is.null(anchors)) {
@@ -290,6 +303,22 @@ layout_regions <- function(sf_obj, region_col,
 
   block_df <- .generate_anchors(block_df, nat_centroid, kappa, padding, delta)
 
+  if (isTRUE(preserve_manual)) {
+    manual_start <- initial_layout |>
+      dplyr::select(dplyr::all_of(c(region_col, "anchor_x", "anchor_y")))
+    block_df <- block_df |>
+      dplyr::select(-dplyr::any_of(c("anchor_x", "anchor_y"))) |>
+      dplyr::left_join(manual_start, by = region_col)
+    missing_anchor <- is.na(block_df$anchor_x) | is.na(block_df$anchor_y)
+    if (any(missing_anchor)) {
+      stop(
+        "`initial_layout` is missing anchor(s) for region(s): ",
+        paste(block_df[[region_col]][missing_anchor], collapse = ", "),
+        call. = FALSE
+      )
+    }
+  }
+
   if (mode == "auto_collision") {
     block_df <- .refine_anchors(block_df, lambda, eta, padding_sep, max_iter)
 
@@ -327,6 +356,10 @@ layout_regions <- function(sf_obj, region_col,
 #' @param region_col Grouping column name
 #' @param mode "auto", "auto_collision", or "manual"
 #' @param anchors For mode = "manual": data.frame with anchor positions
+#' @param initial_layout Optional existing/manual anchor layout used when
+#'   `preserve_manual = TRUE`.
+#' @param preserve_manual When `TRUE`, use `initial_layout` as starting anchors
+#'   so parameter changes refine an existing composition instead of replacing it.
 #' @param alpha_l Local expansion parameter for Level 1 (metres)
 #' @param p Distance scaling exponent (default 1.25)
 #' @param gamma_l Local clearance coefficient (default 1.136); used if alpha_l is NULL
@@ -353,6 +386,8 @@ layout_regions <- function(sf_obj, region_col,
 explode_grouped <- function(sf_obj, region_col,
                             mode         = c("auto", "auto_collision", "manual"),
                             anchors      = NULL,
+                            initial_layout = NULL,
+                            preserve_manual = FALSE,
                             alpha_l      = NULL,
                             p            = 1.25,
                             gamma_l      = 1.136,
@@ -417,6 +452,8 @@ explode_grouped <- function(sf_obj, region_col,
     region_col,
     mode = mode,
     anchors = anchors,
+    initial_layout = initial_layout,
+    preserve_manual = preserve_manual,
     kappa = kappa,
     padding = padding,
     delta = delta,
@@ -485,7 +522,8 @@ explode_grouped <- function(sf_obj, region_col,
     delta = delta,
     lambda = lambda,
     eta = eta,
-    padding_sep = padding_sep
+    padding_sep = padding_sep,
+    preserve_manual = isTRUE(preserve_manual)
   )
 
   plots <- .make_grouped_plots(
@@ -532,6 +570,25 @@ explode_grouped <- function(sf_obj, region_col,
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+.coerce_anchor_layout <- function(x, region_col) {
+  if (is.null(x)) return(NULL)
+  if (inherits(x, "dragmapr_layout")) {
+    x <- x$region_offsets
+  } else if (inherits(x, "layout_quality_report")) {
+    x <- x$anchors
+  } else if (inherits(x, "grouped_exploded_map")) {
+    x <- x$anchors
+  }
+  if (!is.data.frame(x)) {
+    stop("`initial_layout` must be a data.frame or grouped layout object.", call. = FALSE)
+  }
+  if (!all(c(region_col, "anchor_x", "anchor_y") %in% names(x))) {
+    stop("`initial_layout` must contain columns: ", region_col, ", anchor_x, anchor_y",
+         call. = FALSE)
+  }
+  x
+}
+
 # PLOTTING FOR GROUPED LAYOUTS
 # ─────────────────────────────────────────────────────────────────────────────
 

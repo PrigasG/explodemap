@@ -163,7 +163,7 @@ for (i in seq_len(nrow(STATES))) {
       n_regions = cfg$n_regions,
       allow_other = TRUE,
       plot = FALSE,
-      export = FALSE,
+      export = NULL,
       label = cfg$name,
       quiet = TRUE
     )

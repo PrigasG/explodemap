@@ -1,5 +1,97 @@
 # Changelog
 
+## explodemap 0.3.0
+
+- Release A of the Pipeline Studio extraction adds reusable
+  input-preparation primitives:
+  [`count_geometry_vertices()`](https://prigasg.github.io/explodemap/reference/count_geometry_vertices.md),
+  [`simplify_to_vertex_budget()`](https://prigasg.github.io/explodemap/reference/simplify_to_vertex_budget.md),
+  [`assign_spatial_groups()`](https://prigasg.github.io/explodemap/reference/assign_spatial_groups.md),
+  [`validate_explodemap_input()`](https://prigasg.github.io/explodemap/reference/validate_explodemap_input.md),
+  [`prepare_explodemap_input()`](https://prigasg.github.io/explodemap/reference/prepare_explodemap_input.md),
+  [`group_palette()`](https://prigasg.github.io/explodemap/reference/group_palette.md),
+  and
+  [`explodemap_fingerprint()`](https://prigasg.github.io/explodemap/reference/explodemap_fingerprint.md).
+  These functions move proven geometry, validation, palette,
+  simplification, grouping, and compatibility helpers out of the app
+  layer while keeping upload policy and UI orchestration in Pipeline
+  Studio.
+- [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
+  no longer emits the noisy “st_simplify does not correctly simplify
+  longitude/latitude data” warning when it simplifies its WGS84 widget
+  copy; the simplification is render-only and the warning is now
+  suppressed. (Pass `simplify = FALSE`, or pre-simplify in a projected
+  CRS, when dense layers such as municipalities look over-angular.)
+- New `inst/shiny/pipeline-studio` Shiny app (shipped with both
+  explodemap and dragmapr) demonstrates the full cross-package workflow
+  on real US geography: the national HHS exploded map and a state county
+  drill-down with diagnostics and label-aware search, the dragmapr
+  draggable editor with `dragmapr_state` round-trip, and a combined
+  compute -\> compose -\> render -\> persist studio. Run with
+  `shiny::runApp(system.file("shiny/pipeline-studio", package = "explodemap"))`.
+- Added `inst/examples/explodemap_dragmapr_pipeline.R`, a complete
+  cross-package example covering layout optimization, diagnostics,
+  editable state, JSON persistence,
+  [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md),
+  and
+  [`dragmapr::render_dragged_map()`](https://prigasg.github.io/dragmapr/reference/render_dragged_map.html).
+- [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md)
+  is the preferred state-first bridge to `dragmapr`, emitting a
+  [`dragmapr::dragmapr_state()`](https://prigasg.github.io/dragmapr/reference/dragmapr_state.html)
+  that `state =` arguments accept across
+  [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md),
+  [`render_dragged_map()`](https://prigasg.github.io/dragmapr/reference/render_dragged_map.html),
+  and
+  [`update_exploded_layout()`](https://prigasg.github.io/explodemap/reference/update_exploded_layout.md).
+  The older
+  [`as_dragmapr()`](https://prigasg.github.io/explodemap/reference/as_dragmapr.md)
+  is now documented as legacy/low-level (still supported, not
+  deprecated).
+- [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
+  gains `restore_selection` (default `FALSE`): when `TRUE` and the
+  supplied `state` carries a `selected_feature`, the map opens focused
+  on that feature, reproducing a saved composition’s focus. The behavior
+  is fully opt-in, so default renders are unchanged.
+- New `inst/examples/state_first_workflow.R` shows the canonical
+  pipeline:
+  [`explode_grouped()`](https://prigasg.github.io/explodemap/reference/explode_grouped.md)
+  -\>
+  [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md)
+  -\>
+  [`dragmapr_edit()`](https://prigasg.github.io/dragmapr/reference/dragmapr_edit.html)
+  -\> `focus_map(state = )` / `render_dragged_map(state = )`.
+- [`update_focus_palette()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md)
+  now preserves the palette’s names so the browser can key
+  `groupPalette` by group. Previously the colours were sent as an
+  unnamed array and silently ignored (the map fell back to the automatic
+  palette). The focus-map proxy operations
+  ([`update_focus_labels()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md),
+  [`update_focus_palette()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md),
+  [`update_focus_data()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md))
+  now have regression tests.
+- [`update_focus_data()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md)
+  documents its behavior explicitly: a data swap rebuilds the widget and
+  returns it to the idle view. Pass `state` and
+  `restore_selection = TRUE` through `...` to keep a feature focused
+  across the swap.
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on a
+  [`diagnose_layout()`](https://prigasg.github.io/explodemap/reference/diagnose_layout.md)
+  report now draws the region blocks inside the layout’s canvas frame
+  (so unused space is visible) and a red segment between every
+  overlapping region pair, instead of plotting bare anchor points.
+- [`optimize_grouped_layout()`](https://prigasg.github.io/explodemap/reference/optimize_grouped_layout.md)
+  gains `label_col` / `label_size`. When supplied, the parameter search
+  becomes label-aware – each candidate is scored for approximate label
+  overlaps via the `label_overlap` objective weight. Left `NULL` (the
+  default) the result is identical to before.
+- [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
+  now validates the active sf geometry column up front, so a malformed
+  `sf` fails with the same clear message used by
+  [`explode_sf()`](https://prigasg.github.io/explodemap/reference/explode_sf.md)
+  and
+  [`explode_grouped()`](https://prigasg.github.io/explodemap/reference/explode_grouped.md)
+  rather than a deep, cryptic error.
+
 ## explodemap 0.2.0
 
 CRAN release: 2026-05-27
@@ -37,6 +129,12 @@ CRAN release: 2026-05-27
   for drill-down dashboards that explode one selected section while
   keeping the remaining geography as faded or hidden context for
   [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md).
+- Added the first `dragmapr_state` bridge:
+  [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md)
+  exports a grouped layout as a shared editorial composition state, and
+  [`update_exploded_layout()`](https://prigasg.github.io/explodemap/reference/update_exploded_layout.md)
+  / `focus_map(state = ...)` can consume that state after manual
+  editing.
 
 ### Improvements
 

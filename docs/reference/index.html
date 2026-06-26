@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">explodemap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,6 +22,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Getting started</a></li>
     <li><a class="dropdown-item" href="../articles/workflow-guide.html">Choosing a workflow</a></li>
     <li><a class="dropdown-item" href="../articles/grouped-layouts.html">Grouped layouts and anchor placement</a></li>
+    <li><a class="dropdown-item" href="../articles/state-first-composition.html">State-first composition with dragmapr</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing paper examples and drag helpers</a></li>
   </ul></li>
@@ -101,6 +102,13 @@
 
         </dt>
         <dd>Focus-map option presets</dd>
+
+        <dt>
+
+          <code><a href="focusMapProxy.html">focusMapProxy()</a></code> <code><a href="focusMapProxy.html">update_focus_labels()</a></code> <code><a href="focusMapProxy.html">update_focus_palette()</a></code> <code><a href="focusMapProxy.html">update_focus_data()</a></code>
+
+        </dt>
+        <dd>Focus-map Shiny proxy</dd>
       </dl></div><div class="section level2">
       <h2 id="grouped-layouts">Grouped layouts<a class="anchor" aria-label="anchor" href="#grouped-layouts"></a></h2>
 
@@ -131,6 +139,131 @@
 
         </dt>
         <dd>Estimate block radius for each region</dd>
+      </dl></div><div class="section level2">
+      <h2 id="state-first-composition-dragmapr-bridge-">State-first composition (dragmapr bridge)<a class="anchor" aria-label="anchor" href="#state-first-composition-dragmapr-bridge-"></a></h2>
+
+      <div class="section-desc"><p>Hand a computed layout to the dragmapr editor as a reusable dragmapr_state, then apply edited compositions back. as_dragmapr_state() is the preferred handoff; the resulting state is accepted by focus_map(), render_dragged_map(), and update_exploded_layout(). as_dragmapr() is the legacy low-level handoff.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="as_dragmapr_state.html">as_dragmapr_state()</a></code>
+
+        </dt>
+        <dd>Convert a grouped layout to a dragmapr editing state</dd>
+
+        <dt>
+
+          <code><a href="update_exploded_layout.html">update_exploded_layout()</a></code>
+
+        </dt>
+        <dd>Update an exploded grouped layout after manual composition</dd>
+
+        <dt>
+
+          <code><a href="as_dragmapr.html">as_dragmapr()</a></code>
+
+        </dt>
+        <dd>Convert a grouped layout to a drag-edit handoff object (legacy)</dd>
+      </dl></div><div class="section level2">
+      <h2 id="input-preparation-and-app-primitives">Input preparation and app primitives<a class="anchor" aria-label="anchor" href="#input-preparation-and-app-primitives"></a></h2>
+
+      <div class="section-desc"><p>Reusable validation, simplification, grouping, palette, and fingerprint helpers that support Shiny apps, examples, and preprocessing pipelines.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="validate_explodemap_input.html">validate_explodemap_input()</a></code>
+
+        </dt>
+        <dd>Validate explodemap input</dd>
+
+        <dt>
+
+          <code><a href="prepare_explodemap_input.html">prepare_explodemap_input()</a></code>
+
+        </dt>
+        <dd>Prepare input for grouped explodemap layouts</dd>
+
+        <dt>
+
+          <code><a href="count_geometry_vertices.html">count_geometry_vertices()</a></code>
+
+        </dt>
+        <dd>Count geometry vertices</dd>
+
+        <dt>
+
+          <code><a href="simplify_to_vertex_budget.html">simplify_to_vertex_budget()</a></code>
+
+        </dt>
+        <dd>Simplify geometry to a vertex budget</dd>
+
+        <dt>
+
+          <code><a href="assign_spatial_groups.html">assign_spatial_groups()</a></code>
+
+        </dt>
+        <dd>Assign generated spatial groups</dd>
+
+        <dt>
+
+          <code><a href="group_palette.html">group_palette()</a></code>
+
+        </dt>
+        <dd>Create a stable group palette</dd>
+
+        <dt>
+
+          <code><a href="explodemap_fingerprint.html">explodemap_fingerprint()</a></code>
+
+        </dt>
+        <dd>Fingerprint explodemap geometry and grouping</dd>
+      </dl></div><div class="section level2">
+      <h2 id="layout-quality-and-optimization">Layout quality and optimization<a class="anchor" aria-label="anchor" href="#layout-quality-and-optimization"></a></h2>
+
+      <div class="section-desc"><p>Score a grouped layout and search for better region placements.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="diagnose_layout.html">diagnose_layout()</a></code>
+
+        </dt>
+        <dd>Diagnose grouped layout quality</dd>
+
+        <dt>
+
+          <code><a href="plot.layout_quality_report.html">plot(<i>&lt;layout_quality_report&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Plot a grouped-layout diagnostic</dd>
+
+        <dt>
+
+          <code><a href="layout_objective.html">layout_objective()</a></code>
+
+        </dt>
+        <dd>Build layout objective weights</dd>
+
+        <dt>
+
+          <code><a href="optimize_grouped_layout.html">optimize_grouped_layout()</a></code>
+
+        </dt>
+        <dd>Search grouped-layout parameters</dd>
       </dl></div><div class="section level2">
       <h2 id="statistics-and-calibration">Statistics and calibration<a class="anchor" aria-label="anchor" href="#statistics-and-calibration"></a></h2>
 
@@ -205,6 +338,64 @@
 
         </dt>
         <dd>Clear explodemap download cache</dd>
+      </dl></div><div class="section level2">
+      <h2 id="hhs-reference-maps">HHS reference maps<a class="anchor" aria-label="anchor" href="#hhs-reference-maps"></a></h2>
+
+      <div class="section-desc"><p>Ready-made U.S. Department of Health and Human Services region layouts, palettes, and a one-call focus map for HHS-style placeholder shapes.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="hhs_layout.html">hhs_layout()</a></code>
+
+        </dt>
+        <dd>Build an HHS reference layout</dd>
+
+        <dt>
+
+          <code><a href="hhs_focus_map.html">hhs_focus_map()</a></code>
+
+        </dt>
+        <dd>Create a focus-map widget for HHS regions</dd>
+
+        <dt>
+
+          <code><a href="as_hhs_states.html">as_hhs_states()</a></code>
+
+        </dt>
+        <dd>Standardize state polygons for HHS reference maps</dd>
+
+        <dt>
+
+          <code><a href="hhs_regions.html">hhs_regions()</a></code>
+
+        </dt>
+        <dd>HHS regional assignments for states and territories</dd>
+
+        <dt>
+
+          <code><a href="hhs_region_names.html">hhs_region_names()</a></code>
+
+        </dt>
+        <dd>HHS region display names</dd>
+
+        <dt>
+
+          <code><a href="hhs_display_offsets.html">hhs_display_offsets()</a></code>
+
+        </dt>
+        <dd>HHS reference-layout display offsets</dd>
+
+        <dt>
+
+          <code><a href="hhs_palette.html">hhs_palette()</a></code>
+
+        </dt>
+        <dd>HHS region colour palette</dd>
       </dl></div><div class="section level2">
       <h2 id="methods">Methods<a class="anchor" aria-label="anchor" href="#methods"></a></h2>
 

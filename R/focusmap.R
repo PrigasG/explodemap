@@ -28,6 +28,13 @@
 #'   fall back to the widget palette.
 #' @param context_col Optional column identifying features that should remain
 #'   as geographic context rather than active focus features.
+#' @param state Optional `dragmapr_state` editorial composition. Region offsets
+#'   are applied before the widget data is transformed/simplified.
+#' @param restore_selection When `TRUE` and `state` carries a `selected_feature`,
+#'   the map opens focused on that feature (matched by `id_col` value or feature
+#'   name), reproducing a saved composition's focus. Defaults to `FALSE` so the
+#'   map opens in its normal idle view. No-op when the selection is empty or the
+#'   feature is not found.
 #' @param context_values Character vector of values in `context_col` that mark
 #'   context features. Default `"context"`.
 #' @param context_mode How context features are drawn: `"fade"` keeps them
@@ -153,6 +160,8 @@ focus_map <- function(x,
                       group_col    = NULL,
                       group_palette = NULL,
                       context_col  = NULL,
+                      state        = NULL,
+                      restore_selection = FALSE,
                       context_values = "context",
                       context_mode = c("fade", "hide", "show"),
                       coordinate_system = c("auto", "longlat", "planar"),
@@ -221,7 +230,18 @@ focus_map <- function(x,
     if (missing(performance_mode) && !is.null(preset$performance_mode)) performance_mode <- preset$performance_mode
   }
 
+  x <- .apply_focus_state(x, state, group_col)
+
+  initial_focus <- NULL
+  if (isTRUE(restore_selection) && inherits(state, "dragmapr_state")) {
+    sel <- state$selected_feature
+    if (!is.null(sel) && length(sel) == 1L && !is.na(sel) && nzchar(sel)) {
+      initial_focus <- as.character(sel)
+    }
+  }
+
   sf_obj <- .as_viewer_sf(x)
+  .validate_sf_geometry_column(sf_obj)
   info_position <- match.arg(info_position)
   context_mode <- match.arg(context_mode)
   coordinate_system <- match.arg(coordinate_system)
@@ -377,46 +397,29 @@ focus_map <- function(x,
     stop("No non-empty geometries remain after validation.", call. = FALSE)
   }
 
-  # Simplify geometry for rendering performance.
-  # Heavier states need heavier simplification in the widget copy.
-  #   < 50 features  → 0.002° (~200 m) — light touch
-  #   50–150         → 0.005° (~500 m) — moderate
-  #   150–220        → 0.01°  (~1 km)  — Georgia-tier
-  #   > 220          → 0.02°  (~2 km)  — Texas-tier (254 counties)
-  # This does NOT affect the original data — only the widget copy.
+  # Simplify geometry for rendering performance. Keep TRUE conservative:
+  # dense municipal layers can contain thousands of small polygons, and large
+  # tolerances visibly flatten Census boundaries into long straight chords.
+  # This does NOT affect the original data -- only the widget copy.
   # Pass simplify = FALSE to disable, or a custom numeric tolerance.
   if (isTRUE(simplify)) {
-    n <- nrow(sf_obj)
+    tol <- 0.001
 
-    tol <- if (n > 3000) {
-      0.05
-    } else if (n > 1500) {
-      0.04
-    } else if (n > 500) {
-      0.03
-    } else if (n > 220) {
-      0.02
-    } else if (n > 150) {
-      0.01
-    } else if (n > 50) {
-      0.005
-    } else {
-      0.002
-    }
-
-    sf_obj <- sf::st_simplify(
+    # Simplifying the WGS84 widget copy warns that lon/lat simplification is
+    # approximate; that is expected here (render-only copy), so silence it.
+    sf_obj <- suppressWarnings(sf::st_simplify(
       sf_obj,
       preserveTopology = TRUE,
       dTolerance = tol
-    )
+    ))
     sf_obj <- .repair_widget_geometry(sf_obj)
     sf_obj <- sf_obj[!sf::st_is_empty(sf_obj), ]
   } else if (is.numeric(simplify) && length(simplify) == 1 && simplify > 0) {
-    sf_obj <- sf::st_simplify(
+    sf_obj <- suppressWarnings(sf::st_simplify(
       sf_obj,
       preserveTopology = TRUE,
       dTolerance = simplify
-    )
+    ))
     sf_obj <- .repair_widget_geometry(sf_obj)
     sf_obj <- sf_obj[!sf::st_is_empty(sf_obj), ]
   }
@@ -477,6 +480,12 @@ focus_map <- function(x,
     )
   )
 
+  # Only emit initialFocus when a selection is actually being restored, so
+  # default renders produce byte-for-byte identical widget options.
+  if (!is.null(initial_focus)) {
+    payload$options$initialFocus <- initial_focus
+  }
+
   htmlwidgets::createWidget(
     name      = "focusmap",
     x         = payload,
@@ -509,6 +518,79 @@ renderFocusmap <- function(expr, env = parent.frame(), quoted = FALSE) {
 
 # ── internal helpers ─────────────────────────────────────────────────────────
 
+#' Focus-map Shiny proxy
+#'
+#' @param outputId Shiny output ID for an existing `focus_map()`.
+#' @param session Shiny session. Defaults to the current reactive domain.
+#' @return A `focusmap_proxy` object.
+#' @export
+focusMapProxy <- function(outputId, session = NULL) {
+  if (!requireNamespace("shiny", quietly = TRUE)) {
+    stop("The shiny package is required for focusMapProxy().", call. = FALSE)
+  }
+  if (is.null(session)) {
+    session <- shiny::getDefaultReactiveDomain()
+  }
+  if (is.null(session)) {
+    stop("No active Shiny session found. Supply `session` explicitly.", call. = FALSE)
+  }
+  structure(list(id = outputId, session = session), class = "focusmap_proxy")
+}
+
+#' @rdname focusMapProxy
+#' @param proxy A `focusmap_proxy`.
+#' @param show Logical; show focus labels.
+#' @export
+update_focus_labels <- function(proxy, show = TRUE) {
+  .send_focusmap_proxy(proxy, "updateFocusLabels", list(show = isTRUE(show)))
+}
+
+#' @rdname focusMapProxy
+#' @param palette Named character vector of group colours.
+#' @export
+update_focus_palette <- function(proxy, palette) {
+  if (is.null(names(palette)) || any(!nzchar(names(palette)))) {
+    stop("`palette` must be a named character vector.", call. = FALSE)
+  }
+  # Preserve the names: the browser keys `groupPalette` by group, so the value
+  # must serialize to a JSON object ({group: colour}), not a bare array.
+  pal <- as.character(palette)
+  names(pal) <- names(palette)
+  .send_focusmap_proxy(proxy, "updateFocusPalette", as.list(pal))
+}
+
+#' @rdname focusMapProxy
+#' @param data New `sf`, `exploded_map`, or `grouped_exploded_map` data.
+#' @param ... Passed to [focus_map()] when building the replacement payload.
+#'
+#' @details
+#' `update_focus_data()` swaps the widget's geometry and rebuilds it, which
+#' returns the map to its idle (unfocused) view -- a data swap is treated as a
+#' fresh dataset. To keep the user focused on a feature across the swap, pass a
+#' `state` and `restore_selection = TRUE` through `...`; these flow to
+#' [focus_map()] and the new feature is re-focused on load:
+#'
+#' ```r
+#' update_focus_data(proxy, new_sf, id_col = "GEOID",
+#'                   state = state, restore_selection = TRUE)
+#' ```
+#' @export
+update_focus_data <- function(proxy, data, ...) {
+  widget <- focus_map(data, ...)
+  .send_focusmap_proxy(proxy, "updateFocusData", widget$x)
+}
+
+.send_focusmap_proxy <- function(proxy, method, value) {
+  if (!inherits(proxy, "focusmap_proxy")) {
+    stop("`proxy` must be created by focusMapProxy().", call. = FALSE)
+  }
+  proxy$session$sendCustomMessage(
+    "explodemap-focusmap-proxy",
+    list(id = proxy$id, method = method, value = value)
+  )
+  invisible(proxy)
+}
+
 #' @keywords internal
 .as_viewer_sf <- function(x) {
   if (inherits(x, "grouped_exploded_map")) {
@@ -521,6 +603,37 @@ renderFocusmap <- function(expr, env = parent.frame(), quoted = FALSE) {
   }
   if (inherits(x, "sf")) return(x)
   stop("x must be an sf, exploded_map, or grouped_exploded_map.", call. = FALSE)
+}
+
+.apply_focus_state <- function(x, state, group_col) {
+  if (is.null(state)) {
+    return(x)
+  }
+  if (!inherits(state, "dragmapr_state")) {
+    stop("`state` must be a dragmapr_state object.", call. = FALSE)
+  }
+  if (inherits(x, "grouped_exploded_map")) {
+    return(update_exploded_layout(x, state, update_plots = FALSE))
+  }
+  if (!requireNamespace("dragmapr", quietly = TRUE)) {
+    stop("Package 'dragmapr' is required to apply focus-map state.", call. = FALSE)
+  }
+  if (inherits(x, "exploded_map")) {
+    region_col <- x$diagnostics$region_col %||% group_col %||% state$level
+    out <- x
+    out$sf_exp <- dragmapr::apply_dragmapr_state(out$sf_exp, state, region_col = region_col)
+    out$sf_exp_wgs <- sf::st_transform(out$sf_exp, 4326)
+    return(out)
+  }
+  if (inherits(x, "sf")) {
+    region_col <- group_col %||% state$level
+    if (is.null(region_col) || !nzchar(region_col)) {
+      stop("`group_col` is required when applying `state` to a raw sf object.",
+           call. = FALSE)
+    }
+    return(dragmapr::apply_dragmapr_state(x, state, region_col = region_col))
+  }
+  x
 }
 
 #' Repair widget geometry with planar validity checks
