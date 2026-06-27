@@ -15,6 +15,11 @@
 - [Grouped layouts and anchor
   placement](https://prigasg.github.io/explodemap/articles/grouped-layouts.md):
 
+### State-first composition
+
+- [State-first composition with
+  dragmapr](https://prigasg.github.io/explodemap/articles/state-first-composition.md):
+
 ### Paper replication and drag helpers
 
 - [Reproducing the paper

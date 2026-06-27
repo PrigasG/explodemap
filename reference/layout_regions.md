@@ -12,6 +12,8 @@ layout_regions(
   region_col,
   mode = c("auto", "auto_collision", "manual"),
   anchors = NULL,
+  initial_layout = NULL,
+  preserve_manual = FALSE,
   kappa = 1.8,
   padding = 50000,
   delta = 15000,
@@ -43,6 +45,16 @@ layout_regions(
 
   For mode = "manual": data.frame with columns (region_col, anchor_x,
   anchor_y)
+
+- initial_layout:
+
+  Optional data.frame with columns (region_col, anchor_x, anchor_y), or
+  a grouped layout object. Used when `preserve_manual = TRUE`.
+
+- preserve_manual:
+
+  If `TRUE`, use `initial_layout` as starting anchors before optional
+  collision refinement.
 
 - kappa:
 
