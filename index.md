@@ -5,6 +5,8 @@
 MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Hugging Face
 Space](https://img.shields.io/badge/Hugging%20Face-Live%20demo-ffcc4d)](https://huggingface.co/spaces/Prigas89/explodemap-gallery)
+[![Pipeline
+Studio](https://img.shields.io/badge/Hugging%20Face-Pipeline%20Studio-2b7fff)](https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio)
 
 `explodemap` makes exploded-view maps from polygon data. It separates
 crowded regions for display while keeping every polygon’s shape intact.
@@ -32,6 +34,8 @@ install.packages("explodemap")
 
 - Live gallery:
   <https://huggingface.co/spaces/Prigas89/explodemap-gallery>
+- Shared Pipeline Studio:
+  <https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio>
 - Package site: <https://prigasg.github.io/explodemap/>
 - Cross-package roadmap:
   [ROADMAP.md](https://prigasg.github.io/explodemap/ROADMAP.md)
