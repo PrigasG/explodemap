@@ -19,7 +19,8 @@ Description: Tools for generating hierarchical exploded-view maps from
 License: MIT + file LICENSE
 URL: https://prigasg.github.io/explodemap/,
     https://github.com/PrigasG/explodemap,
-    https://huggingface.co/spaces/Prigas89/explodemap-gallery
+    https://huggingface.co/spaces/Prigas89/explodemap-gallery,
+    https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio
 BugReports: https://github.com/PrigasG/explodemap/issues
 Depends: 
     R (>= 4.1.0)

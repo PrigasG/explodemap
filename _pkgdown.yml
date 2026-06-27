@@ -11,7 +11,7 @@ template:
 home:
   title: explodemap
   description: |
-    Tools for hierarchical exploded-view cartography of dense administrative boundary data. The package supports deterministic two-level exploded maps, grouped multi-region layouts, analytical parameter derivation, export workflows for downstream mapping, and a live Hugging Face demo at https://huggingface.co/spaces/Prigas89/explodemap-gallery.
+    Tools for hierarchical exploded-view cartography of dense administrative boundary data. The package supports deterministic two-level exploded maps, grouped multi-region layouts, analytical parameter derivation, export workflows for downstream mapping, a live explodemap gallery at https://huggingface.co/spaces/Prigas89/explodemap-gallery, and a shared Pipeline Studio with dragmapr at https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio.
   sidebar:
     structure:
     - links
@@ -31,6 +31,7 @@ navbar:
     - gallery
     - news
     right:
+    - pipeline
     - demo
     - search
     - github
@@ -63,9 +64,14 @@ navbar:
       href: news/index.html
     demo:
       icon: fas fa-rocket
-      text: Live demo
+      text: Gallery
       href: https://huggingface.co/spaces/Prigas89/explodemap-gallery
-      aria-label: Live demo on Hugging Face Spaces
+      aria-label: explodemap gallery on Hugging Face Spaces
+    pipeline:
+      icon: fas fa-layer-group
+      text: Pipeline Studio
+      href: https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio
+      aria-label: Shared Pipeline Studio on Hugging Face Spaces
     github:
       icon: fab fa-github
       href: https://github.com/PrigasG/explodemap
