@@ -8,10 +8,46 @@ test_that("diagnose_layout reports grouped layout metrics", {
   expect_true(all(c(
     "polygon_overlap_area", "overlapping_pairs", "minimum_group_gap",
     "mean_displacement", "maximum_displacement", "label_overlap_count",
-    "canvas_utilization", "aspect_ratio", "mental_map_stability"
+    "canvas_utilization", "aspect_ratio", "mental_map_stability",
+    "polygon_overlap_fraction", "mean_displacement_fraction",
+    "label_overlap_fraction"
   ) %in% names(report)))
   expect_true(is.numeric(report$polygon_overlap_area))
   expect_true(is.data.frame(report$overlapping_pairs))
+  expect_true(all(c(
+    report$polygon_overlap_fraction,
+    report$mean_displacement_fraction,
+    report$label_overlap_fraction
+  ) >= 0))
+})
+
+test_that("layout score uses dimensionless report terms", {
+  report_a <- list(
+    polygon_overlap_fraction = 0.1,
+    mean_displacement_fraction = 0.2,
+    canvas_utilization = 0.7,
+    label_overlap_fraction = 0.05,
+    polygon_overlap_area = 1e8,
+    mean_displacement = 1e4,
+    label_overlap_count = 10L
+  )
+  report_b <- report_a
+  report_b$polygon_overlap_area <- 1e12
+  report_b$mean_displacement <- 1e7
+  report_b$label_overlap_count <- 1000L
+
+  expect_equal(
+    .score_layout_report(report_a, layout_objective()),
+    .score_layout_report(report_b, layout_objective())
+  )
+})
+
+test_that("label overlap scoring excludes missing labels", {
+  x <- make_grouped_sf()
+  x$id <- c("A", NA_character_, "界", rep(NA_character_, nrow(x) - 3L))
+  count <- .label_overlap_count(x, "id", label_size = 1e6)
+
+  expect_equal(count, 1L)
 })
 
 test_that("plot.layout_quality_report builds a ggplot", {
@@ -39,6 +75,12 @@ test_that("optimize_grouped_layout is label-aware only when label_col is given",
   expect_equal(plain$optimization$best_report$label_overlap_count, 0L)
   # With a label column, the count is computed (and feeds the score).
   expect_true(is.numeric(labelled$optimization$best_report$label_overlap_count))
+  input_bbox <- sf::st_bbox(x)
+  expected_size <- max(
+    as.numeric(input_bbox["xmax"] - input_bbox["xmin"]),
+    as.numeric(input_bbox["ymax"] - input_bbox["ymin"])
+  ) * 0.025
+  expect_equal(labelled$optimization$label_size, expected_size)
 })
 
 test_that("optimize_grouped_layout returns best grouped layout with metadata", {

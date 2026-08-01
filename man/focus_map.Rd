@@ -118,9 +118,11 @@ selected-section maps. \code{"municipal_drilldown"} combines both. Explicit
 arguments supplied by the user override preset defaults.}
 
 \item{simplify}{Controls geometry simplification for rendering
-performance. \code{TRUE} (default) applies a sensible tolerance
-(\code{dTolerance = 0.001} in WGS 84 degrees, \eqn{\approx}
-100 m). A positive number sets a custom tolerance. \code{FALSE}
+performance. \code{TRUE} (default) applies a conservative tolerance of
+approximately one metre. Longitude/latitude data is simplified in a local metric
+projection to avoid latitude-dependent distortion. A positive number sets
+a custom tolerance in the data's coordinate units; longitude/latitude
+tolerances above 0.1 degrees are rejected as unsafe. \code{FALSE}
 disables simplification. Only affects the widget copy — the
 original data is never modified.}
 

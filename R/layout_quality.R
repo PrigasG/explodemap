@@ -20,14 +20,30 @@ diagnose_layout <- function(result, label_col = NULL, label_size = NULL) {
   height <- as.numeric(bbox["ymax"] - bbox["ymin"])
   hull_area <- as.numeric(sf::st_area(sf::st_convex_hull(sf::st_union(sf::st_geometry(sf_grouped)))))
   canvas_area <- width * height
+  polygon_area <- sum(as.numeric(sf::st_area(sf_grouped)), na.rm = TRUE)
+  original_bbox <- sf::st_bbox(result$sf_orig)
+  original_width <- as.numeric(original_bbox["xmax"] - original_bbox["xmin"])
+  original_height <- as.numeric(original_bbox["ymax"] - original_bbox["ymin"])
+  original_diagonal <- sqrt(original_width^2 + original_height^2)
+  label_overlaps <- .label_overlap_count(sf_grouped, label_col, label_size)
+  label_count <- if (!is.null(label_col) && label_col %in% names(sf_grouped)) {
+    labels <- trimws(as.character(sf_grouped[[label_col]]))
+    sum(!is.na(labels) & nzchar(labels))
+  } else {
+    0L
+  }
+  possible_label_pairs <- label_count * (label_count - 1) / 2
 
   out <- list(
     polygon_overlap_area = overlap$total_area,
+    polygon_overlap_fraction = if (polygon_area > 0) overlap$total_area / polygon_area else 0,
     overlapping_pairs = overlap$pairs,
     minimum_group_gap = gaps$minimum_group_gap,
     mean_displacement = displacement$mean,
+    mean_displacement_fraction = if (original_diagonal > 0) displacement$mean / original_diagonal else 0,
     maximum_displacement = displacement$max,
-    label_overlap_count = .label_overlap_count(sf_grouped, label_col, label_size),
+    label_overlap_count = label_overlaps,
+    label_overlap_fraction = if (possible_label_pairs > 0) label_overlaps / possible_label_pairs else 0,
     canvas_utilization = if (canvas_area > 0) hull_area / canvas_area else NA_real_,
     aspect_ratio = if (height > 0) width / height else NA_real_,
     mental_map_stability = displacement$stability,
@@ -161,10 +177,12 @@ plot.layout_quality_report <- function(x, ...) {
 
 #' Build layout objective weights
 #'
-#' @param overlap Weight for polygon overlap area.
-#' @param displacement Weight for mean displacement.
+#' @param overlap Weight for polygon overlap as a fraction of total polygon area.
+#' @param displacement Weight for mean displacement as a fraction of the
+#'   original layout diagonal.
 #' @param unused_space Weight for unused canvas space.
-#' @param label_overlap Weight for approximate label overlaps.
+#' @param label_overlap Weight for approximate label overlaps as a fraction of
+#'   all possible label pairs.
 #' @return Named numeric vector of objective weights.
 #' @export
 layout_objective <- function(overlap = 10,
@@ -211,6 +229,14 @@ optimize_grouped_layout <- function(x,
                                     ...) {
   objective <- match.arg(objective, several.ok = TRUE)
   weights <- .objective_weights(objective, weights)
+  search_label_size <- label_size
+  if (is.null(search_label_size) && !is.null(label_col) && label_col %in% names(x)) {
+    input_bbox <- sf::st_bbox(x)
+    search_label_size <- max(
+      as.numeric(input_bbox["xmax"] - input_bbox["xmin"]),
+      as.numeric(input_bbox["ymax"] - input_bbox["ymin"])
+    ) * 0.025
+  }
   if (is.null(grid)) {
     grid <- expand.grid(
       kappa = kappa,
@@ -241,7 +267,11 @@ optimize_grouped_layout <- function(x,
       quiet = TRUE,
       ...
     )
-    reports[[i]] <- diagnose_layout(runs[[i]], label_col = label_col, label_size = label_size)
+    reports[[i]] <- diagnose_layout(
+      runs[[i]],
+      label_col = label_col,
+      label_size = search_label_size
+    )
     scores[i] <- .score_layout_report(reports[[i]], weights)
   }
 
@@ -250,6 +280,7 @@ optimize_grouped_layout <- function(x,
   out$optimization <- list(
     objective = objective,
     weights = weights,
+    label_size = search_label_size,
     grid = grid,
     scores = scores,
     best_index = best,
@@ -546,18 +577,31 @@ update_exploded_layout <- function(result,
     label_size <- max(as.numeric(bb["xmax"] - bb["xmin"]), as.numeric(bb["ymax"] - bb["ymin"])) * 0.025
   }
   xy <- sf::st_coordinates(centroid_geoms(sf_obj, "point_on_surface"))
-  labels <- as.character(sf_obj[[label_col]])
-  widths <- pmax(nchar(labels), 1) * label_size * 0.55
-  heights <- rep(label_size, length(labels))
-  count <- 0L
-  for (i in seq_len(nrow(sf_obj) - 1L)) {
-    for (j in seq.int(i + 1L, nrow(sf_obj))) {
-      x_overlap <- abs(xy[i, 1] - xy[j, 1]) < (widths[i] + widths[j]) / 2
-      y_overlap <- abs(xy[i, 2] - xy[j, 2]) < (heights[i] + heights[j]) / 2
-      if (x_overlap && y_overlap) count <- count + 1L
-    }
-  }
-  count
+  labels <- trimws(as.character(sf_obj[[label_col]]))
+  keep <- !is.na(labels) & nzchar(labels)
+  if (sum(keep) < 2L) return(0L)
+  labels <- labels[keep]
+  xy <- xy[keep, 1:2, drop = FALSE]
+  widths <- pmax(nchar(labels, type = "width", keepNA = TRUE), 1L) * label_size * 0.55
+  half_widths <- widths / 2
+  half_heights <- rep(label_size / 2, length(labels))
+  boxes <- lapply(seq_along(labels), function(i) {
+    xmin <- xy[i, 1] - half_widths[[i]]
+    xmax <- xy[i, 1] + half_widths[[i]]
+    ymin <- xy[i, 2] - half_heights[[i]]
+    ymax <- xy[i, 2] + half_heights[[i]]
+    sf::st_polygon(list(rbind(
+      c(xmin, ymin), c(xmax, ymin), c(xmax, ymax),
+      c(xmin, ymax), c(xmin, ymin)
+    )))
+  })
+  box_geometry <- sf::st_sfc(boxes, crs = sf::st_crs(sf_obj))
+  intersections <- sf::st_intersects(box_geometry, sparse = TRUE)
+  as.integer(sum(vapply(
+    seq_along(intersections),
+    function(i) sum(intersections[[i]] > i),
+    integer(1)
+  )))
 }
 
 .objective_weights <- function(objective, weights) {
@@ -571,10 +615,10 @@ update_exploded_layout <- function(result,
 
 .score_layout_report <- function(report, weights) {
   vals <- c(
-    overlap = ifelse(is.finite(report$polygon_overlap_area), report$polygon_overlap_area, 0),
-    displacement = ifelse(is.finite(report$mean_displacement), report$mean_displacement, 0),
+    overlap = ifelse(is.finite(report$polygon_overlap_fraction), report$polygon_overlap_fraction, 0),
+    displacement = ifelse(is.finite(report$mean_displacement_fraction), report$mean_displacement_fraction, 0),
     unused_space = ifelse(is.finite(report$canvas_utilization), 1 - report$canvas_utilization, 1),
-    label_overlap = ifelse(is.finite(report$label_overlap_count), report$label_overlap_count, 0)
+    label_overlap = ifelse(is.finite(report$label_overlap_fraction), report$label_overlap_fraction, 0)
   )
   sum(vals[names(weights)] * weights, na.rm = TRUE)
 }

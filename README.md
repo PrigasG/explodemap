@@ -1,23 +1,19 @@
 # explodemap <img src="man/figures/logo.png" alt="explodemap logo" align="right" height="130"/>
 
-[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/PrigasG/explodemap)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Live%20demo-ffcc4d)](https://huggingface.co/spaces/Prigas89/explodemap-gallery)
-[![Pipeline Studio](https://img.shields.io/badge/Hugging%20Face-Pipeline%20Studio-2b7fff)](https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio)
+[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/PrigasG/explodemap) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Live%20demo-ffcc4d)](https://huggingface.co/spaces/Prigas89/explodemap-gallery) [![Pipeline Studio](https://img.shields.io/badge/Hugging%20Face-Pipeline%20Studio-2b7fff)](https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio)
 
-`explodemap` makes exploded-view maps from polygon data. It separates crowded
-regions for display while keeping every polygon's shape intact.
+`explodemap` makes exploded-view maps from polygon data. It separates crowded regions for display while keeping every polygon's shape intact.
 
 Use it when you want to:
 
-- separate dense counties, municipalities, districts, or service areas
-- build larger grouped layouts such as national region maps
-- inspect one area interactively with `focus_map()`
-- hand a computed layout to `dragmapr` for manual composition
+-   separate dense counties, municipalities, districts, or service areas
+-   build larger grouped layouts such as national region maps
+-   inspect one area interactively with `focus_map()`
+-   hand a computed layout to `dragmapr` for manual composition
 
 ## Install
 
-```r
+``` r
 install.packages("explodemap")
 
 # Development version
@@ -27,22 +23,21 @@ install.packages("explodemap")
 
 ## Try It
 
-- Live gallery: <https://huggingface.co/spaces/Prigas89/explodemap-gallery>
-- Shared Pipeline Studio: <https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio>
-- Package site: <https://prigasg.github.io/explodemap/>
-- Cross-package roadmap: [ROADMAP.md](ROADMAP.md)
-- Pipeline Studio:
+-   Live gallery: <https://huggingface.co/spaces/Prigas89/explodemap-gallery>
+-   Shared Pipeline Studio: <https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio>
+-   Package site: <https://prigasg.github.io/explodemap/>
+-   Cross-package roadmap: [ROADMAP.md](ROADMAP.md)
+-   Pipeline Studio:
 
-```r
+``` r
 shiny::runApp(system.file("shiny/pipeline-studio", package = "explodemap"))
 ```
 
-Pipeline Studio is the bridge app for `explodemap` and `dragmapr`: compute a
-layout, refine it by dragging, apply the edits, and export the final map.
+Pipeline Studio is the bridge app for `explodemap` and `dragmapr`: compute a layout, refine it by dragging, apply the edits, and export the final map.
 
 ## Quick Start
 
-```r
+``` r
 library(sf)
 library(explodemap)
 
@@ -72,7 +67,7 @@ plot(layout, "both")
 
 ### Explode Any Projected `sf`
 
-```r
+``` r
 layout <- explode_sf(my_sf, region_col = "district", plot = FALSE)
 ```
 
@@ -80,7 +75,7 @@ Input should be polygon or multipolygon `sf` data in a projected CRS.
 
 ### Explode A US State
 
-```r
+``` r
 nj <- explode_state(
   state_fips = "34",
   crs = 32111,
@@ -94,12 +89,11 @@ nj <- explode_state(
 )
 ```
 
-Use `level = "county"` for county maps, or `level = "cousub"` for municipal and
-county-subdivision maps.
+Use `level = "county"` for county maps, or `level = "cousub"` for municipal and county-subdivision maps.
 
 ### Build A Grouped Layout
 
-```r
+``` r
 grouped <- explode_grouped(
   my_sf,
   region_col = "region",
@@ -108,12 +102,11 @@ grouped <- explode_grouped(
 )
 ```
 
-Grouped layouts are useful for national or multi-region maps where entire
-region blocks need space between them.
+Grouped layouts are useful for national or multi-region maps where entire region blocks need space between them.
 
 ### Inspect The Result Interactively
 
-```r
+``` r
 focus_map(
   grouped,
   label_col = "name",
@@ -125,7 +118,7 @@ focus_map(
 
 In Shiny:
 
-```r
+``` r
 ui <- fluidPage(focusmapOutput("map", height = "650px"))
 
 server <- function(input, output, session) {
@@ -139,7 +132,7 @@ server <- function(input, output, session) {
 
 Release A adds small helpers that are useful in scripts, apps, and tests:
 
-```r
+``` r
 check <- validate_explodemap_input(
   my_sf,
   group_col = "region",
@@ -161,7 +154,7 @@ layout <- explode_grouped(prepared$data, region_col = "region")
 
 Other app-friendly helpers:
 
-```r
+``` r
 count_geometry_vertices(my_sf)
 simplify_to_vertex_budget(my_sf, target_vertices = 350000)
 assign_spatial_groups(my_sf, method = "clusters", groups = 6)
@@ -171,10 +164,9 @@ explodemap_fingerprint(my_sf, id_col = "geoid", group_col = "region")
 
 ## Improve A Layout
 
-Automatic layout is collision-aware, but cartographic composition often still
-needs judgment. Use diagnostics and bounded search before manual editing:
+Automatic layout is collision-aware, but cartographic composition often still needs judgment. Use diagnostics and bounded search before manual editing:
 
-```r
+``` r
 report <- diagnose_layout(grouped, label_col = "name")
 plot(report)
 
@@ -187,7 +179,7 @@ better <- optimize_grouped_layout(
 
 Then hand the layout to `dragmapr`:
 
-```r
+``` r
 library(dragmapr)
 
 state <- as_dragmapr_state(better)
@@ -196,7 +188,7 @@ dragmapr_edit(better, state = state)
 
 Render the same edited state in either package:
 
-```r
+``` r
 focus_map(better, state = state)
 
 render_dragged_map(
@@ -208,7 +200,7 @@ render_dragged_map(
 
 ## Common Helpers
 
-```r
+``` r
 print(layout)
 summary(layout)
 plot(layout)
@@ -218,13 +210,13 @@ calibration_row(layout)
 
 Export TopoJSON when `mapshaper` is installed:
 
-```r
+``` r
 export_topojson(layout, "exploded.topojson")
 ```
 
 ## Learn More
 
-```r
+``` r
 vignette("getting-started", package = "explodemap")
 vignette("workflow-guide", package = "explodemap")
 vignette("grouped-layouts", package = "explodemap")
@@ -233,6 +225,4 @@ vignette("state-first-composition", package = "explodemap")
 
 The method is described in:
 
-> Arthur, G. (2026). *A Hierarchical Vector-Based Framework for Multi-Scale
-> Exploded-View Cartography: Centroid-Driven Spatial Displacement for Dense
-> Administrative Maps.*
+> Arthur, G. (2026). *A Hierarchical Vector-Based Framework for Multi-Scale Exploded-View Cartography: Centroid-Driven Spatial Displacement for Dense Administrative Maps.*

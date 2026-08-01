@@ -14,6 +14,7 @@
 ^\.github$
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
+^ROADMAP\.md$
 ^inst/huggingface/data$
 ^inst/huggingface/Dockerfile$
 ^inst/huggingface/\.dockerignore$

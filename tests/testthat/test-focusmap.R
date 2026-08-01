@@ -342,3 +342,16 @@ test_that("focus_map accepts dragmapr_state for grouped layouts", {
 
   expect_s3_class(widget, "htmlwidget")
 })
+
+test_that("focus_map rejects unsafe longitude-latitude simplification", {
+  x <- sf::st_transform(make_test_sf(), 4326)
+
+  expect_error(
+    focus_map(x, label_col = "id", simplify = 1),
+    "must not exceed 0.1 degrees"
+  )
+  expect_s3_class(
+    focus_map(x, label_col = "id", simplify = 0.001),
+    "htmlwidget"
+  )
+})

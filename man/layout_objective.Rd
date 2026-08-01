@@ -12,13 +12,15 @@ layout_objective(
 )
 }
 \arguments{
-\item{overlap}{Weight for polygon overlap area.}
+\item{overlap}{Weight for polygon overlap as a fraction of total polygon area.}
 
-\item{displacement}{Weight for mean displacement.}
+\item{displacement}{Weight for mean displacement as a fraction of the
+original layout diagonal.}
 
 \item{unused_space}{Weight for unused canvas space.}
 
-\item{label_overlap}{Weight for approximate label overlaps.}
+\item{label_overlap}{Weight for approximate label overlaps as a fraction of
+all possible label pairs.}
 }
 \value{
 Named numeric vector of objective weights.

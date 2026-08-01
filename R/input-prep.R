@@ -10,11 +10,7 @@
 #' @export
 count_geometry_vertices <- function(x) {
   geom <- if (inherits(x, "sfc")) x else sf::st_geometry(x)
-  sum(vapply(
-    geom,
-    function(g) nrow(sf::st_coordinates(g)),
-    numeric(1)
-  ), na.rm = TRUE)
+  nrow(sf::st_coordinates(geom))
 }
 
 #' Create a stable group palette
@@ -38,9 +34,20 @@ group_palette <- function(groups, palette = "Dark 3", existing = NULL) {
   out <- existing[intersect(names(existing), groups)]
   missing <- setdiff(groups, names(out))
   if (length(missing)) {
-    colours <- grDevices::hcl.colors(length(groups), palette = palette)
-    generated <- stats::setNames(colours, groups)
-    out <- c(out, generated[missing])
+    colour_key <- function(colours) {
+      if (!length(colours)) return(character())
+      rgba <- grDevices::col2rgb(colours, alpha = TRUE)
+      apply(rgba, 2L, paste, collapse = ":")
+    }
+    used <- colour_key(unname(out))
+    candidate_count <- max(length(groups), length(missing))
+    repeat {
+      candidates <- grDevices::hcl.colors(candidate_count, palette = palette)
+      available <- candidates[!colour_key(candidates) %in% used]
+      if (length(available) >= length(missing)) break
+      candidate_count <- candidate_count * 2L
+    }
+    out <- c(out, stats::setNames(available[seq_along(missing)], missing))
   }
   out[groups]
 }
@@ -63,6 +70,18 @@ assign_spatial_groups <- function(x,
   if (!inherits(x, "sf")) {
     stop("`x` must be an sf object.", call. = FALSE)
   }
+  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+    get(".Random.seed", envir = .GlobalEnv)
+  } else {
+    NULL
+  }
+  on.exit({
+    if (!is.null(old_seed)) {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    }
+  }, add = TRUE)
   method <- match.arg(method)
   if (!is.character(group_col) || length(group_col) != 1L || !nzchar(group_col)) {
     stop("`group_col` must be a single non-empty string.", call. = FALSE)
@@ -91,16 +110,6 @@ assign_spatial_groups <- function(x,
   }
 
   groups <- max(2L, min(as.integer(groups %||% 6L), nrow(x)))
-  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
-    get(".Random.seed", envir = .GlobalEnv)
-  } else {
-    NULL
-  }
-  on.exit({
-    if (!is.null(old_seed)) {
-      assign(".Random.seed", old_seed, envir = .GlobalEnv)
-    }
-  }, add = TRUE)
   set.seed(seed)
   scaled <- scale(coords)
   bad_cols <- !is.finite(colSums(scaled))
@@ -147,6 +156,9 @@ validate_explodemap_input <- function(x,
   }
 
   metrics$features <- nrow(x)
+  if (nrow(x) == 0L) {
+    errors <- c(errors, "`x` must contain at least one feature.")
+  }
   metrics$vertices <- count_geometry_vertices(x)
   metrics$geometry_types <- sort(unique(as.character(sf::st_geometry_type(x, by_geometry = TRUE))))
   crs <- sf::st_crs(x)
@@ -210,13 +222,30 @@ validate_explodemap_input <- function(x,
 }
 
 new_explodemap_validation <- function(errors, warnings, metrics) {
+  messages <- c(errors, warnings)
+  suggestions <- character()
+  if (any(grepl("coordinate reference system", messages, fixed = TRUE))) {
+    suggestions <- c(suggestions, "Assign the source CRS with sf::st_set_crs() before preparation.")
+  }
+  if (any(grepl("polygon or multipolygon", messages, fixed = TRUE))) {
+    suggestions <- c(suggestions, "Supply polygon or multipolygon features only.")
+  }
+  if (any(grepl("Feature IDs", messages, fixed = TRUE))) {
+    suggestions <- c(suggestions, "Choose a complete column with one unique value per feature.")
+  }
+  if (any(grepl("Group", messages, fixed = TRUE)) || any(grepl("groups", messages, fixed = TRUE))) {
+    suggestions <- c(suggestions, "Choose a complete grouping column or generate spatial groups.")
+  }
+  if (any(grepl("vertices; maximum", messages, fixed = TRUE))) {
+    suggestions <- c(suggestions, "Use simplify_to_vertex_budget() before validation.")
+  }
   structure(
     list(
       valid = length(errors) == 0L,
       errors = errors[!is.na(errors) & nzchar(errors)],
       warnings = warnings[!is.na(warnings) & nzchar(warnings)],
       metrics = metrics,
-      suggestions = character(),
+      suggestions = unique(suggestions),
       format_version = 1L
     ),
     class = "explodemap_validation"
@@ -234,6 +263,10 @@ print.explodemap_validation <- function(x, ...) {
   if (length(x$warnings)) {
     cat("Warnings:\n")
     cat(paste0("- ", x$warnings, collapse = "\n"), "\n")
+  }
+  if (length(x$suggestions)) {
+    cat("Suggestions:\n")
+    cat(paste0("- ", x$suggestions, collapse = "\n"), "\n")
   }
   invisible(x)
 }
@@ -265,6 +298,15 @@ simplify_to_vertex_budget <- function(x,
     return(new_simplification_result(x, before, before, 0, FALSE, 0L))
   }
 
+  original_types <- unique(as.character(sf::st_geometry_type(x, by_geometry = TRUE)))
+  if (isTRUE(preserve_features) && !all(grepl("POLYGON", original_types))) {
+    warning(
+      "Simplification was skipped because `preserve_features = TRUE` requires polygon geometry.",
+      call. = FALSE
+    )
+    return(new_simplification_result(x, before, before, 0, FALSE, 0L))
+  }
+
   fractions <- c(0.00005, 0.0001, 0.0002, 0.0004, 0.0008, 0.0016, 0.0032)
   tolerances <- extent * fractions
   if (!is.null(max_tolerance)) {
@@ -275,26 +317,75 @@ simplify_to_vertex_budget <- function(x,
   best_tol <- 0
   best_vertices <- before
   attempts <- 0L
-  original_types <- unique(as.character(sf::st_geometry_type(x, by_geometry = TRUE)))
-  for (tol in tolerances) {
-    attempts <- attempts + 1L
+  evaluate_tolerance <- function(tol) {
+    attempts <<- attempts + 1L
     candidate <- tryCatch(
       sf::st_make_valid(sf::st_simplify(x, dTolerance = tol, preserveTopology = preserve_topology)),
       error = function(e) NULL
     )
-    if (is.null(candidate)) next
+    if (is.null(candidate)) return(NULL)
     if (isTRUE(preserve_features)) {
       candidate_types <- unique(as.character(sf::st_geometry_type(candidate, by_geometry = TRUE)))
-      if (nrow(candidate) != nrow(x) || any(sf::st_is_empty(candidate))) next
-      if (!all(grepl("POLYGON", candidate_types)) || !all(grepl("POLYGON", original_types))) next
+      if (nrow(candidate) != nrow(x) || any(sf::st_is_empty(candidate))) return(NULL)
+      if (!all(grepl("POLYGON", candidate_types))) return(NULL)
     }
     candidate_vertices <- count_geometry_vertices(candidate)
-    if (candidate_vertices < best_vertices) {
-      best <- candidate
-      best_tol <- tol
-      best_vertices <- candidate_vertices
+    list(data = candidate, vertices = candidate_vertices, tolerance = tol)
+  }
+
+  if (!length(tolerances)) {
+    return(new_simplification_result(x, before, before, 0, FALSE, 0L))
+  }
+
+  # Test the largest tolerance first. If it reaches the budget, bisect the
+  # candidate indices to find the least destructive tolerance that does so.
+  high_index <- length(tolerances)
+  high_result <- evaluate_tolerance(tolerances[[high_index]])
+  if (!is.null(high_result) && high_result$vertices < best_vertices) {
+    best <- high_result$data
+    best_tol <- high_result$tolerance
+    best_vertices <- high_result$vertices
+  }
+  if (!is.null(high_result) && high_result$vertices <= target_vertices) {
+    low_index <- 1L
+    while (low_index < high_index) {
+      mid_index <- floor((low_index + high_index) / 2)
+      candidate_result <- evaluate_tolerance(tolerances[[mid_index]])
+      if (!is.null(candidate_result) && candidate_result$vertices <= target_vertices) {
+        best <- candidate_result$data
+        best_tol <- candidate_result$tolerance
+        best_vertices <- candidate_result$vertices
+        high_index <- mid_index
+      } else {
+        if (!is.null(candidate_result) && candidate_result$vertices < best_vertices) {
+          best <- candidate_result$data
+          best_tol <- candidate_result$tolerance
+          best_vertices <- candidate_result$vertices
+        }
+        low_index <- mid_index + 1L
+      }
     }
-    if (candidate_vertices <= target_vertices) break
+  } else if (!is.null(high_result)) {
+    # No smaller listed tolerance can be expected to remove more vertices.
+    if (high_result$vertices < before) {
+      best <- high_result$data
+      best_tol <- high_result$tolerance
+      best_vertices <- high_result$vertices
+    }
+  } else {
+    # Fall back through smaller tolerances only when the largest candidate
+    # could not be constructed safely.
+    for (tol in rev(tolerances[-length(tolerances)])) {
+      candidate_result <- evaluate_tolerance(tol)
+      if (is.null(candidate_result)) next
+      candidate_vertices <- candidate_result$vertices
+      if (candidate_vertices < best_vertices) {
+        best <- candidate_result$data
+        best_tol <- candidate_result$tolerance
+        best_vertices <- candidate_vertices
+      }
+      if (candidate_vertices <= target_vertices) break
+    }
   }
 
   new_simplification_result(best, before, best_vertices, best_tol, best_tol > 0, attempts)
@@ -364,6 +455,29 @@ prepare_explodemap_input <- function(x,
   )
   warnings <- character()
 
+  collision_rows <- list()
+  preserve_collision <- function(target, source) {
+    if (!target %in% names(out) || identical(target, source)) return(invisible(NULL))
+    base <- paste0(target, "_source")
+    preserved <- base
+    index <- 2L
+    while (preserved %in% names(out)) {
+      preserved <- paste0(base, "_", index)
+      index <- index + 1L
+    }
+    out[[preserved]] <<- out[[target]]
+    collision_rows[[length(collision_rows) + 1L]] <<- data.frame(
+      column = target,
+      preserved_as = preserved,
+      stringsAsFactors = FALSE
+    )
+    warnings <<- c(
+      warnings,
+      paste0("Existing `", target, "` column was preserved as `", preserved, "`.")
+    )
+    invisible(NULL)
+  }
+
   if (isTRUE(make_valid)) {
     out <- sf::st_make_valid(out)
   }
@@ -378,6 +492,10 @@ prepare_explodemap_input <- function(x,
     report$simplified <- isTRUE(simp$simplified)
     report$simplification <- unclass(simp)[setdiff(names(unclass(simp)), "data")]
   }
+
+  preserve_collision("unit_id", id_col)
+  preserve_collision("unit_name", label_col)
+  preserve_collision("region", if (identical(group_method, "column")) group_col else NULL)
 
   out$unit_id <- if (!is.null(id_col) && nzchar(id_col) && id_col %in% names(out)) {
     as.character(out[[id_col]])
@@ -404,6 +522,11 @@ prepare_explodemap_input <- function(x,
   }
 
   validation <- validate_explodemap_input(out, "region", "unit_id", "unit_name")
+  report$column_collisions <- if (length(collision_rows)) {
+    do.call(rbind, collision_rows)
+  } else {
+    data.frame(column = character(), preserved_as = character())
+  }
   structure(
     list(
       data = out,
@@ -411,7 +534,7 @@ prepare_explodemap_input <- function(x,
       mapping = list(id_col = id_col, label_col = label_col, group_col = group_col,
                      group_method = group_method),
       warnings = unique(c(warnings, validation$warnings)),
-      format_version = 1L
+      format_version = 2L
     ),
     class = "explodemap_prepared_input"
   )
@@ -420,10 +543,16 @@ prepare_explodemap_input <- function(x,
 #' @export
 print.explodemap_prepared_input <- function(x, ...) {
   data <- x$data
+  validation <- x$report$validation
   cat("Prepared explodemap input\n")
+  cat("Status:        ", if (isTRUE(validation$valid)) "valid" else "invalid", "\n", sep = "")
   cat("Features:      ", nrow(data), "\n", sep = "")
   cat("Parent groups: ", length(unique(as.character(data$region))), "\n", sep = "")
   cat("Vertices:      ", format(count_geometry_vertices(data), big.mark = ","), "\n", sep = "")
+  if (length(validation$errors)) {
+    cat("Errors:\n")
+    cat(paste0("- ", validation$errors, collapse = "\n"), "\n")
+  }
   if (length(x$warnings)) {
     cat("Warnings:\n")
     cat(paste0("- ", x$warnings, collapse = "\n"), "\n")
@@ -449,20 +578,19 @@ explodemap_fingerprint <- function(x,
   }
   if (!inherits(x, "sf")) stop("`x` must be an sf object or grouped explodemap layout.", call. = FALSE)
 
-  ids <- if (!is.null(id_col) && id_col %in% names(x)) as.character(x[[id_col]]) else seq_len(nrow(x))
+  ids <- if (!is.null(id_col) && id_col %in% names(x)) as.character(x[[id_col]]) else as.character(seq_len(nrow(x)))
   groups <- if (!is.null(group_col) && group_col %in% names(x)) as.character(x[[group_col]]) else NULL
+  crs <- sf::st_crs(x)
   payload <- list(
-    format_version = 1L,
-    crs = sf::st_crs(x)$wkt,
+    format_version = 2L,
+    crs = if (!is.na(crs$epsg)) list(authority = "EPSG", code = crs$epsg) else crs$wkt,
     ids = ids,
     groups = groups,
     bbox = unname(as.numeric(sf::st_bbox(x)))
   )
   if (isTRUE(include_geometry)) {
-    payload$geometry <- sf::st_as_binary(sf::st_geometry(x), EWKB = TRUE)
+    payload$geometry <- sf::st_as_binary(sf::st_geometry(x), EWKB = TRUE, endian = "little")
   }
-  path <- tempfile(fileext = ".rds")
-  on.exit(unlink(path), add = TRUE)
-  saveRDS(payload, path, version = 3)
-  unname(tools::md5sum(path))
+  bytes <- serialize(payload, connection = NULL, version = 3)
+  digest::digest(bytes, algo = "md5", serialize = FALSE)
 }

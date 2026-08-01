@@ -20,6 +20,7 @@ Useful links:
   \item \url{https://prigasg.github.io/explodemap/}
   \item \url{https://github.com/PrigasG/explodemap}
   \item \url{https://huggingface.co/spaces/Prigas89/explodemap-gallery}
+  \item \url{https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio}
   \item Report bugs at \url{https://github.com/PrigasG/explodemap/issues}
 }
 

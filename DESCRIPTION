@@ -1,6 +1,6 @@
 Package: explodemap
 Title: Hierarchical Exploded-View Cartography
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: 
     person("George", "Arthur", , "prigasgenthian48@gmail.com", role = c("aut", "cre"))
 Description: Tools for generating hierarchical exploded-view maps from
@@ -25,6 +25,7 @@ BugReports: https://github.com/PrigasG/explodemap/issues
 Depends: 
     R (>= 4.1.0)
 Imports:
+    digest,
     dplyr,
     ggplot2,
     htmlwidgets,
@@ -36,6 +37,7 @@ Suggests:
     bslib,
     dragmapr,
     ggiraph,
+    jsonlite,
     knitr,
     rmarkdown,
     shiny,

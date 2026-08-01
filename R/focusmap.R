@@ -56,9 +56,11 @@
 #'   selected-section maps. `"municipal_drilldown"` combines both. Explicit
 #'   arguments supplied by the user override preset defaults.
 #' @param simplify Controls geometry simplification for rendering
-#'   performance. \code{TRUE} (default) applies a sensible tolerance
-#'   (\code{dTolerance = 0.001} in WGS 84 degrees, \eqn{\approx}
-#'   100 m). A positive number sets a custom tolerance. \code{FALSE}
+#'   performance. \code{TRUE} (default) applies a conservative tolerance of
+#'   approximately one metre. Longitude/latitude data is simplified in a local metric
+#'   projection to avoid latitude-dependent distortion. A positive number sets
+#'   a custom tolerance in the data's coordinate units; longitude/latitude
+#'   tolerances above 0.1 degrees are rejected as unsafe. \code{FALSE}
 #'   disables simplification. Only affects the widget copy — the
 #'   original data is never modified.
 #' @param fill Fill colour (used when \code{group_col} is \code{NULL}).
@@ -402,24 +404,22 @@ focus_map <- function(x,
   # tolerances visibly flatten Census boundaries into long straight chords.
   # This does NOT affect the original data -- only the widget copy.
   # Pass simplify = FALSE to disable, or a custom numeric tolerance.
-  if (isTRUE(simplify)) {
-    tol <- 0.001
-
-    # Simplifying the WGS84 widget copy warns that lon/lat simplification is
-    # approximate; that is expected here (render-only copy), so silence it.
-    sf_obj <- suppressWarnings(sf::st_simplify(
-      sf_obj,
-      preserveTopology = TRUE,
-      dTolerance = tol
-    ))
-    sf_obj <- .repair_widget_geometry(sf_obj)
-    sf_obj <- sf_obj[!sf::st_is_empty(sf_obj), ]
-  } else if (is.numeric(simplify) && length(simplify) == 1 && simplify > 0) {
-    sf_obj <- suppressWarnings(sf::st_simplify(
-      sf_obj,
-      preserveTopology = TRUE,
-      dTolerance = simplify
-    ))
+  valid_logical_simplify <- is.logical(simplify) && length(simplify) == 1L && !is.na(simplify)
+  valid_numeric_simplify <- is.numeric(simplify) && length(simplify) == 1L &&
+    is.finite(simplify) && simplify > 0
+  if (!valid_logical_simplify && !valid_numeric_simplify) {
+    stop("`simplify` must be TRUE, FALSE, or one positive finite number.", call. = FALSE)
+  }
+  if (is.numeric(simplify) && isTRUE(sf::st_is_longlat(sf_obj)) && simplify > 0.1) {
+    stop(
+      "Numeric `simplify` must not exceed 0.1 degrees for longitude/latitude data; ",
+      "use TRUE, a smaller value, or pre-simplify in a projected CRS.",
+      call. = FALSE
+    )
+  }
+  if (isTRUE(simplify) || is.numeric(simplify)) {
+    tolerance <- if (isTRUE(simplify)) 0.00001 else simplify
+    sf_obj <- .simplify_focus_geometry(sf_obj, tolerance)
     sf_obj <- .repair_widget_geometry(sf_obj)
     sf_obj <- sf_obj[!sf::st_is_empty(sf_obj), ]
   }
@@ -494,6 +494,37 @@ focus_map <- function(x,
     package   = "explodemap",
     elementId = elementId
   )
+}
+
+.simplify_focus_geometry <- function(sf_obj, tolerance) {
+  if (!isTRUE(sf::st_is_longlat(sf_obj))) {
+    return(sf::st_simplify(
+      sf_obj,
+      preserveTopology = TRUE,
+      dTolerance = tolerance
+    ))
+  }
+
+  bbox <- sf::st_bbox(sf_obj)
+  longitude <- mean(as.numeric(bbox[c("xmin", "xmax")]))
+  latitude <- mean(as.numeric(bbox[c("ymin", "ymax")]))
+  if (!is.finite(longitude) || !is.finite(latitude)) {
+    stop("Cannot derive a metric simplification CRS from the geometry extent.", call. = FALSE)
+  }
+  local_crs <- paste0(
+    "+proj=aeqd +lat_0=", latitude,
+    " +lon_0=", longitude,
+    " +datum=WGS84 +units=m +no_defs"
+  )
+  original_crs <- sf::st_crs(sf_obj)
+  metric_tolerance <- tolerance * 111195
+  metric <- sf::st_transform(sf_obj, local_crs)
+  metric <- sf::st_simplify(
+    metric,
+    preserveTopology = TRUE,
+    dTolerance = metric_tolerance
+  )
+  sf::st_transform(metric, original_crs)
 }
 
 
