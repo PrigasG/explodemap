@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">explodemap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Build layout objective weights</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PrigasG/explodemap/blob/0.3.0/R/layout_quality.R" class="external-link"><code>R/layout_quality.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PrigasG/explodemap/blob/master/R/layout_quality.R" class="external-link"><code>R/layout_quality.R</code></a></small>
       <div class="d-none name"><code>layout_objective.Rd</code></div>
     </div>
 
@@ -64,11 +64,12 @@
 
 
 <dl><dt id="arg-overlap">overlap<a class="anchor" aria-label="anchor" href="#arg-overlap"></a></dt>
-<dd><p>Weight for polygon overlap area.</p></dd>
+<dd><p>Weight for polygon overlap as a fraction of total polygon area.</p></dd>
 
 
 <dt id="arg-displacement">displacement<a class="anchor" aria-label="anchor" href="#arg-displacement"></a></dt>
-<dd><p>Weight for mean displacement.</p></dd>
+<dd><p>Weight for mean displacement as a fraction of the
+original layout diagonal.</p></dd>
 
 
 <dt id="arg-unused-space">unused_space<a class="anchor" aria-label="anchor" href="#arg-unused-space"></a></dt>
@@ -76,7 +77,8 @@
 
 
 <dt id="arg-label-overlap">label_overlap<a class="anchor" aria-label="anchor" href="#arg-label-overlap"></a></dt>
-<dd><p>Weight for approximate label overlaps.</p></dd>
+<dd><p>Weight for approximate label overlaps as a fraction of
+all possible label pairs.</p></dd>
 
 </dl></div>
     <div class="section level2">

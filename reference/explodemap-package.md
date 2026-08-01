@@ -20,6 +20,8 @@ Useful links:
 
 - <https://huggingface.co/spaces/Prigas89/explodemap-gallery>
 
+- <https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio>
+
 - Report bugs at <https://github.com/PrigasG/explodemap/issues>
 
 ## Author

@@ -17,11 +17,12 @@ layout_objective(
 
 - overlap:
 
-  Weight for polygon overlap area.
+  Weight for polygon overlap as a fraction of total polygon area.
 
 - displacement:
 
-  Weight for mean displacement.
+  Weight for mean displacement as a fraction of the original layout
+  diagonal.
 
 - unused_space:
 
@@ -29,7 +30,8 @@ layout_objective(
 
 - label_overlap:
 
-  Weight for approximate label overlaps.
+  Weight for approximate label overlaps as a fraction of all possible
+  label pairs.
 
 ## Value
 

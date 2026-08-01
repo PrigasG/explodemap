@@ -149,10 +149,13 @@ renderFocusmap(expr, env = parent.frame(), quoted = FALSE)
 - simplify:
 
   Controls geometry simplification for rendering performance. `TRUE`
-  (default) applies a sensible tolerance (`dTolerance = 0.001` in WGS 84
-  degrees, \\\approx\\ 100 m). A positive number sets a custom
-  tolerance. `FALSE` disables simplification. Only affects the widget
-  copy — the original data is never modified.
+  (default) applies a conservative tolerance of approximately one metre.
+  Longitude/latitude data is simplified in a local metric projection to
+  avoid latitude-dependent distortion. A positive number sets a custom
+  tolerance in the data's coordinate units; longitude/latitude
+  tolerances above 0.1 degrees are rejected as unsafe. `FALSE` disables
+  simplification. Only affects the widget copy — the original data is
+  never modified.
 
 - fill:
 
@@ -361,5 +364,5 @@ counties <- sf::st_sf(
 
 focus_map(counties, label_col = "NAME", group_col = "region")
 
-{"x":{"geojson_str":"{\n\"type\": \"FeatureCollection\",\n\"name\": \"file1fad69f28b4b\",\n\"features\": [\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"1\", \"id\": \"1\", \"NAME\": \"A\", \"group\": \"North\", \"info_title\": \"A\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -74.0, 40.0 ], [ -74.0, 40.2 ], [ -74.2, 40.2 ], [ -74.2, 40.0 ], [ -74.0, 40.0 ] ] ] } },\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"2\", \"id\": \"2\", \"NAME\": \"B\", \"group\": \"South\", \"info_title\": \"B\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -73.7, 40.0 ], [ -73.7, 40.2 ], [ -73.9, 40.2 ], [ -73.9, 40.0 ], [ -73.7, 40.0 ] ] ] } }\n]\n}","options":{"fill":"#2d6ea3","coordinateSystem":"longlat","groupPalette":null,"contextMode":"fade","contextValues":["context"],"contextFill":"#cfd9df","contextOpacity":0.18,"contextClickable":false,"focusPreset":"none","fillOpacity":0.58,"stroke":"#ffffff","liftScale":1.16,"focusPadding":40,"focusSize":0.76,"minFocusWidth":0,"minFocusHeight":0,"tinyFeatureThreshold":48,"tinyFeatureBoost":1,"maxZoom":null,"originContext":"none","originContextPosition":"bottom-left","focusContextOpacity":0.3,"showDragZoom":false,"showGroupLabels":false,"groupLabels":null,"fontSize":14,"showLabels":true,"performanceMode":null,"showInfoCard":false,"infoPosition":"top-right","infoCols":null,"infoKeys":[],"infoLabels":null,"infoTitle":"NAME","infoCardScale":1,"areaMin":5000,"widthMin":95,"heightMin":28,"hasGroups":true}},"evals":[],"jsHooks":[]}# }
+{"x":{"geojson_str":"{\n\"type\": \"FeatureCollection\",\n\"name\": \"file20071b853021\",\n\"features\": [\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"1\", \"id\": \"1\", \"NAME\": \"A\", \"group\": \"North\", \"info_title\": \"A\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -74.2, 40.0 ], [ -74.0, 40.0 ], [ -74.0, 40.2 ], [ -74.2, 40.2 ], [ -74.2, 40.0 ] ] ] } },\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"2\", \"id\": \"2\", \"NAME\": \"B\", \"group\": \"South\", \"info_title\": \"B\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -73.9, 40.0 ], [ -73.7, 40.0 ], [ -73.7, 40.2 ], [ -73.9, 40.2 ], [ -73.9, 40.0 ] ] ] } }\n]\n}","options":{"fill":"#2d6ea3","coordinateSystem":"longlat","groupPalette":null,"contextMode":"fade","contextValues":["context"],"contextFill":"#cfd9df","contextOpacity":0.18,"contextClickable":false,"focusPreset":"none","fillOpacity":0.58,"stroke":"#ffffff","liftScale":1.16,"focusPadding":40,"focusSize":0.76,"minFocusWidth":0,"minFocusHeight":0,"tinyFeatureThreshold":48,"tinyFeatureBoost":1,"maxZoom":null,"originContext":"none","originContextPosition":"bottom-left","focusContextOpacity":0.3,"showDragZoom":false,"showGroupLabels":false,"groupLabels":null,"fontSize":14,"showLabels":true,"performanceMode":null,"showInfoCard":false,"infoPosition":"top-right","infoCols":null,"infoKeys":[],"infoLabels":null,"infoTitle":"NAME","infoCardScale":1,"areaMin":5000,"widthMin":95,"heightMin":28,"hasGroups":true}},"evals":[],"jsHooks":[]}# }
 ```
