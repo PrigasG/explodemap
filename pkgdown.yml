@@ -1,5 +1,5 @@
 pandoc: 3.8.3
-pkgdown: 2.2.0
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   getting-started: getting-started.html
@@ -7,7 +7,7 @@ articles:
   reproducing-paper-examples: reproducing-paper-examples.html
   state-first-composition: state-first-composition.html
   workflow-guide: workflow-guide.html
-last_built: 2026-06-27T10:57Z
+last_built: 2026-08-01T21:38Z
 urls:
   reference: https://prigasg.github.io/explodemap/reference
   article: https://prigasg.github.io/explodemap/articles
