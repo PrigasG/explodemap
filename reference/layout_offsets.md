@@ -6,7 +6,12 @@ distinct from manual/editorial offsets stored by `dragmapr`.
 ## Usage
 
 ``` r
-layout_offsets(layout, level = c("group", "feature"), id_col = NULL)
+layout_offsets(
+  layout,
+  level = c("group", "feature"),
+  id_col = NULL,
+  require_stable_id = identical(level, "feature")
+)
 ```
 
 ## Arguments
@@ -22,6 +27,11 @@ layout_offsets(layout, level = c("group", "feature"), id_col = NULL)
 - id_col:
 
   Optional feature ID column for `level = "feature"`.
+
+- require_stable_id:
+
+  Require a real feature ID column for feature-level persistent
+  handoffs. When `TRUE`, row-number fallback IDs are rejected.
 
 ## Value
 

@@ -93,8 +93,22 @@ state
 #> $selected_feature
 #> NULL
 #> 
+#> $region_col
+#> [1] "region"
+#> 
+#> $label_id_col
+#> [1] "label_id"
+#> 
+#> $binding
+#> $binding$region_col
+#> [1] "region"
+#> 
+#> $binding$label_id_col
+#> [1] "label_id"
+#> 
+#> 
 #> $schema_version
-#> [1] "1.0.0"
+#> [1] "1.1.0"
 #> 
 #> $package_version
 #> [1] "0.3.1"

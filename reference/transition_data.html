@@ -61,7 +61,8 @@ plans without inspecting layout internals.</p>
 <span>  <span class="va">layout</span>,</span>
 <span>  level <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="st">"feature"</span><span class="op">)</span>,</span>
 <span>  id_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  ordering <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  ordering <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  require_stable_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">level</span>, <span class="st">"feature"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -83,6 +84,11 @@ plans without inspecting layout internals.</p>
 
 <dt id="arg-ordering">ordering<a class="anchor" aria-label="anchor" href="#arg-ordering"></a></dt>
 <dd><p>Optional ordering column for <code>level = "feature"</code>.</p></dd>
+
+
+<dt id="arg-require-stable-id">require_stable_id<a class="anchor" aria-label="anchor" href="#arg-require-stable-id"></a></dt>
+<dd><p>Require a real feature ID column for feature-level
+persistent handoffs. When <code>TRUE</code>, row-number fallback IDs are rejected.</p></dd>
 
 </dl></div>
     <div class="section level2">

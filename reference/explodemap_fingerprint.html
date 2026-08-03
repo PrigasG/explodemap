@@ -56,7 +56,8 @@
 <span>  id_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  include_geometry <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  include_parameters <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  include_parameters <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  require_stable_id <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -83,6 +84,11 @@
 <dt id="arg-include-parameters">include_parameters<a class="anchor" aria-label="anchor" href="#arg-include-parameters"></a></dt>
 <dd><p>Include layout parameters and package version when
 <code>x</code> is a grouped explodemap layout.</p></dd>
+
+
+<dt id="arg-require-stable-id">require_stable_id<a class="anchor" aria-label="anchor" href="#arg-require-stable-id"></a></dt>
+<dd><p>Require a real feature ID column instead of
+row-number fallback IDs.</p></dd>
 
 </dl></div>
     <div class="section level2">

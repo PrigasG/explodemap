@@ -177,6 +177,23 @@ prepared <- prepare_explodemap_input(
 layout <- explode_grouped(prepared$data, region_col = "region")
 ```
 
+If the source file does not have a usable ID column,
+[`prepare_explodemap_input()`](https://prigasg.github.io/explodemap/reference/prepare_explodemap_input.md)
+creates deterministic `unit_id` values from the geometry and labels.
+Feature- level handoffs then use those IDs instead of row numbers:
+
+``` r
+
+prepared <- prepare_explodemap_input(
+  my_sf,
+  label_col = "name",
+  group_col = "region"
+)
+
+layout <- explode_grouped(prepared$data, region_col = "region", plot = FALSE)
+movement <- transition_data(layout, level = "feature", id_col = "unit_id")
+```
+
 Other app-friendly helpers:
 
 ``` r
@@ -213,6 +230,7 @@ Then hand the layout to `dragmapr`:
 library(dragmapr)
 
 state <- as_dragmapr_state(better)
+state$region_col
 dragmapr_edit(better, state = state)
 ```
 

@@ -11,7 +11,8 @@ transition_data(
   layout,
   level = c("group", "feature"),
   id_col = NULL,
-  ordering = NULL
+  ordering = NULL,
+  require_stable_id = identical(level, "feature")
 )
 ```
 
@@ -32,6 +33,11 @@ transition_data(
 - ordering:
 
   Optional ordering column for `level = "feature"`.
+
+- require_stable_id:
+
+  Require a real feature ID column for feature-level persistent
+  handoffs. When `TRUE`, row-number fallback IDs are rejected.
 
 ## Value
 
