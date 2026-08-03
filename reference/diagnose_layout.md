@@ -5,7 +5,7 @@ Diagnose grouped layout quality
 ## Usage
 
 ``` r
-diagnose_layout(result, label_col = NULL, label_size = NULL)
+diagnose_layout(result, label_col = NULL, label_size = NULL, state = NULL)
 ```
 
 ## Arguments
@@ -21,6 +21,11 @@ diagnose_layout(result, label_col = NULL, label_size = NULL)
 - label_size:
 
   Approximate label size in map units.
+
+- state:
+
+  Optional dragmapr state. Reserved for post-drag diagnostics; when
+  supplied, the report records that manual state was considered.
 
 ## Value
 

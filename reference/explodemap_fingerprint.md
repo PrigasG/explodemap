@@ -9,7 +9,8 @@ explodemap_fingerprint(
   x,
   id_col = NULL,
   group_col = NULL,
-  include_geometry = TRUE
+  include_geometry = TRUE,
+  include_parameters = TRUE
 )
 ```
 
@@ -30,6 +31,11 @@ explodemap_fingerprint(
 - include_geometry:
 
   Include EWKB geometry bytes.
+
+- include_parameters:
+
+  Include layout parameters and package version when `x` is a grouped
+  explodemap layout.
 
 ## Value
 

@@ -46,78 +46,555 @@
 
 <div id="explodemap--dragmapr-roadmap" class="section level1">
 
-<p>This roadmap captures the package boundary revealed by Pipeline Studio. The packages should own reusable geometry and editable-state behavior; Pipeline Studio should own upload policy, navigation, overlays, and the public demo journey.</p>
+<p>This roadmap captures the package boundary revealed by Pipeline Studio and the prototype work. The packages should own reusable layout, state, validation, and export contracts. The apps should own upload policy, navigation, public demo limits, and the user journey.</p>
+<p>The central contract is:</p>
+<pre class="text"><code>computed layout movement
+        +
+manual editorial movement
+        =
+final spatial composition</code></pre>
+<p><code>explodemap</code> owns computed/base layout movement. <code>dragmapr</code> owns manual edits, state, labels, validation, undo-friendly operations, and reproducible export. Pipeline Studio, Spatial Studio, and future apps should consume those package APIs instead of recreating layout, state, label, connector, and export logic.</p>
+<p>The first complete use case should stay US-focused. The United States gives us a full hierarchy ladder: national layouts at the state level, state layouts at the county level, and county layouts at municipality, tract, or place level. HHS regions also give a useful parent-to-state workflow. That is enough to exercise coarse, middle, and fine geography without changing country assumptions.</p>
 <div class="section level2">
-<h2 id="release-a-proven-primitives">Release A: proven primitives<a class="anchor" aria-label="anchor" href="#release-a-proven-primitives"></a></h2>
-<p>Export small, workflow-neutral functions that are already used by multiple parts of the bridge app.</p>
+<h2 id="naming-rules">Naming Rules<a class="anchor" aria-label="anchor" href="#naming-rules"></a></h2>
+<p>Use current exported names where they already exist, even when they include the package name. For new APIs, prefer package-native verbs and nouns instead of repeating the package name inside every function.</p>
+<p>Examples for future APIs:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/layout_offsets.html">layout_offsets</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/transition_data.html">transition_data</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/original_geometry.html">original_geometry</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/original_geometry.html">final_geometry</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/connector_geometry.html">connector_geometry</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span><span class="fu">region_connectors</span><span class="op">(</span><span class="va">layout</span>, <span class="va">state</span><span class="op">)</span></span>
+<span><span class="fu">label_connectors</span><span class="op">(</span><span class="va">labels</span>, <span class="va">state</span><span class="op">)</span></span>
+<span><span class="fu">update_region_offset</span><span class="op">(</span><span class="va">state</span>, <span class="va">region</span>, <span class="va">dx_m</span>, <span class="va">dy_m</span><span class="op">)</span></span>
+<span><span class="fu">update_label_offset</span><span class="op">(</span><span class="va">state</span>, <span class="va">label_id</span>, <span class="va">dx_m</span>, <span class="va">dy_m</span><span class="op">)</span></span>
+<span><span class="fu">hierarchy_state</span><span class="op">(</span><span class="va">root</span>, children <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Keep established names such as <code>dragmapr_state()</code>, <code>dragmapr_widget()</code>, <code>drag_map_prototype()</code>, <code><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input()</a></code>, <code><a href="reference/validate_explodemap_input.html">validate_explodemap_input()</a></code>, <code><a href="reference/explodemap_fingerprint.html">explodemap_fingerprint()</a></code>, and <code><a href="reference/as_dragmapr_state.html">as_dragmapr_state()</a></code> unless there is a deliberate breaking API cleanup.</p>
+</div>
+<div class="section level2">
+<h2 id="shared-foundation">Shared Foundation<a class="anchor" aria-label="anchor" href="#shared-foundation"></a></h2>
+<div class="section level3">
+<h3 id="canonical-spatial-input">Canonical Spatial Input<a class="anchor" aria-label="anchor" href="#canonical-spatial-input"></a></h3>
+<p>Stabilize <code><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input()</a></code> as the canonical preparation pipeline and standardize its return contract. It should own the common steps now repeated in apps: geometry repair, CRS choice, stable IDs, feature labels, parent columns, optional simplification, vertex budgeting, and transparent reporting.</p>
+<p>The return object should include:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">prepared_sf</span>,</span>
+<span>  validation <span class="op">=</span> <span class="va">validation_result</span>,</span>
+<span>  crs <span class="op">=</span> <span class="va">crs_decision</span>,</span>
+<span>  simplification <span class="op">=</span> <span class="va">simplification_report</span>,</span>
+<span>  fingerprint <span class="op">=</span> <span class="va">fingerprint</span>,</span>
+<span>  roles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    id <span class="op">=</span> <span class="st">"feature_id"</span>,</span>
+<span>    label <span class="op">=</span> <span class="st">"label"</span>,</span>
+<span>    parent <span class="op">=</span> <span class="st">"parent_id"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>This lets apps preserve the user’s original field names while still giving both packages a stable layout input.</p>
+</div>
+<div class="section level3">
+<h3 id="structured-validation">Structured Validation<a class="anchor" aria-label="anchor" href="#structured-validation"></a></h3>
+<p>Expand <code><a href="reference/validate_explodemap_input.html">validate_explodemap_input()</a></code> to return structured errors, warnings, recommendations, and performance metrics.</p>
+<p>The result should be easy for an app to display:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  valid <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  errors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  warnings <span class="op">=</span> <span class="st">"Geometry has 684,000 vertices."</span>,</span>
+<span>  recommendations <span class="op">=</span> <span class="st">"Simplify to approximately 250,000 vertices."</span>,</span>
+<span>  metrics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    features <span class="op">=</span> <span class="fl">564</span>,</span>
+<span>    vertices <span class="op">=</span> <span class="fl">684000</span>,</span>
+<span>    invalid <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>    empty <span class="op">=</span> <span class="fl">0</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Use the same pattern for state compatibility checks in <code>dragmapr</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="stable-identity">Stable Identity<a class="anchor" aria-label="anchor" href="#stable-identity"></a></h3>
+<p>Standardize <code><a href="reference/explodemap_fingerprint.html">explodemap_fingerprint()</a></code> across package interoperability, saved projects, and state compatibility checks. Fingerprints should cover the parts that make a saved state safe or unsafe to reuse:</p>
+<ul><li>stable feature IDs;</li>
+<li>parent/group IDs;</li>
+<li>CRS;</li>
+<li>geometry content when requested;</li>
+<li>layout method and key parameters;</li>
+<li>schema/package versions.</li>
+</ul><p>Avoid persisted IDs that depend only on row order. When apps must generate IDs, they should be deterministic from source identifiers and hierarchy level.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="explodemap-priorities">explodemap Priorities<a class="anchor" aria-label="anchor" href="#explodemap-priorities"></a></h2>
+<div class="section level3">
+<h3 id="id_1-layout-offsets">1. Layout Offsets<a class="anchor" aria-label="anchor" href="#id_1-layout-offsets"></a></h3>
+<p>Add a stable <code><a href="reference/layout_offsets.html">layout_offsets()</a></code> accessor for computed movement. It should describe base movement produced by the layout algorithm, not manual edits.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">offsets</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/layout_offsets.html">layout_offsets</a></span><span class="op">(</span><span class="va">layout</span>, level <span class="op">=</span> <span class="st">"group"</span><span class="op">)</span></span></code></pre></div>
+<p>Recommended columns:</p>
+<pre class="text"><code><span><span class="va">feature_id</span></span>
+<span><span class="va">parent_id</span></span>
+<span><span class="va">base_dx_m</span></span>
+<span><span class="va">base_dy_m</span></span>
+<span><span class="va">anchor_x</span></span>
+<span><span class="va">anchor_y</span></span></code></pre>
+<p><code>dragmapr</code> can then store manual movement separately:</p>
+<pre class="text"><code><span><span class="va">final_dx_m</span> <span class="op">=</span> <span class="va">base_dx_m</span> <span class="op">+</span> <span class="va">manual_dx_m</span></span>
+<span><span class="va">final_dy_m</span> <span class="op">=</span> <span class="va">base_dy_m</span> <span class="op">+</span> <span class="va">manual_dy_m</span></span></code></pre>
+<p>This separation is the core cross-package contract.</p>
+</div>
+<div class="section level3">
+<h3 id="id_2-transition-data">2. Transition Data<a class="anchor" aria-label="anchor" href="#id_2-transition-data"></a></h3>
+<p>Add <code><a href="reference/transition_data.html">transition_data()</a></code> as a renderer-neutral description of original-to-final movement. The current browser prototypes should not have to invent animation offsets in JavaScript.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">movement</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/transition_data.html">transition_data</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span></code></pre></div>
+<p>Recommended columns:</p>
+<pre class="text"><code><span><span class="va">feature_id</span></span>
+<span><span class="va">parent_id</span></span>
+<span><span class="va">original_anchor_x</span></span>
+<span><span class="va">original_anchor_y</span></span>
+<span><span class="va">final_anchor_x</span></span>
+<span><span class="va">final_anchor_y</span></span>
+<span><span class="va">base_dx_m</span></span>
+<span><span class="va">base_dy_m</span></span>
+<span><span class="va">distance_m</span></span>
+<span><span class="va">angle_degrees</span></span>
+<span><span class="va">animation_order</span></span></code></pre>
+<p>This supports SVG, MapLibre, deck.gl, static diagnostics, reproducible exports, and conversion to editable state.</p>
+</div>
+<div class="section level3">
+<h3 id="id_3-geometry-accessors">3. Geometry Accessors<a class="anchor" aria-label="anchor" href="#id_3-geometry-accessors"></a></h3>
+<p>Applications should not inspect internal list structures. Add or stabilize documented accessors:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/original_geometry.html">original_geometry</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/original_geometry.html">final_geometry</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/original_geometry.html">group_geometry</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/anchor_table.html">anchor_table</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/connector_geometry.html">connector_geometry</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span></code></pre></div>
+<p>Each accessor should return documented columns and classes.</p>
+</div>
+<div class="section level3">
+<h3 id="id_4-official-dragmapr-handoff">4. Official dragmapr Handoff<a class="anchor" aria-label="anchor" href="#id_4-official-dragmapr-handoff"></a></h3>
+<p>Formalize and document <code><a href="reference/as_dragmapr_state.html">as_dragmapr_state()</a></code> as the official bridge from <code>explodemap</code> layouts to <code>dragmapr</code> editing state.</p>
+<p>The bridge should standardize:</p>
+<ul><li>region IDs;</li>
+<li>geometry fingerprints;</li>
+<li>CRS;</li>
+<li>parent hierarchy;</li>
+<li>base offsets versus manual offsets;</li>
+<li>labels and label anchors.</li>
+</ul><p>The user-facing pattern should stay simple:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">layout</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explode_grouped.html">explode_grouped</a></span><span class="op">(</span><span class="va">prepared</span>, region_col <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span>
+<span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/as_dragmapr_state.html">as_dragmapr_state</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span><span class="va">editor</span> <span class="op">&lt;-</span> <span class="fu">dragmapr_edit</span><span class="op">(</span><span class="va">layout</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="id_5-crs-decisions">5. CRS Decisions<a class="anchor" aria-label="anchor" href="#id_5-crs-decisions"></a></h3>
+<p>Stabilize CRS resolution as package behavior rather than app behavior. US data can default to a national equal-area CRS where appropriate, while state and local data can use a suitable projected CRS.</p>
+<p>Future API:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">resolve_layout_crs</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  strategy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"preserve"</span>, <span class="st">"utm"</span>, <span class="st">"laea"</span>, <span class="st">"aeqd"</span>, <span class="st">"user"</span><span class="op">)</span>,</span>
+<span>  crs <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Return a structured decision:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  crs <span class="op">=</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>,</span>
+<span>  strategy <span class="op">=</span> <span class="st">"auto"</span>,</span>
+<span>  reason <span class="op">=</span> <span class="st">"US-wide extent uses an equal-area working CRS."</span>,</span>
+<span>  centroid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">...</span>, y <span class="op">=</span> <span class="va">...</span><span class="op">)</span>,</span>
+<span>  warnings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="id_6-actionable-diagnostics">6. Actionable Diagnostics<a class="anchor" aria-label="anchor" href="#id_6-actionable-diagnostics"></a></h3>
+<p>Expand <code><a href="reference/diagnose_layout.html">diagnose_layout()</a></code> with displacement metrics, per-group findings, actionable recommendations, and optional post-drag diagnostics.</p>
+<p>Recommended shape:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  summary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    overlap_count <span class="op">=</span> <span class="fl">12</span>,</span>
+<span>    label_overlap_count <span class="op">=</span> <span class="fl">8</span>,</span>
+<span>    minimum_gap_m <span class="op">=</span> <span class="fl">1200</span>,</span>
+<span>    canvas_utilization <span class="op">=</span> <span class="fl">0.63</span>,</span>
+<span>    median_displacement_m <span class="op">=</span> <span class="fl">42000</span>,</span>
+<span>    maximum_displacement_m <span class="op">=</span> <span class="fl">116000</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  by_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>,</span>
+<span>  overlapping_pairs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>,</span>
+<span>  displaced_features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>,</span>
+<span>  recommendations <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Increase group padding to approximately 35,000 meters."</span>,</span>
+<span>    <span class="st">"Reduce labels to the top 60 priority features."</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Apps should be able to zoom to the groups named in the report.</p>
+</div>
+<div class="section level3">
+<h3 id="id_7-deterministic-ordering">7. Deterministic Ordering<a class="anchor" aria-label="anchor" href="#id_7-deterministic-ordering"></a></h3>
+<p>Expose deterministic <code>group_order</code>, <code>feature_order</code>, and <code>animation_order</code>. Ordering should be stable across sessions and based on group position, angle from layout center, feature position, or an optional user-supplied ordering column.</p>
+</div>
+<div class="section level3">
+<h3 id="id_8-partial-recalculation">8. Partial Recalculation<a class="anchor" aria-label="anchor" href="#id_8-partial-recalculation"></a></h3>
+<p>Support recalculating only part of a layout:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">recompute_groups</span><span class="op">(</span></span>
+<span>  <span class="va">layout</span>,</span>
+<span>  <span class="va">groups</span>,</span>
+<span>  parameters <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  preserve_other_groups <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>US use cases:</p>
+<ul><li>recompute one HHS region;</li>
+<li>recompute one state’s county layout;</li>
+<li>adjust only groups with remaining overlap;</li>
+<li>preserve manual anchors elsewhere.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_9-hierarchy-aware-layouts">9. Hierarchy-Aware Layouts<a class="anchor" aria-label="anchor" href="#id_9-hierarchy-aware-layouts"></a></h3>
+<p>Make multi-level layouts explicit. A root layout can carry lazy child layouts:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hierarchy</span> <span class="op">&lt;-</span> <span class="fu">layout_hierarchy</span><span class="op">(</span>root <span class="op">=</span> <span class="va">usa_states</span><span class="op">)</span></span>
+<span><span class="va">hierarchy</span> <span class="op">&lt;-</span> <span class="fu">attach_child_layout</span><span class="op">(</span><span class="va">hierarchy</span>, parent_id <span class="op">=</span> <span class="st">"30"</span>, child <span class="op">=</span> <span class="va">montana_counties</span><span class="op">)</span></span>
+<span><span class="va">hierarchy</span> <span class="op">&lt;-</span> <span class="fu">attach_child_layout</span><span class="op">(</span><span class="va">hierarchy</span>, parent_id <span class="op">=</span> <span class="st">"34"</span>, child <span class="op">=</span> <span class="va">new_jersey_counties</span><span class="op">)</span></span></code></pre></div>
+<p>The class should describe relationships without forcing every child level to be computed up front.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="dragmapr-priorities">dragmapr Priorities<a class="anchor" aria-label="anchor" href="#dragmapr-priorities"></a></h2>
+<div class="section level3">
+<h3 id="id_1-safe-state-mutation">1. Safe State Mutation<a class="anchor" aria-label="anchor" href="#id_1-safe-state-mutation"></a></h3>
+<p>Applications should not directly edit offset tables. Add helpers that validate IDs, increment versions, and can later create history operations.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu">update_region_offset</span><span class="op">(</span></span>
+<span>  <span class="va">state</span>,</span>
+<span>  region <span class="op">=</span> <span class="st">"30"</span>,</span>
+<span>  dx_m <span class="op">=</span> <span class="fl">14000</span>,</span>
+<span>  dy_m <span class="op">=</span> <span class="fl">1500</span>,</span>
+<span>  mode <span class="op">=</span> <span class="st">"replace"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu">update_label_offset</span><span class="op">(</span></span>
+<span>  <span class="va">state</span>,</span>
+<span>  label_id <span class="op">=</span> <span class="st">"30-label"</span>,</span>
+<span>  dx_m <span class="op">=</span> <span class="fl">4000</span>,</span>
+<span>  dy_m <span class="op">=</span> <span class="fl">2500</span>,</span>
+<span>  mode <span class="op">=</span> <span class="st">"increment"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Also add reset helpers:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">reset_region</span><span class="op">(</span><span class="va">state</span>, <span class="st">"30"</span><span class="op">)</span></span>
+<span><span class="fu">reset_regions</span><span class="op">(</span><span class="va">state</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"30"</span>, <span class="st">"34"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">reset_label</span><span class="op">(</span><span class="va">state</span>, <span class="st">"30-label"</span><span class="op">)</span></span>
+<span><span class="fu">reset_labels</span><span class="op">(</span><span class="va">state</span><span class="op">)</span></span>
+<span><span class="fu">reset_all</span><span class="op">(</span><span class="va">state</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="id_2-improved-state-diff">2. Improved State Diff<a class="anchor" aria-label="anchor" href="#id_2-improved-state-diff"></a></h3>
+<p>Expand <code>dragmapr_state_diff()</code> so apps can explain what changed without writing their own offset comparison code.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">diff</span> <span class="op">&lt;-</span> <span class="fu">dragmapr_state_diff</span><span class="op">(</span><span class="va">before</span>, <span class="va">after</span>, tolerance <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<p>Return:</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  moved_regions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>,</span>
+<span>  moved_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>,</span>
+<span>  added_regions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  removed_regions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  expanded_groups_changed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  view_changed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  selected_feature_changed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  summary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    region_changes <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>    label_changes <span class="op">=</span> <span class="fl">7</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="id_3-compatibility-validation">3. Compatibility Validation<a class="anchor" aria-label="anchor" href="#id_3-compatibility-validation"></a></h3>
+<p>Add compatibility checks between a layout and a state:</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">validate_state_compatibility</span><span class="op">(</span><span class="va">layout</span>, <span class="va">state</span>, strict <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Check geometry fingerprint, CRS, feature IDs, region IDs, labels, hierarchy level, schema version, and package version. Return structured errors and migration advice.</p>
+</div>
+<div class="section level3">
+<h3 id="id_4-first-class-connector-data">4. First-Class Connector Data<a class="anchor" aria-label="anchor" href="#id_4-first-class-connector-data"></a></h3>
+<p>Move movement connectors and label connectors out of renderer-only logic.</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">region_lines</span> <span class="op">&lt;-</span> <span class="fu">region_connectors</span><span class="op">(</span></span>
+<span>  <span class="va">layout</span>,</span>
+<span>  <span class="va">state</span>,</span>
+<span>  threshold_m <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  include_unmoved <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">label_lines</span> <span class="op">&lt;-</span> <span class="fu">label_connectors</span><span class="op">(</span></span>
+<span>  <span class="va">labels</span>,</span>
+<span>  <span class="va">state</span>,</span>
+<span>  threshold_m <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  connector_type <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The result can be an <code>sf</code> line layer or a table with explicit anchors:</p>
+<pre class="text"><code><span><span class="va">id</span></span>
+<span><span class="va">origin_x</span></span>
+<span><span class="va">origin_y</span></span>
+<span><span class="va">final_x</span></span>
+<span><span class="va">final_y</span></span>
+<span><span class="va">distance_m</span></span>
+<span><span class="va">connector_type</span></span>
+<span><span class="va">visible</span></span></code></pre>
+<p>This supports SVG rendering, MapLibre rendering, static maps, GeoPackage export, and diagnostics.</p>
+</div>
+<div class="section level3">
+<h3 id="id_5-formal-label-objects">5. Formal Label Objects<a class="anchor" aria-label="anchor" href="#id_5-formal-label-objects"></a></h3>
+<p>Create a documented label object for text edits, visibility, priority, width, height, connector settings, locked state, and style.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">labels</span> <span class="op">&lt;-</span> <span class="fu">drag_labels</span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">id_col</span>,</span>
+<span>  <span class="va">region_col</span>,</span>
+<span>  <span class="va">label_col</span>,</span>
+<span>  anchor <span class="op">=</span> <span class="st">"point_on_surface"</span>,</span>
+<span>  priority_col <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The internal table should carry:</p>
+<pre class="text"><code><span><span class="va">label_id</span></span>
+<span><span class="va">region</span></span>
+<span><span class="va">text</span></span>
+<span><span class="va">anchor_x</span></span>
+<span><span class="va">anchor_y</span></span>
+<span><span class="va">manual_dx_m</span></span>
+<span><span class="va">manual_dy_m</span></span>
+<span><span class="va">visible</span></span>
+<span><span class="va">priority</span></span>
+<span><span class="va">locked</span></span>
+<span><span class="va">connector</span></span>
+<span><span class="va">connector_type</span></span></code></pre>
+</div>
+<div class="section level3">
+<h3 id="id_6-performance-aware-label-selection">6. Performance-Aware Label Selection<a class="anchor" aria-label="anchor" href="#id_6-performance-aware-label-selection"></a></h3>
+<p>Move label thinning into package code:</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">selected</span> <span class="op">&lt;-</span> <span class="fu">select_labels</span><span class="op">(</span></span>
+<span>  <span class="va">labels</span>,</span>
+<span>  max_labels <span class="op">=</span> <span class="fl">80</span>,</span>
+<span>  priority_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  always_include <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"hybrid"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">limit</span> <span class="op">&lt;-</span> <span class="fu">recommend_label_limit</span><span class="op">(</span></span>
+<span>  feature_count <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>,</span>
+<span>  viewport <span class="op">=</span> <span class="va">view</span>,</span>
+<span>  label_lengths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">labels</span><span class="op">$</span><span class="va">text</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="id_7-hierarchical-state">7. Hierarchical State<a class="anchor" aria-label="anchor" href="#id_7-hierarchical-state"></a></h3>
+<p>Add a root-plus-children state for US state, county, and municipality workflows:</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">project_state</span> <span class="op">&lt;-</span> <span class="fu">hierarchy_state</span><span class="op">(</span></span>
+<span>  root <span class="op">=</span> <span class="va">usa_states_state</span>,</span>
+<span>  children <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    `30` <span class="op">=</span> <span class="va">montana_counties_state</span>,</span>
+<span>    `34` <span class="op">=</span> <span class="va">new_jersey_counties_state</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  active_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"USA"</span>, <span class="st">"30"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Accessors:</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">root_state</span><span class="op">(</span><span class="va">project_state</span><span class="op">)</span></span>
+<span><span class="fu">child_state</span><span class="op">(</span><span class="va">project_state</span>, <span class="st">"30"</span><span class="op">)</span></span>
+<span><span class="fu">set_child_state</span><span class="op">(</span><span class="va">project_state</span>, <span class="st">"30"</span>, <span class="va">montana_counties_state</span><span class="op">)</span></span>
+<span><span class="fu">remove_child_state</span><span class="op">(</span><span class="va">project_state</span>, <span class="st">"30"</span><span class="op">)</span></span>
+<span><span class="fu">active_path</span><span class="op">(</span><span class="va">project_state</span><span class="op">)</span></span>
+<span><span class="fu">set_active_path</span><span class="op">(</span><span class="va">project_state</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"USA"</span>, <span class="st">"34"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="id_8-schema-versioning-and-migration">8. Schema Versioning And Migration<a class="anchor" aria-label="anchor" href="#id_8-schema-versioning-and-migration"></a></h3>
+<p>Every persisted state should include:</p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">schema_version</span> <span class="op">=</span> <span class="st">"1.0.0"</span></span>
+<span><span class="va">package_version</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">packageVersion</a></span><span class="op">(</span><span class="st">"dragmapr"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Add:</p>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">migrate_state</span><span class="op">(</span><span class="va">state</span><span class="op">)</span></span>
+<span><span class="fu">migrate_hierarchy_state</span><span class="op">(</span><span class="va">project_state</span><span class="op">)</span></span></code></pre></div>
+<p>Saved projects should remain readable as the state format evolves.</p>
+</div>
+<div class="section level3">
+<h3 id="id_9-reversible-operations">9. Reversible Operations<a class="anchor" aria-label="anchor" href="#id_9-reversible-operations"></a></h3>
+<p>Create package-level operation objects that apps can use for Undo/Redo:</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">operation</span> <span class="op">&lt;-</span> <span class="fu">new_operation</span><span class="op">(</span></span>
+<span>  type <span class="op">=</span> <span class="st">"move_region"</span>,</span>
+<span>  target <span class="op">=</span> <span class="st">"30"</span>,</span>
+<span>  before <span class="op">=</span> <span class="va">before_state</span>,</span>
+<span>  after <span class="op">=</span> <span class="va">after_state</span>,</span>
+<span>  metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>source <span class="op">=</span> <span class="st">"widget"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu">apply_operation</span><span class="op">(</span><span class="va">state</span>, <span class="va">operation</span><span class="op">)</span></span>
+<span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu">reverse_operation</span><span class="op">(</span><span class="va">state</span>, <span class="va">operation</span><span class="op">)</span></span></code></pre></div>
+<p>Operation types should include move region, move label, reset region, delete region, restore region, change label text, lock, and unlock.</p>
+</div>
+<div class="section level3">
+<h3 id="id_10-project-bundles-and-spatial-export">10. Project Bundles And Spatial Export<a class="anchor" aria-label="anchor" href="#id_10-project-bundles-and-spatial-export"></a></h3>
+<p>Continue formalizing project bundle support around:</p>
+<pre class="text"><code><span><span class="va">source.gpkg</span></span>
+<span><span class="va">state.json</span></span>
+<span><span class="va">hierarchy</span><span class="op">-</span><span class="va">state.json</span></span>
+<span><span class="va">labels.csv</span></span>
+<span><span class="va">palette.csv</span></span>
+<span><span class="va">metadata.json</span></span>
+<span><span class="va">preview.png</span></span></code></pre>
+<p>Add spatial export helpers:</p>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">apply_state_to_sf</span><span class="op">(</span><span class="va">x</span>, <span class="va">state</span><span class="op">)</span></span>
+<span><span class="fu">connector_sf</span><span class="op">(</span><span class="va">layout</span>, <span class="va">state</span><span class="op">)</span></span>
+<span><span class="fu">write_geopackage</span><span class="op">(</span><span class="va">project_state</span>, <span class="st">"us-layout.gpkg"</span><span class="op">)</span></span></code></pre></div>
+<p>A GeoPackage export should be able to include original geometry, final geometry, region connectors, labels, label connectors, offset tables, and metadata.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="interoperability-contract">Interoperability Contract<a class="anchor" aria-label="anchor" href="#interoperability-contract"></a></h2>
+<div class="section level3">
+<h3 id="offset-semantics">Offset Semantics<a class="anchor" aria-label="anchor" href="#offset-semantics"></a></h3>
+<p>Document offsets explicitly:</p>
+<pre class="text"><code>base_dx_m, base_dy_m     from computed layout movement
+manual_dx_m, manual_dy_m from browser/editor movement
+final_dx_m, final_dy_m   base + manual</code></pre>
+<p><code>explodemap</code> supplies base movement. <code>dragmapr</code> owns manual movement. Static renderers and app exports use final movement.</p>
+</div>
+<div class="section level3">
+<h3 id="anchors">Anchors<a class="anchor" aria-label="anchor" href="#anchors"></a></h3>
+<p>Use explicit anchor names rather than generic <code>x</code> and <code>y</code>:</p>
+<ul><li>original centroid;</li>
+<li>original point on surface;</li>
+<li>original connector anchor;</li>
+<li>base/final group anchor;</li>
+<li>label anchor;</li>
+<li>label connector anchor.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="crs-responsibility">CRS Responsibility<a class="anchor" aria-label="anchor" href="#crs-responsibility"></a></h3>
+<p><code>explodemap</code> chooses or accepts the working CRS. <code>dragmapr</code> preserves it and rejects incompatible state. The browser receives transform metadata so screen movement can be converted back into working-CRS movement.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="app-refactor">App Refactor<a class="anchor" aria-label="anchor" href="#app-refactor"></a></h2>
+<p>The apps are revealing package API gaps. Move reusable logic down into package functions, then keep the apps thin.</p>
+<p>Extract from Spatial Studio:</p>
+<ul><li>hierarchy recommendations;</li>
+<li>project bundle handling;</li>
+<li>label editing;</li>
+<li>palette handling;</li>
+<li>input heuristics;</li>
+<li>label thinning.</li>
+</ul><p>Extract from Pipeline Studio:</p>
+<ul><li>upload validation;</li>
+<li>source fingerprinting;</li>
+<li>geometry deletion;</li>
+<li>state snapshotting;</li>
+<li>undo and redo operations;</li>
+<li>layout caching.</li>
+</ul><p>The target app shape is:</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">server</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">project</span> <span class="op">&lt;-</span> <span class="fu">project_state</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="fu">mod_import_server</span><span class="op">(</span><span class="st">"import"</span>, <span class="va">project</span><span class="op">)</span></span>
+<span>  <span class="fu">mod_layout_server</span><span class="op">(</span><span class="st">"layout"</span>, <span class="va">project</span><span class="op">)</span></span>
+<span>  <span class="fu">mod_drag_server</span><span class="op">(</span><span class="st">"drag"</span>, <span class="va">project</span><span class="op">)</span></span>
+<span>  <span class="fu">mod_export_server</span><span class="op">(</span><span class="st">"export"</span>, <span class="va">project</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="keep-app-level">Keep App-Level<a class="anchor" aria-label="anchor" href="#keep-app-level"></a></h2>
+<p>Keep these outside the packages:</p>
+<ul><li>country or jurisdiction registry;</li>
+<li>MapLibre camera behavior;</li>
+<li>background blur and visual decoration;</li>
+<li>search and navigation;</li>
+<li>data licensing catalog;</li>
+<li>application dashboards;</li>
+<li>rendered animation frames;</li>
+<li>deployment-specific cache management;</li>
+<li>public upload limits;</li>
+<li>processing overlays;</li>
+<li>source registry and bundled-data fallback;</li>
+<li>notifications, modals, navigation, and download buttons.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="implementation-order">Implementation Order<a class="anchor" aria-label="anchor" href="#implementation-order"></a></h2>
 <div class="section level3">
 <h3 id="explodemap">explodemap<a class="anchor" aria-label="anchor" href="#explodemap"></a></h3>
-<ul><li><code>count_geometry_vertices(x)</code></li>
-<li><code>simplify_to_vertex_budget(x, target_vertices = 350000, ...)</code></li>
-<li><code>assign_spatial_groups(x, method = c("quadrants", "clusters", "individual"), ...)</code></li>
-<li><code>validate_explodemap_input(x, group_col, id_col = NULL, label_col = NULL, ...)</code></li>
-<li><code>prepare_explodemap_input(x, ...)</code></li>
-<li><code>group_palette(groups, palette = "Dark 3", existing = NULL)</code></li>
-<li><code>explodemap_fingerprint(x, id_col = NULL, group_col = NULL, include_geometry = TRUE)</code></li>
-</ul><p>Validation and preparation should return structured S3 objects with <code>format_version = 1L</code>, metrics, warnings, errors, and print methods. Preparation must be transparent: report CRS changes, ID choices, grouping choices, simplification tolerance, geometry repairs, and clustering seeds.</p>
-</div>
+<ol style="list-style-type: decimal"><li>Stabilize <code><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input()</a></code> return contract.</li>
+<li>Expand <code><a href="reference/validate_explodemap_input.html">validate_explodemap_input()</a></code> structured results.</li>
+<li>Standardize <code><a href="reference/explodemap_fingerprint.html">explodemap_fingerprint()</a></code> for interoperability.</li>
+<li>Formalize <code><a href="reference/as_dragmapr_state.html">as_dragmapr_state()</a></code> as the bridge.</li>
+<li>Expand <code><a href="reference/diagnose_layout.html">diagnose_layout()</a></code> with actionable findings.</li>
+<li>Add <code><a href="reference/layout_offsets.html">layout_offsets()</a></code>.</li>
+<li>Add <code><a href="reference/transition_data.html">transition_data()</a></code>.</li>
+<li>Add geometry and connector accessors.</li>
+<li>Stabilize CRS resolution.</li>
+<li>Add deterministic ordering.</li>
+<li>Add partial group recalculation.</li>
+<li>Add hierarchy-aware layout support.</li>
+</ol></div>
 <div class="section level3">
 <h3 id="dragmapr">dragmapr<a class="anchor" aria-label="anchor" href="#dragmapr"></a></h3>
-<ul><li><code>dragmapr_state_diff(draft, canonical, tolerance = 1, compare = "composition")</code></li>
-<li><code>dragmapr_state_equal(a, b, tolerance = 1, compare = "composition")</code></li>
-<li>stronger <code>validate_dragmapr_state(state, x = NULL, layout = NULL, geometry_id = NULL, strict = TRUE)</code>
-</li>
-<li><code>summary.dragmapr_state()</code></li>
-<li>first-class palette arguments for <code>dragmapr_widget(..., region_palette = palette)</code> and <code>updateDragmapr(..., region_palette = palette)</code>
-</li>
-</ul><p>State comparison should distinguish composition changes from interaction-only changes such as selection or viewport updates.</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="release-b-app-refactor">Release B: app refactor<a class="anchor" aria-label="anchor" href="#release-b-app-refactor"></a></h2>
-<p>Refactor Pipeline Studio to consume Release A primitives. The app should lose local copies of vertex counting, simplification, spatial grouping, validation, fingerprinting, palette generation, and state diff helpers.</p>
-<p>After the refactor, inspect the remaining canonical/draft code:</p>
-<ul><li><code>rv$state</code></li>
-<li><code>rv$draft</code></li>
-<li><code>rv$palette</code></li>
-<li><code>rv$saved</code></li>
-<li><code>remember_current()</code></li>
-<li><code>set_canonical()</code></li>
-</ul><p>That remaining code should determine whether a project abstraction is truly needed.</p>
+<ol style="list-style-type: decimal"><li>Add safe state mutation helpers.</li>
+<li>Improve <code>dragmapr_state_diff()</code>.</li>
+<li>Add state compatibility validation.</li>
+<li>Add region connector output.</li>
+<li>Add label connector output.</li>
+<li>Formalize label objects.</li>
+<li>Add label selection and label limit helpers.</li>
+<li>Add state schema versioning and migration.</li>
+<li>Add hierarchy state.</li>
+<li>Add reversible operation primitives.</li>
+<li>Expand project bundle support.</li>
+<li>Add spatial export helpers.</li>
+</ol></div>
 </div>
 <div class="section level2">
-<h2 id="release-c-internal-project-prototype">Release C: internal project prototype<a class="anchor" aria-label="anchor" href="#release-c-internal-project-prototype"></a></h2>
-<p>Prototype a low-level <code>dragmapr_project</code> internally before exporting it:</p>
-<ul><li><code>new_dragmapr_project(canonical, draft = canonical, palette = NULL, metadata = list())</code></li>
-<li><code>project_is_dirty(project)</code></li>
-<li><code>project_diff(project)</code></li>
-<li><code>project_apply(project)</code></li>
-<li><code>project_reset_draft(project)</code></li>
-</ul><p>Avoid Shiny-specific concepts, source registries, navigation stages, export behavior, and Pipeline Studio terminology.</p>
+<h2 id="minimum-us-first-workflow">Minimum US-First Workflow<a class="anchor" aria-label="anchor" href="#minimum-us-first-workflow"></a></h2>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">prepared</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input</a></span><span class="op">(</span></span>
+<span>  <span class="va">states</span>,</span>
+<span>  id_col <span class="op">=</span> <span class="st">"GEOID"</span>,</span>
+<span>  label_col <span class="op">=</span> <span class="st">"NAME"</span>,</span>
+<span>  parent_col <span class="op">=</span> <span class="st">"HHS_REGION"</span>,</span>
+<span>  working_crs <span class="op">=</span> <span class="st">"auto"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">layout</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explode_grouped.html">explode_grouped</a></span><span class="op">(</span></span>
+<span>  <span class="va">prepared</span><span class="op">$</span><span class="va">data</span>,</span>
+<span>  region_col <span class="op">=</span> <span class="st">"HHS_REGION"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/as_dragmapr_state.html">as_dragmapr_state</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu">update_region_offset</span><span class="op">(</span></span>
+<span>  <span class="va">state</span>,</span>
+<span>  region <span class="op">=</span> <span class="st">"4"</span>,</span>
+<span>  dx_m <span class="op">=</span> <span class="fl">14000</span>,</span>
+<span>  dy_m <span class="op">=</span> <span class="fl">1500</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">diagnostics</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/diagnose_layout.html">diagnose_layout</a></span><span class="op">(</span><span class="va">layout</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span>
+<span><span class="va">connectors</span> <span class="op">&lt;-</span> <span class="fu">region_connectors</span><span class="op">(</span><span class="va">layout</span>, <span class="va">state</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">write_dragmapr_project</span><span class="op">(</span></span>
+<span>  <span class="va">state</span>,</span>
+<span>  <span class="st">"us-hhs-layout.zip"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>That workflow should scale from US states to counties and municipalities without requiring app-specific state or geometry logic.</p>
 </div>
-<div class="section level2">
-<h2 id="release-d-experimental-project-api">Release D: experimental project API<a class="anchor" aria-label="anchor" href="#release-d-experimental-project-api"></a></h2>
-<p>Export the project object only after it survives Pipeline Studio and at least one non-Studio workflow. Mark it experimental at first.</p>
-</div>
-<div class="section level2">
-<h2 id="keep-app-level">Keep app-level<a class="anchor" aria-label="anchor" href="#keep-app-level"></a></h2>
-<p>These should remain Pipeline Studio or Shiny-helper code:</p>
-<ul><li>upload archive inspection and safe extraction</li>
-<li>GeoPackage layer selection</li>
-<li>public deployment limits</li>
-<li>processing overlays</li>
-<li>source registry and bundled-data fallback</li>
-<li>notifications, modals, navigation, and download buttons</li>
-<li>the Explore -&gt; Refine -&gt; Apply -&gt; Export user journey</li>
-</ul></div>
-<div class="section level2">
-<h2 id="cross-package-ownership">Cross-package ownership<a class="anchor" aria-label="anchor" href="#cross-package-ownership"></a></h2>
-<ul><li>
-<code>explodemap</code> owns exploded layouts, input preparation, diagnostics, fingerprints, group palettes, <code><a href="reference/focus_map.html">focus_map()</a></code>, and applying editable state back to exploded layouts.</li>
-<li>
-<code>dragmapr</code> owns editable composition state, state validation, state comparison, state serialization, interactive editing, proxy updates, and any future project state.</li>
-<li>Adapters should be directional and avoid hard circular dependencies.</li>
-</ul></div>
 </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

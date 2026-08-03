@@ -13,6 +13,7 @@
 <url><loc>https://prigasg.github.io/explodemap/index.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/map-gallery/index.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/news/index.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/anchor_table.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/apply_region_offsets.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/as_dragmapr.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/as_dragmapr_state.html</loc></url>
@@ -23,6 +24,7 @@
 <url><loc>https://prigasg.github.io/explodemap/reference/calibration_row.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/centroid_geoms.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/compute_stats.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/connector_geometry.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/count_geometry_vertices.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/derive_params.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/diagnose_layout.html</loc></url>
@@ -64,8 +66,10 @@
 <url><loc>https://prigasg.github.io/explodemap/reference/hhs_regions.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/index.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/layout_objective.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/layout_offsets.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/layout_regions.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/optimize_grouped_layout.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/original_geometry.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/plot.exploded_map.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/plot.grouped_exploded_map.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/plot.layout_quality_report.html</loc></url>
@@ -76,6 +80,7 @@
 <url><loc>https://prigasg.github.io/explodemap/reference/simplify_to_vertex_budget.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/summary.exploded_map.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/summary.grouped_exploded_map.html</loc></url>
+<url><loc>https://prigasg.github.io/explodemap/reference/transition_data.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/update_exploded_layout.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/validate_explodemap_input.html</loc></url>
 <url><loc>https://prigasg.github.io/explodemap/reference/validate_input.html</loc></url>

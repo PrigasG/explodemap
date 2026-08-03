@@ -93,6 +93,12 @@ state
 #> $selected_feature
 #> NULL
 #> 
+#> $schema_version
+#> [1] "1.0.0"
+#> 
+#> $package_version
+#> [1] "0.3.1"
+#> 
 #> attr(,"class")
 #> [1] "dragmapr_state"
 ```
