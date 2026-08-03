@@ -505,8 +505,8 @@ prepare_explodemap_input <- function(x,
   out$unit_id <- if (!is.null(id_col) && nzchar(id_col) && id_col %in% names(out)) {
     as.character(out[[id_col]])
   } else {
-    warnings <- c(warnings, "No ID column supplied; generated row-based unit IDs.")
-    sprintf("feature-%06d", seq_len(nrow(out)))
+    warnings <- c(warnings, "No ID column supplied; generated stable feature IDs from geometry and labels.")
+    stable_feature_ids(out, group_col = group_col, label_col = label_col)
   }
   out$unit_name <- if (!is.null(label_col) && nzchar(label_col) && label_col %in% names(out)) {
     as.character(out[[label_col]])
@@ -588,6 +588,8 @@ print.explodemap_prepared_input <- function(x, ...) {
 #' @param include_geometry Include EWKB geometry bytes.
 #' @param include_parameters Include layout parameters and package version when
 #'   `x` is a grouped explodemap layout.
+#' @param require_stable_id Require a real feature ID column instead of
+#'   row-number fallback IDs.
 #'
 #' @return A stable MD5 fingerprint string.
 #' @export
@@ -595,7 +597,8 @@ explodemap_fingerprint <- function(x,
                                    id_col = NULL,
                                    group_col = NULL,
                                    include_geometry = TRUE,
-                                   include_parameters = TRUE) {
+                                   include_parameters = TRUE,
+                                   require_stable_id = FALSE) {
   parameters <- NULL
   if (inherits(x, "grouped_exploded_map")) {
     parameters <- x$params
@@ -604,7 +607,8 @@ explodemap_fingerprint <- function(x,
   }
   if (!inherits(x, "sf")) stop("`x` must be an sf object or grouped explodemap layout.", call. = FALSE)
 
-  ids <- if (!is.null(id_col) && id_col %in% names(x)) as.character(x[[id_col]]) else as.character(seq_len(nrow(x)))
+  id_col <- resolve_fingerprint_id_col(x, id_col, require_stable_id)
+  ids <- if (is.null(id_col)) as.character(seq_len(nrow(x))) else as.character(x[[id_col]])
   groups <- if (!is.null(group_col) && group_col %in% names(x)) as.character(x[[group_col]]) else NULL
   crs <- sf::st_crs(x)
   payload <- list(
@@ -623,4 +627,41 @@ explodemap_fingerprint <- function(x,
   }
   bytes <- serialize(payload, connection = NULL, version = 3)
   digest::digest(bytes, algo = "md5", serialize = FALSE)
+}
+
+stable_feature_ids <- function(x, group_col = NULL, label_col = NULL) {
+  geom <- sf::st_as_binary(sf::st_geometry(x), EWKB = TRUE, endian = "little")
+  group <- if (!is.null(group_col) && group_col %in% names(x)) as.character(x[[group_col]]) else NULL
+  label <- if (!is.null(label_col) && label_col %in% names(x)) as.character(x[[label_col]]) else NULL
+  ids <- vapply(seq_along(geom), function(i) {
+    payload <- list(
+      geometry = geom[[i]],
+      group = if (is.null(group)) NULL else group[[i]],
+      label = if (is.null(label)) NULL else label[[i]]
+    )
+    paste0("feature-", substr(digest::digest(payload, algo = "xxhash64"), 1L, 16L))
+  }, character(1))
+  make.unique(ids, sep = "-")
+}
+
+resolve_fingerprint_id_col <- function(x, id_col = NULL, require_stable_id = FALSE) {
+  if (!is.null(id_col)) {
+    if (!id_col %in% names(x)) {
+      stop("`id_col` column '", id_col, "' was not found.", call. = FALSE)
+    }
+    return(id_col)
+  }
+  candidates <- c("feature_id", "unit_id", "GEOID", "geoid", "id", "ID")
+  hit <- candidates[candidates %in% names(x)]
+  if (length(hit)) {
+    return(hit[[1]])
+  }
+  if (isTRUE(require_stable_id)) {
+    stop(
+      "A stable feature ID column is required for this fingerprint. ",
+      "Pass `id_col` or run prepare_explodemap_input() first.",
+      call. = FALSE
+    )
+  }
+  NULL
 }

@@ -4,19 +4,33 @@
 \alias{connector_geometry}
 \title{Connector geometry for computed layout movement}
 \usage{
-connector_geometry(layout, threshold_m = 1, include_unmoved = FALSE)
+connector_geometry(
+  layout,
+  level = c("group", "feature"),
+  id_col = NULL,
+  threshold_m = 1,
+  include_unmoved = FALSE,
+  require_stable_id = identical(level, "feature")
+)
 }
 \arguments{
 \item{layout}{A \code{grouped_exploded_map}.}
 
+\item{level}{Either \code{"group"} or \code{"feature"}.}
+
+\item{id_col}{Optional feature ID column for \code{level = "feature"}.}
+
 \item{threshold_m}{Minimum movement distance to mark a connector visible.}
 
 \item{include_unmoved}{Include zero-distance rows.}
+
+\item{require_stable_id}{Require a real feature ID column for feature-level
+persistent handoffs. When \code{TRUE}, row-number fallback IDs are rejected.}
 }
 \value{
 An \code{sf} line layer with movement attributes.
 }
 \description{
-Builds one line per moved group, from the original group anchor to the final
-group anchor.
+Builds one line per moved group or feature, from the original anchor to the
+final anchor.
 }

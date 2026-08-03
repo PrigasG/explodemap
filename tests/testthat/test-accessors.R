@@ -30,6 +30,23 @@ test_that("layout_offsets reports base movement at group and feature levels", {
   expect_true(any(abs(group_offsets$base_dx_m) > 0 | abs(group_offsets$base_dy_m) > 0))
 })
 
+test_that("feature-level handoffs require stable IDs by default", {
+  x <- make_grouped_sf()
+  x$id <- NULL
+  out <- explode_grouped(x, region_col = "region", mode = "auto", plot = FALSE)
+
+  expect_error(
+    layout_offsets(out, level = "feature"),
+    "stable feature ID"
+  )
+  expect_error(
+    transition_data(out, level = "feature"),
+    "stable feature ID"
+  )
+  legacy <- layout_offsets(out, level = "feature", require_stable_id = FALSE)
+  expect_equal(legacy$feature_id, as.character(seq_len(nrow(x))))
+})
+
 test_that("transition_data and connector_geometry are renderer-neutral", {
   x <- make_grouped_sf()
   out <- explode_grouped(x, region_col = "region", mode = "auto", plot = FALSE)

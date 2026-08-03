@@ -650,14 +650,16 @@ update_focus_data <- function(proxy, data, ...) {
     stop("Package 'dragmapr' is required to apply focus-map state.", call. = FALSE)
   }
   if (inherits(x, "exploded_map")) {
-    region_col <- x$diagnostics$region_col %||% group_col %||% state$level
+    region_col <- x$diagnostics$region_col %||% group_col %||%
+      state$region_col %||% state$binding$region_col %||% state$level
     out <- x
     out$sf_exp <- dragmapr::apply_dragmapr_state(out$sf_exp, state, region_col = region_col)
     out$sf_exp_wgs <- sf::st_transform(out$sf_exp, 4326)
     return(out)
   }
   if (inherits(x, "sf")) {
-    region_col <- group_col %||% state$level
+    region_col <- group_col %||% state$region_col %||%
+      state$binding$region_col %||% state$level
     if (is.null(region_col) || !nzchar(region_col)) {
       stop("`group_col` is required when applying `state` to a raw sf object.",
            call. = FALSE)

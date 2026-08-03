@@ -56,12 +56,15 @@ anchor_table <- function(layout) {
 #' @param layout A `grouped_exploded_map`.
 #' @param level Either `"group"` or `"feature"`.
 #' @param id_col Optional feature ID column for `level = "feature"`.
+#' @param require_stable_id Require a real feature ID column for feature-level
+#'   persistent handoffs. When `TRUE`, row-number fallback IDs are rejected.
 #'
 #' @return A data frame of computed offsets.
 #' @export
 layout_offsets <- function(layout,
                            level = c("group", "feature"),
-                           id_col = NULL) {
+                           id_col = NULL,
+                           require_stable_id = identical(level, "feature")) {
   validate_grouped_layout(layout)
   level <- match.arg(level)
   region_col <- layout$diagnostics$region_col
@@ -91,11 +94,12 @@ layout_offsets <- function(layout,
     return(out)
   }
 
-  id_col <- resolve_feature_id_col(layout$sf_orig, id_col)
+  require_stable_id <- isTRUE(require_stable_id)
+  id_col <- resolve_feature_id_col(layout$sf_orig, id_col, require_stable_id = require_stable_id)
   orig_xy <- feature_anchor_xy(layout$sf_orig, centroid_fun)
   final_xy <- feature_anchor_xy(layout$sf_grouped, centroid_fun)
   data.frame(
-    feature_id = feature_ids(layout$sf_orig, id_col),
+    feature_id = feature_ids(layout$sf_orig, id_col, require_stable_id = require_stable_id),
     parent_id = as.character(layout$sf_orig[[region_col]]),
     original_anchor_x = orig_xy[, 1],
     original_anchor_y = orig_xy[, 2],
@@ -115,7 +119,7 @@ layout_offsets <- function(layout,
 #'
 #' @param layout A `grouped_exploded_map`.
 #' @param level Either `"group"` or `"feature"`.
-#' @param id_col Optional feature ID column for `level = "feature"`.
+#' @inheritParams layout_offsets
 #' @param ordering Optional ordering column for `level = "feature"`.
 #'
 #' @return A data frame with movement, distance, angle, and animation order.
@@ -123,9 +127,15 @@ layout_offsets <- function(layout,
 transition_data <- function(layout,
                             level = c("group", "feature"),
                             id_col = NULL,
-                            ordering = NULL) {
+                            ordering = NULL,
+                            require_stable_id = identical(level, "feature")) {
   level <- match.arg(level)
-  offsets <- layout_offsets(layout, level = level, id_col = id_col)
+  offsets <- layout_offsets(
+    layout,
+    level = level,
+    id_col = id_col,
+    require_stable_id = require_stable_id
+  )
   if (identical(level, "group")) {
     offsets$feature_id <- offsets$parent_id
     offsets$original_anchor_x <- offsets$anchor_x - offsets$base_dx_m
@@ -151,22 +161,33 @@ transition_data <- function(layout,
 
 #' Connector geometry for computed layout movement
 #'
-#' Builds one line per moved group, from the original group anchor to the final
-#' group anchor.
+#' Builds one line per moved group or feature, from the original anchor to the
+#' final anchor.
 #'
 #' @param layout A `grouped_exploded_map`.
+#' @param level Either `"group"` or `"feature"`.
+#' @inheritParams layout_offsets
 #' @param threshold_m Minimum movement distance to mark a connector visible.
 #' @param include_unmoved Include zero-distance rows.
 #'
 #' @return An `sf` line layer with movement attributes.
 #' @export
 connector_geometry <- function(layout,
+                               level = c("group", "feature"),
+                               id_col = NULL,
                                threshold_m = 1,
-                               include_unmoved = FALSE) {
+                               include_unmoved = FALSE,
+                               require_stable_id = identical(level, "feature")) {
   validate_grouped_layout(layout)
+  level <- match.arg(level)
   threshold_m <- numeric_scalar(threshold_m, "`threshold_m`", min = 0)
   include_unmoved <- isTRUE(include_unmoved)
-  movement <- transition_data(layout, level = "group")
+  movement <- transition_data(
+    layout,
+    level = level,
+    id_col = id_col,
+    require_stable_id = require_stable_id
+  )
   movement$visible <- movement$distance_m >= threshold_m
   if (!include_unmoved) {
     movement <- movement[movement$visible, , drop = FALSE]
@@ -202,7 +223,7 @@ feature_anchor_xy <- function(x, centroid_fun) {
   sf::st_coordinates(centroid_geoms(x, centroid_fun))[, 1:2, drop = FALSE]
 }
 
-resolve_feature_id_col <- function(x, id_col = NULL) {
+resolve_feature_id_col <- function(x, id_col = NULL, require_stable_id = FALSE) {
   if (!is.null(id_col)) {
     if (!id_col %in% names(x)) {
       stop("`id_col` column '", id_col, "' was not found.", call. = FALSE)
@@ -211,11 +232,28 @@ resolve_feature_id_col <- function(x, id_col = NULL) {
   }
   candidates <- c("feature_id", "unit_id", "GEOID", "geoid", "id", "ID")
   hit <- candidates[candidates %in% names(x)]
-  if (length(hit)) hit[[1]] else NULL
+  if (length(hit)) {
+    return(hit[[1]])
+  }
+  if (isTRUE(require_stable_id)) {
+    stop(
+      "Feature-level output requires a stable feature ID column. ",
+      "Pass `id_col` or run prepare_explodemap_input() first.",
+      call. = FALSE
+    )
+  }
+  NULL
 }
 
-feature_ids <- function(x, id_col = NULL) {
+feature_ids <- function(x, id_col = NULL, require_stable_id = FALSE) {
   ids <- if (is.null(id_col)) {
+    if (isTRUE(require_stable_id)) {
+      stop(
+        "Feature-level output requires a stable feature ID column. ",
+        "Pass `id_col` or run prepare_explodemap_input() first.",
+        call. = FALSE
+      )
+    }
     as.character(seq_len(nrow(x)))
   } else {
     as.character(x[[id_col]])

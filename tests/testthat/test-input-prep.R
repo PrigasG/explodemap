@@ -124,6 +124,17 @@ test_that("prepare_explodemap_input preserves standard-column collisions", {
   expect_equal(prepared$format_version, 2L)
 })
 
+test_that("prepare_explodemap_input generates stable IDs without id_col", {
+  x <- make_grouped_sf()
+  prepared <- prepare_explodemap_input(x, label_col = "id", group_col = "region")
+  shuffled <- prepare_explodemap_input(x[rev(seq_len(nrow(x))), ], label_col = "id", group_col = "region")
+
+  expect_true(all(grepl("^feature-", prepared$data$unit_id)))
+  ids_by_label <- stats::setNames(prepared$data$unit_id, prepared$data$unit_name)
+  shuffled_by_label <- stats::setNames(shuffled$data$unit_id, shuffled$data$unit_name)
+  expect_equal(shuffled_by_label[names(ids_by_label)], ids_by_label)
+})
+
 test_that("prepared input print surfaces invalid validation", {
   x <- make_grouped_sf()
   x$id[[2]] <- x$id[[1]]
@@ -147,10 +158,21 @@ test_that("explodemap_fingerprint changes when grouping changes", {
 
 test_that("explodemap_fingerprint uses consistent fallback ID types", {
   x <- make_grouped_sf()
+  x$id <- NULL
   x$row_id <- as.character(seq_len(nrow(x)))
 
   expect_equal(
     explodemap_fingerprint(x),
     explodemap_fingerprint(x, id_col = "row_id")
+  )
+})
+
+test_that("explodemap_fingerprint can require stable IDs", {
+  x <- make_grouped_sf()
+  x$id <- NULL
+
+  expect_error(
+    explodemap_fingerprint(x, require_stable_id = TRUE),
+    "stable feature ID"
   )
 })

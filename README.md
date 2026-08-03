@@ -6,10 +6,10 @@
 
 Use it when you want to:
 
--   separate dense counties, municipalities, districts, or service areas
--   build larger grouped layouts such as national region maps
--   inspect one area interactively with `focus_map()`
--   hand a computed layout to `dragmapr` for manual composition
+- separate dense counties, municipalities, districts, or service areas
+- build larger grouped layouts such as national region maps
+- inspect one area interactively with `focus_map()`
+- hand a computed layout to `dragmapr` for manual composition
 
 ## Install
 
@@ -23,11 +23,11 @@ install.packages("explodemap")
 
 ## Try It
 
--   Live gallery: <https://huggingface.co/spaces/Prigas89/explodemap-gallery>
--   Shared Pipeline Studio: <https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio>
--   Package site: <https://prigasg.github.io/explodemap/>
--   Cross-package roadmap: [ROADMAP.md](ROADMAP.md)
--   Pipeline Studio:
+- Live gallery: <https://huggingface.co/spaces/Prigas89/explodemap-gallery>
+- Shared Pipeline Studio: <https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio>
+- Package site: <https://prigasg.github.io/explodemap/>
+- Cross-package roadmap: [ROADMAP.md](ROADMAP.md)
+- Pipeline Studio:
 
 ``` r
 shiny::runApp(system.file("shiny/pipeline-studio", package = "explodemap"))
@@ -152,6 +152,21 @@ prepared <- prepare_explodemap_input(
 layout <- explode_grouped(prepared$data, region_col = "region")
 ```
 
+If the source file does not have a usable ID column, `prepare_explodemap_input()`
+creates deterministic `unit_id` values from the geometry and labels. Feature-
+level handoffs then use those IDs instead of row numbers:
+
+``` r
+prepared <- prepare_explodemap_input(
+  my_sf,
+  label_col = "name",
+  group_col = "region"
+)
+
+layout <- explode_grouped(prepared$data, region_col = "region", plot = FALSE)
+movement <- transition_data(layout, level = "feature", id_col = "unit_id")
+```
+
 Other app-friendly helpers:
 
 ``` r
@@ -183,6 +198,7 @@ Then hand the layout to `dragmapr`:
 library(dragmapr)
 
 state <- as_dragmapr_state(better)
+state$region_col
 dragmapr_edit(better, state = state)
 ```
 

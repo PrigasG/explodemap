@@ -4,7 +4,12 @@
 \alias{layout_offsets}
 \title{Computed offsets from a grouped exploded layout}
 \usage{
-layout_offsets(layout, level = c("group", "feature"), id_col = NULL)
+layout_offsets(
+  layout,
+  level = c("group", "feature"),
+  id_col = NULL,
+  require_stable_id = identical(level, "feature")
+)
 }
 \arguments{
 \item{layout}{A \code{grouped_exploded_map}.}
@@ -12,6 +17,9 @@ layout_offsets(layout, level = c("group", "feature"), id_col = NULL)
 \item{level}{Either \code{"group"} or \code{"feature"}.}
 
 \item{id_col}{Optional feature ID column for \code{level = "feature"}.}
+
+\item{require_stable_id}{Require a real feature ID column for feature-level
+persistent handoffs. When \code{TRUE}, row-number fallback IDs are rejected.}
 }
 \value{
 A data frame of computed offsets.

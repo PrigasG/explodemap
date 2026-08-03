@@ -1,9 +1,11 @@
 ^.*\.Rproj$
 ^\.git$
 ^\.git/
+^\.git($|[\\/])
 ^_pkgdown\.yml$
 ^\.Rproj\.user$
 ^\.claude$
+^\.agents$
 ^LICENSE\.md$
 ^doc$
 ^docs$

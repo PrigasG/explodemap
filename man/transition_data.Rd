@@ -8,7 +8,8 @@ transition_data(
   layout,
   level = c("group", "feature"),
   id_col = NULL,
-  ordering = NULL
+  ordering = NULL,
+  require_stable_id = identical(level, "feature")
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ transition_data(
 \item{id_col}{Optional feature ID column for \code{level = "feature"}.}
 
 \item{ordering}{Optional ordering column for \code{level = "feature"}.}
+
+\item{require_stable_id}{Require a real feature ID column for feature-level
+persistent handoffs. When \code{TRUE}, row-number fallback IDs are rejected.}
 }
 \value{
 A data frame with movement, distance, angle, and animation order.

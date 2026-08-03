@@ -9,7 +9,8 @@ explodemap_fingerprint(
   id_col = NULL,
   group_col = NULL,
   include_geometry = TRUE,
-  include_parameters = TRUE
+  include_parameters = TRUE,
+  require_stable_id = FALSE
 )
 }
 \arguments{
@@ -23,6 +24,9 @@ explodemap_fingerprint(
 
 \item{include_parameters}{Include layout parameters and package version when
 \code{x} is a grouped explodemap layout.}
+
+\item{require_stable_id}{Require a real feature ID column instead of
+row-number fallback IDs.}
 }
 \value{
 A stable MD5 fingerprint string.

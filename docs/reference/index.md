@@ -53,10 +53,10 @@ optional collision-aware refinement.
 ## State-first composition (dragmapr bridge)
 
 Hand a computed layout to the dragmapr editor as a reusable
-dragmapr_state, then apply edited compositions back. as_dragmapr_state()
-is the preferred handoff; the resulting state is accepted by
-focus_map(), render_dragged_map(), and update_exploded_layout().
-as_dragmapr() is the legacy low-level handoff.
+dragmapr_state, then apply edited compositions back. Feature-level
+handoffs use stable IDs from source columns or
+prepare_explodemap_input(). as_dragmapr_state() is the preferred
+handoff; as_dragmapr() is the legacy low-level handoff.
 
 - [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md)
   : Convert a grouped layout to a dragmapr editing state

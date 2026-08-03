@@ -157,7 +157,7 @@
       </dl></div><div class="section level2">
       <h2 id="state-first-composition-dragmapr-bridge-">State-first composition (dragmapr bridge)<a class="anchor" aria-label="anchor" href="#state-first-composition-dragmapr-bridge-"></a></h2>
 
-      <div class="section-desc"><p>Hand a computed layout to the dragmapr editor as a reusable dragmapr_state, then apply edited compositions back. as_dragmapr_state() is the preferred handoff; the resulting state is accepted by focus_map(), render_dragged_map(), and update_exploded_layout(). as_dragmapr() is the legacy low-level handoff.</p></div>
+      <div class="section-desc"><p>Hand a computed layout to the dragmapr editor as a reusable dragmapr_state, then apply edited compositions back. Feature-level handoffs use stable IDs from source columns or prepare_explodemap_input(). as_dragmapr_state() is the preferred handoff; as_dragmapr() is the legacy low-level handoff.</p></div>
 
       <dl></dl></div><div class="section level2">
 

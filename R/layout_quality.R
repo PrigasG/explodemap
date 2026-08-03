@@ -456,13 +456,18 @@ as_dragmapr_state <- function(result, geometry_id = NULL, level = NULL) {
   crs_arg <- if (is.null(crs) || is.na(crs)) NULL else crs
 
   dragmapr_state <- getExportedValue("dragmapr", "dragmapr_state")
-  dragmapr_state(
+  args <- list(
     level = level,
     region_offsets = region_offsets,
     label_offsets = result$label_offsets %||% NULL,
     crs = crs_arg,
     geometry_id = geometry_id
   )
+  if ("region_col" %in% names(formals(dragmapr_state))) {
+    args$region_col <- region_col
+    args$label_id_col <- "label_id"
+  }
+  do.call(dragmapr_state, args)
 }
 
 #' Update an exploded grouped layout after manual composition

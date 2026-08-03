@@ -224,8 +224,18 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">layout</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explode_grouped.html">explode_grouped</a></span><span class="op">(</span><span class="va">prepared</span><span class="op">$</span><span class="va">data</span>, region_col <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span></code></pre></div>
-<p>Other app-friendly helpers:</p>
+<p>If the source file does not have a usable ID column, <code><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input()</a></code> creates deterministic <code>unit_id</code> values from the geometry and labels. Feature- level handoffs then use those IDs instead of row numbers:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">prepared</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input</a></span><span class="op">(</span></span>
+<span>  <span class="va">my_sf</span>,</span>
+<span>  label_col <span class="op">=</span> <span class="st">"name"</span>,</span>
+<span>  group_col <span class="op">=</span> <span class="st">"region"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">layout</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explode_grouped.html">explode_grouped</a></span><span class="op">(</span><span class="va">prepared</span><span class="op">$</span><span class="va">data</span>, region_col <span class="op">=</span> <span class="st">"region"</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">movement</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/transition_data.html">transition_data</a></span><span class="op">(</span><span class="va">layout</span>, level <span class="op">=</span> <span class="st">"feature"</span>, id_col <span class="op">=</span> <span class="st">"unit_id"</span><span class="op">)</span></span></code></pre></div>
+<p>Other app-friendly helpers:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/count_geometry_vertices.html">count_geometry_vertices</a></span><span class="op">(</span><span class="va">my_sf</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/simplify_to_vertex_budget.html">simplify_to_vertex_budget</a></span><span class="op">(</span><span class="va">my_sf</span>, target_vertices <span class="op">=</span> <span class="fl">350000</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/assign_spatial_groups.html">assign_spatial_groups</a></span><span class="op">(</span><span class="va">my_sf</span>, method <span class="op">=</span> <span class="st">"clusters"</span>, groups <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
@@ -236,7 +246,7 @@
 <h2 id="improve-a-layout">Improve A Layout<a class="anchor" aria-label="anchor" href="#improve-a-layout"></a>
 </h2>
 <p>Automatic layout is collision-aware, but cartographic composition often still needs judgment. Use diagnostics and bounded search before manual editing:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/diagnose_layout.html">diagnose_layout</a></span><span class="op">(</span><span class="va">grouped</span>, label_col <span class="op">=</span> <span class="st">"name"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">report</span><span class="op">)</span></span>
 <span></span>
@@ -246,13 +256,14 @@
 <span>  label_col <span class="op">=</span> <span class="st">"name"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Then hand the layout to <code>dragmapr</code>:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://prigasg.github.io/dragmapr/" class="external-link">dragmapr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/as_dragmapr_state.html">as_dragmapr_state</a></span><span class="op">(</span><span class="va">better</span><span class="op">)</span></span>
+<span><span class="va">state</span><span class="op">$</span><span class="va">region_col</span></span>
 <span><span class="fu"><a href="https://prigasg.github.io/dragmapr/reference/dragmapr_edit.html" class="external-link">dragmapr_edit</a></span><span class="op">(</span><span class="va">better</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span></code></pre></div>
 <p>Render the same edited state in either package:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/focus_map.html">focus_map</a></span><span class="op">(</span><span class="va">better</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://prigasg.github.io/dragmapr/reference/render_dragged_map.html" class="external-link">render_dragged_map</a></span><span class="op">(</span></span>
@@ -264,20 +275,20 @@
 <div class="section level2">
 <h2 id="common-helpers">Common Helpers<a class="anchor" aria-label="anchor" href="#common-helpers"></a>
 </h2>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">layout</span>, <span class="st">"both"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/calibration_row.html">calibration_row</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span></code></pre></div>
 <p>Export TopoJSON when <code>mapshaper</code> is installed:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/export_topojson.html">export_topojson</a></span><span class="op">(</span><span class="va">layout</span>, <span class="st">"exploded.topojson"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="learn-more">Learn More<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"getting-started"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"workflow-guide"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"grouped-layouts"</span>, package <span class="op">=</span> <span class="st">"explodemap"</span><span class="op">)</span></span>
