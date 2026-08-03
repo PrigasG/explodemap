@@ -4,7 +4,7 @@
 \alias{diagnose_layout}
 \title{Diagnose grouped layout quality}
 \usage{
-diagnose_layout(result, label_col = NULL, label_size = NULL)
+diagnose_layout(result, label_col = NULL, label_size = NULL, state = NULL)
 }
 \arguments{
 \item{result}{A \code{grouped_exploded_map} object.}
@@ -12,6 +12,9 @@ diagnose_layout(result, label_col = NULL, label_size = NULL)
 \item{label_col}{Optional label column for approximate label overlap checks.}
 
 \item{label_size}{Approximate label size in map units.}
+
+\item{state}{Optional dragmapr state. Reserved for post-drag diagnostics;
+when supplied, the report records that manual state was considered.}
 }
 \value{
 A \code{layout_quality_report} list.

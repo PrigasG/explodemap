@@ -101,12 +101,17 @@ reference:
   - explode_grouped
   - layout_regions
   - estimate_block_radii
+  - original_geometry
+  - anchor_table
 - title: State-first composition (dragmapr bridge)
   desc: |
     Hand a computed layout to the dragmapr editor as a reusable dragmapr_state, then apply edited compositions back. as_dragmapr_state() is the preferred handoff; the resulting state is accepted by focus_map(), render_dragged_map(), and update_exploded_layout(). as_dragmapr() is the legacy low-level handoff.
   contents:
   - as_dragmapr_state
   - update_exploded_layout
+  - layout_offsets
+  - transition_data
+  - connector_geometry
   - as_dragmapr
 - title: Input preparation and app primitives
   desc: |

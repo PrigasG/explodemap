@@ -8,7 +8,8 @@ explodemap_fingerprint(
   x,
   id_col = NULL,
   group_col = NULL,
-  include_geometry = TRUE
+  include_geometry = TRUE,
+  include_parameters = TRUE
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ explodemap_fingerprint(
 \item{group_col}{Optional group column.}
 
 \item{include_geometry}{Include EWKB geometry bytes.}
+
+\item{include_parameters}{Include layout parameters and package version when
+\code{x} is a grouped explodemap layout.}
 }
 \value{
 A stable MD5 fingerprint string.

@@ -3,9 +3,11 @@
 #' @param result A `grouped_exploded_map` object.
 #' @param label_col Optional label column for approximate label overlap checks.
 #' @param label_size Approximate label size in map units.
+#' @param state Optional dragmapr state. Reserved for post-drag diagnostics;
+#'   when supplied, the report records that manual state was considered.
 #' @return A `layout_quality_report` list.
 #' @export
-diagnose_layout <- function(result, label_col = NULL, label_size = NULL) {
+diagnose_layout <- function(result, label_col = NULL, label_size = NULL, state = NULL) {
   if (!inherits(result, "grouped_exploded_map")) {
     stop("`result` must be a grouped_exploded_map object.", call. = FALSE)
   }
@@ -33,8 +35,43 @@ diagnose_layout <- function(result, label_col = NULL, label_size = NULL) {
     0L
   }
   possible_label_pairs <- label_count * (label_count - 1) / 2
+  displacement_details <- displacement$details
+  names(displacement_details)[names(displacement_details) == region_col] <- "group_id"
+  displacement_details$distance_m <- displacement_details$d
+  displacement_details <- displacement_details[, c(
+    "group_id", "cx_orig", "cy_orig", "cx_grouped", "cy_grouped", "distance_m"
+  ), drop = FALSE]
+  group_metrics <- displacement_details |>
+    dplyr::left_join(
+      gaps$pairs |>
+        dplyr::group_by(.data$region_i) |>
+        dplyr::summarise(nearest_gap_m = min(.data$gap, na.rm = TRUE), .groups = "drop") |>
+        dplyr::rename(group_id = "region_i"),
+      by = "group_id"
+    )
+  recommendations <- layout_recommendations(
+    overlap_count = nrow(overlap$pairs),
+    label_overlap_count = label_overlaps,
+    minimum_gap_m = gaps$minimum_group_gap,
+    canvas_utilization = if (canvas_area > 0) hull_area / canvas_area else NA_real_,
+    median_displacement_m = stats::median(displacement_details$distance_m, na.rm = TRUE),
+    maximum_displacement_m = displacement$max
+  )
 
   out <- list(
+    summary = list(
+      overlap_count = nrow(overlap$pairs),
+      label_overlap_count = label_overlaps,
+      minimum_gap_m = gaps$minimum_group_gap,
+      canvas_utilization = if (canvas_area > 0) hull_area / canvas_area else NA_real_,
+      median_displacement_m = stats::median(displacement_details$distance_m, na.rm = TRUE),
+      mean_displacement_m = displacement$mean,
+      maximum_displacement_m = displacement$max,
+      post_drag = !is.null(state)
+    ),
+    by_group = group_metrics,
+    displaced_features = displacement_details,
+    recommendations = recommendations,
     polygon_overlap_area = overlap$total_area,
     polygon_overlap_fraction = if (polygon_area > 0) overlap$total_area / polygon_area else 0,
     overlapping_pairs = overlap$pairs,
@@ -52,6 +89,34 @@ diagnose_layout <- function(result, label_col = NULL, label_size = NULL) {
     plot_data = list(group_gaps = gaps$pairs)
   )
   structure(out, class = c("layout_quality_report", "list"))
+}
+
+layout_recommendations <- function(overlap_count,
+                                   label_overlap_count,
+                                   minimum_gap_m,
+                                   canvas_utilization,
+                                   median_displacement_m,
+                                   maximum_displacement_m) {
+  out <- character()
+  if (is.finite(overlap_count) && overlap_count > 0) {
+    out <- c(out, "Increase group padding or rerun collision refinement for overlapping groups.")
+  }
+  if (is.finite(label_overlap_count) && label_overlap_count > 0) {
+    out <- c(out, "Reduce visible labels or increase label spacing for crowded areas.")
+  }
+  if (is.finite(minimum_gap_m) && minimum_gap_m < 0) {
+    out <- c(out, "Inspect groups with negative gap values; they overlap after layout.")
+  }
+  if (is.finite(canvas_utilization) && canvas_utilization < 0.45) {
+    out <- c(out, "Reduce anchor expansion or padding to use the canvas more efficiently.")
+  }
+  if (is.finite(maximum_displacement_m) &&
+      is.finite(median_displacement_m) &&
+      median_displacement_m > 0 &&
+      maximum_displacement_m > median_displacement_m * 3) {
+    out <- c(out, "Inspect highly displaced groups; one or two groups may dominate the mental-map cost.")
+  }
+  unique(out)
 }
 
 #' @export

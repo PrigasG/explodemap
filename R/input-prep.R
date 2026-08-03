@@ -146,6 +146,8 @@ validate_explodemap_input <- function(x,
     features = NA_integer_,
     groups = NA_integer_,
     vertices = NA_real_,
+    invalid = NA_integer_,
+    empty = NA_integer_,
     geometry_types = character(),
     crs = NA
   )
@@ -161,6 +163,8 @@ validate_explodemap_input <- function(x,
   }
   metrics$vertices <- count_geometry_vertices(x)
   metrics$geometry_types <- sort(unique(as.character(sf::st_geometry_type(x, by_geometry = TRUE))))
+  metrics$empty <- sum(sf::st_is_empty(x))
+  metrics$invalid <- sum(!sf::st_is_valid(x))
   crs <- sf::st_crs(x)
   metrics$crs <- if (is.na(crs)) NA else crs$epsg %||% crs$wkt
 
@@ -244,6 +248,7 @@ new_explodemap_validation <- function(errors, warnings, metrics) {
       valid = length(errors) == 0L,
       errors = errors[!is.na(errors) & nzchar(errors)],
       warnings = warnings[!is.na(warnings) & nzchar(warnings)],
+      recommendations = unique(suggestions),
       metrics = metrics,
       suggestions = unique(suggestions),
       format_version = 1L
@@ -531,6 +536,21 @@ prepare_explodemap_input <- function(x,
     list(
       data = out,
       report = c(report, list(validation = validation)),
+      validation = validation,
+      crs = list(
+        input = report$input_crs,
+        output = report$output_crs,
+        strategy = if (is.null(target_crs)) "preserve" else "user",
+        reason = if (is.null(target_crs)) {
+          "No target CRS supplied; preserved source CRS."
+        } else {
+          "Used caller-supplied target CRS."
+        },
+        warnings = character()
+      ),
+      simplification = report$simplification,
+      fingerprint = explodemap_fingerprint(out, id_col = "unit_id", group_col = "region"),
+      roles = list(id = "unit_id", label = "unit_name", parent = "region"),
       mapping = list(id_col = id_col, label_col = label_col, group_col = group_col,
                      group_method = group_method),
       warnings = unique(c(warnings, validation$warnings)),
@@ -566,14 +586,20 @@ print.explodemap_prepared_input <- function(x, ...) {
 #' @param id_col Optional feature ID column.
 #' @param group_col Optional group column.
 #' @param include_geometry Include EWKB geometry bytes.
+#' @param include_parameters Include layout parameters and package version when
+#'   `x` is a grouped explodemap layout.
 #'
 #' @return A stable MD5 fingerprint string.
 #' @export
 explodemap_fingerprint <- function(x,
                                    id_col = NULL,
                                    group_col = NULL,
-                                   include_geometry = TRUE) {
+                                   include_geometry = TRUE,
+                                   include_parameters = TRUE) {
+  parameters <- NULL
   if (inherits(x, "grouped_exploded_map")) {
+    parameters <- x$params
+    group_col <- group_col %||% x$diagnostics$region_col
     x <- x$sf_grouped
   }
   if (!inherits(x, "sf")) stop("`x` must be an sf object or grouped explodemap layout.", call. = FALSE)
@@ -588,6 +614,10 @@ explodemap_fingerprint <- function(x,
     groups = groups,
     bbox = unname(as.numeric(sf::st_bbox(x)))
   )
+  if (isTRUE(include_parameters)) {
+    payload$parameters <- parameters
+    payload$package_version <- as.character(utils::packageVersion("explodemap"))
+  }
   if (isTRUE(include_geometry)) {
     payload$geometry <- sf::st_as_binary(sf::st_geometry(x), EWKB = TRUE, endian = "little")
   }

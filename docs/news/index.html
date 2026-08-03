@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">explodemap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,14 @@
       <small>Source: <a href="https://github.com/PrigasG/explodemap/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.1" id="explodemap-031">explodemap 0.3.1<a class="anchor" aria-label="anchor" href="#explodemap-031"></a></h2>
+<ul><li>Layout objective terms are now dimensionless, making objective weights portable across datasets and coordinate scales. Label-aware searches use one fixed default label size across candidate layouts, and label collision counts now use an indexed spatial query with missing and display-width-aware labels.</li>
+<li>Input preparation now preserves colliding source columns, reports collisions, surfaces invalid status and validation errors when printed, restores fresh session RNG state, avoids duplicate generated palette colours, and produces portable in-memory geometry fingerprints.</li>
+<li>Geometry vertex counting and simplification-budget searches avoid repeated per-feature coordinate extraction and unnecessary simplification passes.</li>
+<li>
+<code><a href="../reference/focus_map.html">focus_map()</a></code> now simplifies longitude/latitude widget data in a local metric projection and rejects unsafe custom degree tolerances.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="explodemap-030">explodemap 0.3.0<a class="anchor" aria-label="anchor" href="#explodemap-030"></a></h2>
 <ul><li>Release A of the Pipeline Studio extraction adds reusable input-preparation primitives: <code><a href="../reference/count_geometry_vertices.html">count_geometry_vertices()</a></code>, <code><a href="../reference/simplify_to_vertex_budget.html">simplify_to_vertex_budget()</a></code>, <code><a href="../reference/assign_spatial_groups.html">assign_spatial_groups()</a></code>, <code><a href="../reference/validate_explodemap_input.html">validate_explodemap_input()</a></code>, <code><a href="../reference/prepare_explodemap_input.html">prepare_explodemap_input()</a></code>, <code><a href="../reference/group_palette.html">group_palette()</a></code>, and <code><a href="../reference/explodemap_fingerprint.html">explodemap_fingerprint()</a></code>. These functions move proven geometry, validation, palette, simplification, grouping, and compatibility helpers out of the app layer while keeping upload policy and UI orchestration in Pipeline Studio.</li>

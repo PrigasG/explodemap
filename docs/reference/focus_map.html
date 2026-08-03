@@ -7,7 +7,7 @@ round-trips."><meta property="og:description" content="Renders spatial features 
 polygon to zoom in and lift it from the map with a &quot;toast&quot; effect;
 right-click or press Escape to reset. Camera transitions use D3's
 optimal zoom interpolation for fluid 60 fps motion with zero server
-round-trips."><meta property="og:image" content="https://prigasg.github.io/explodemap/logo.png"><!-- dependencies from examples --><script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><script src="libs/d3-7.9.0/d3.v7.min.js"></script><script src="libs/topojson-client-3.1.0/topojson-client.v3.min.js"></script><script src="libs/focusmap-binding-0.3.0/focusmap.js"></script></head><body>
+round-trips."><meta property="og:image" content="https://prigasg.github.io/explodemap/logo.png"><!-- dependencies from examples --><script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><script src="libs/d3-7.9.0/d3.v7.min.js"></script><script src="libs/topojson-client-3.1.0/topojson-client.v3.min.js"></script><script src="libs/focusmap-binding-0.3.1/focusmap.js"></script></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -15,7 +15,7 @@ round-trips."><meta property="og:image" content="https://prigasg.github.io/explo
 
     <a class="navbar-brand me-2" href="../index.html">explodemap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -210,9 +210,11 @@ arguments supplied by the user override preset defaults.</p></dd>
 
 <dt id="arg-simplify">simplify<a class="anchor" aria-label="anchor" href="#arg-simplify"></a></dt>
 <dd><p>Controls geometry simplification for rendering
-performance. <code>TRUE</code> (default) applies a sensible tolerance
-(<code>dTolerance = 0.001</code> in WGS 84 degrees, \(\approx\)
-100 m). A positive number sets a custom tolerance. <code>FALSE</code>
+performance. <code>TRUE</code> (default) applies a conservative tolerance of
+approximately one metre. Longitude/latitude data is simplified in a local metric
+projection to avoid latitude-dependent distortion. A positive number sets
+a custom tolerance in the data's coordinate units; longitude/latitude
+tolerances above 0.1 degrees are rejected as unsafe. <code>FALSE</code>
 disables simplification. Only affects the widget copy — the
 original data is never modified.</p></dd>
 
@@ -427,7 +429,7 @@ to <code>label_col</code>.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">focus_map</span><span class="op">(</span><span class="va">counties</span>, label_col <span class="op">=</span> <span class="st">"NAME"</span>, group_col <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span></span>
 <div id="htmlwidget-e5c8c404fe174e4c81bd" style="width:100%;height:600px;" class="focusmap html-widget"></div>
-<script type="application/json" data-for="htmlwidget-e5c8c404fe174e4c81bd">{"x":{"geojson_str":"{\n\"type\": \"FeatureCollection\",\n\"name\": \"file9fc44435440f\",\n\"features\": [\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"1\", \"id\": \"1\", \"NAME\": \"A\", \"group\": \"North\", \"info_title\": \"A\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -74.0, 40.0 ], [ -74.0, 40.2 ], [ -74.2, 40.2 ], [ -74.2, 40.0 ], [ -74.0, 40.0 ] ] ] } },\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"2\", \"id\": \"2\", \"NAME\": \"B\", \"group\": \"South\", \"info_title\": \"B\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -73.7, 40.0 ], [ -73.7, 40.2 ], [ -73.9, 40.2 ], [ -73.9, 40.0 ], [ -73.7, 40.0 ] ] ] } }\n]\n}","options":{"fill":"#2d6ea3","coordinateSystem":"longlat","groupPalette":null,"contextMode":"fade","contextValues":["context"],"contextFill":"#cfd9df","contextOpacity":0.18,"contextClickable":false,"focusPreset":"none","fillOpacity":0.58,"stroke":"#ffffff","liftScale":1.16,"focusPadding":40,"focusSize":0.76,"minFocusWidth":0,"minFocusHeight":0,"tinyFeatureThreshold":48,"tinyFeatureBoost":1,"maxZoom":null,"originContext":"none","originContextPosition":"bottom-left","focusContextOpacity":0.3,"showDragZoom":false,"showGroupLabels":false,"groupLabels":null,"fontSize":14,"showLabels":true,"performanceMode":null,"showInfoCard":false,"infoPosition":"top-right","infoCols":null,"infoKeys":[],"infoLabels":null,"infoTitle":"NAME","infoCardScale":1,"areaMin":5000,"widthMin":95,"heightMin":28,"hasGroups":true}},"evals":[],"jsHooks":[]}</script><span class="r-in"><span><span class="co"># }</span></span></span>
+<script type="application/json" data-for="htmlwidget-e5c8c404fe174e4c81bd">{"x":{"geojson_str":"{\n\"type\": \"FeatureCollection\",\n\"name\": \"file46e04a6a1c46\",\n\"features\": [\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"1\", \"id\": \"1\", \"NAME\": \"A\", \"group\": \"North\", \"info_title\": \"A\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -74.2, 40.0 ], [ -74.0, 40.0 ], [ -74.0, 40.2 ], [ -74.2, 40.2 ], [ -74.2, 40.0 ] ] ] } },\n{ \"type\": \"Feature\", \"properties\": { \"feature_id\": \"2\", \"id\": \"2\", \"NAME\": \"B\", \"group\": \"South\", \"info_title\": \"B\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ -73.9, 40.0 ], [ -73.7, 40.0 ], [ -73.7, 40.2 ], [ -73.9, 40.2 ], [ -73.9, 40.0 ] ] ] } }\n]\n}","options":{"fill":"#2d6ea3","coordinateSystem":"longlat","groupPalette":null,"contextMode":"fade","contextValues":["context"],"contextFill":"#cfd9df","contextOpacity":0.18,"contextClickable":false,"focusPreset":"none","fillOpacity":0.58,"stroke":"#ffffff","liftScale":1.16,"focusPadding":40,"focusSize":0.76,"minFocusWidth":0,"minFocusHeight":0,"tinyFeatureThreshold":48,"tinyFeatureBoost":1,"maxZoom":null,"originContext":"none","originContextPosition":"bottom-left","focusContextOpacity":0.3,"showDragZoom":false,"showGroupLabels":false,"groupLabels":null,"fontSize":14,"showLabels":true,"performanceMode":null,"showInfoCard":false,"infoPosition":"top-right","infoCols":null,"infoKeys":[],"infoLabels":null,"infoTitle":"NAME","infoCardScale":1,"areaMin":5000,"widthMin":95,"heightMin":28,"hasGroups":true}},"evals":[],"jsHooks":[]}</script><span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

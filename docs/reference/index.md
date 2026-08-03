@@ -42,6 +42,13 @@ optional collision-aware refinement.
   : Compute region anchor positions for grouped layouts
 - [`estimate_block_radii()`](https://prigasg.github.io/explodemap/reference/estimate_block_radii.md)
   : Estimate block radius for each region
+- [`original_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md)
+  [`local_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md)
+  [`final_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md)
+  [`group_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md)
+  : Access geometry from a grouped exploded layout
+- [`anchor_table()`](https://prigasg.github.io/explodemap/reference/anchor_table.md)
+  : Access grouped-layout anchor data
 
 ## State-first composition (dragmapr bridge)
 
@@ -55,6 +62,12 @@ as_dragmapr() is the legacy low-level handoff.
   : Convert a grouped layout to a dragmapr editing state
 - [`update_exploded_layout()`](https://prigasg.github.io/explodemap/reference/update_exploded_layout.md)
   : Update an exploded grouped layout after manual composition
+- [`layout_offsets()`](https://prigasg.github.io/explodemap/reference/layout_offsets.md)
+  : Computed offsets from a grouped exploded layout
+- [`transition_data()`](https://prigasg.github.io/explodemap/reference/transition_data.md)
+  : Renderer-neutral transition data
+- [`connector_geometry()`](https://prigasg.github.io/explodemap/reference/connector_geometry.md)
+  : Connector geometry for computed layout movement
 - [`as_dragmapr()`](https://prigasg.github.io/explodemap/reference/as_dragmapr.md)
   : Convert a grouped layout to a drag-edit handoff object (legacy)
 

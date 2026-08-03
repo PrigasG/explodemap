@@ -1,5 +1,24 @@
 # Changelog
 
+## explodemap 0.3.1
+
+- Layout objective terms are now dimensionless, making objective weights
+  portable across datasets and coordinate scales. Label-aware searches
+  use one fixed default label size across candidate layouts, and label
+  collision counts now use an indexed spatial query with missing and
+  display-width-aware labels.
+- Input preparation now preserves colliding source columns, reports
+  collisions, surfaces invalid status and validation errors when
+  printed, restores fresh session RNG state, avoids duplicate generated
+  palette colours, and produces portable in-memory geometry
+  fingerprints.
+- Geometry vertex counting and simplification-budget searches avoid
+  repeated per-feature coordinate extraction and unnecessary
+  simplification passes.
+- [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
+  now simplifies longitude/latitude widget data in a local metric
+  projection and rejects unsafe custom degree tolerances.
+
 ## explodemap 0.3.0
 
 - Release A of the Pipeline Studio extraction adds reusable
