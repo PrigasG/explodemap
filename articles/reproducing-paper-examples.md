@@ -541,7 +541,7 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] dplyr_1.2.1      sf_1.1-2         explodemap_0.3.1
+#> [1] dplyr_1.2.1      sf_1.1-2         explodemap_0.4.0
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] jsonlite_2.0.0     compiler_4.6.1     tidyselect_1.2.1   Rcpp_1.1.2        

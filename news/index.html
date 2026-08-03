@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">explodemap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,12 @@
       <small>Source: <a href="https://github.com/PrigasG/explodemap/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="explodemap-040">explodemap 0.4.0<a class="anchor" aria-label="anchor" href="#explodemap-040"></a></h2>
+<ul><li>Added renderer-neutral accessors for computed layouts: <code><a href="../reference/original_geometry.html">original_geometry()</a></code>, <code><a href="../reference/original_geometry.html">local_geometry()</a></code>, <code><a href="../reference/original_geometry.html">final_geometry()</a></code>, <code><a href="../reference/original_geometry.html">group_geometry()</a></code>, <code><a href="../reference/anchor_table.html">anchor_table()</a></code>, <code><a href="../reference/layout_offsets.html">layout_offsets()</a></code>, <code><a href="../reference/transition_data.html">transition_data()</a></code>, and <code><a href="../reference/connector_geometry.html">connector_geometry()</a></code>. These provide stable geometry, movement, animation-order, and connector contracts without requiring downstream renderers to inspect layout internals.</li>
+<li>Feature-level handoffs now require stable identifiers by default. Input preparation generates deterministic geometry-and-label-based <code>unit_id</code> values when no source ID is supplied, so reordering features does not change persistent handoff identities. Legacy row-number fallback remains explicitly available with <code>require_stable_id = FALSE</code>.</li>
+<li>Strengthened <code>dragmapr</code> interoperability with explicit region and label ID metadata where supported, parameter-aware geometry fingerprints, and stable computed-versus-editorial offset contracts.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.1" id="explodemap-031">explodemap 0.3.1<a class="anchor" aria-label="anchor" href="#explodemap-031"></a></h2>
 <ul><li>Layout objective terms are now dimensionless, making objective weights portable across datasets and coordinate scales. Label-aware searches use one fixed default label size across candidate layouts, and label collision counts now use an indexed spatial query with missing and display-width-aware labels.</li>

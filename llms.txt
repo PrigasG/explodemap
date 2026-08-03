@@ -180,7 +180,7 @@ layout <- explode_grouped(prepared$data, region_col = "region")
 If the source file does not have a usable ID column,
 [`prepare_explodemap_input()`](https://prigasg.github.io/explodemap/reference/prepare_explodemap_input.md)
 creates deterministic `unit_id` values from the geometry and labels.
-Feature- level handoffs then use those IDs instead of row numbers:
+Feature-level handoffs then use those IDs instead of row numbers:
 
 ``` r
 

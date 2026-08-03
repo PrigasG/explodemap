@@ -30,7 +30,7 @@
 
     <a class="navbar-brand me-2" href="index.html">explodemap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -224,7 +224,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">layout</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explode_grouped.html">explode_grouped</a></span><span class="op">(</span><span class="va">prepared</span><span class="op">$</span><span class="va">data</span>, region_col <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span></code></pre></div>
-<p>If the source file does not have a usable ID column, <code><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input()</a></code> creates deterministic <code>unit_id</code> values from the geometry and labels. Feature- level handoffs then use those IDs instead of row numbers:</p>
+<p>If the source file does not have a usable ID column, <code><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input()</a></code> creates deterministic <code>unit_id</code> values from the geometry and labels. Feature-level handoffs then use those IDs instead of row numbers:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">prepared</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input</a></span><span class="op">(</span></span>
 <span>  <span class="va">my_sf</span>,</span>

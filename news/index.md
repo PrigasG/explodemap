@@ -1,5 +1,30 @@
 # Changelog
 
+## explodemap 0.4.0
+
+- Added renderer-neutral accessors for computed layouts:
+  [`original_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md),
+  [`local_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md),
+  [`final_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md),
+  [`group_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md),
+  [`anchor_table()`](https://prigasg.github.io/explodemap/reference/anchor_table.md),
+  [`layout_offsets()`](https://prigasg.github.io/explodemap/reference/layout_offsets.md),
+  [`transition_data()`](https://prigasg.github.io/explodemap/reference/transition_data.md),
+  and
+  [`connector_geometry()`](https://prigasg.github.io/explodemap/reference/connector_geometry.md).
+  These provide stable geometry, movement, animation-order, and
+  connector contracts without requiring downstream renderers to inspect
+  layout internals.
+- Feature-level handoffs now require stable identifiers by default.
+  Input preparation generates deterministic geometry-and-label-based
+  `unit_id` values when no source ID is supplied, so reordering features
+  does not change persistent handoff identities. Legacy row-number
+  fallback remains explicitly available with
+  `require_stable_id = FALSE`.
+- Strengthened `dragmapr` interoperability with explicit region and
+  label ID metadata where supported, parameter-aware geometry
+  fingerprints, and stable computed-versus-editorial offset contracts.
+
 ## explodemap 0.3.1
 
 - Layout objective terms are now dimensionless, making objective weights
