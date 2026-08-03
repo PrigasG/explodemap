@@ -152,9 +152,7 @@ prepared <- prepare_explodemap_input(
 layout <- explode_grouped(prepared$data, region_col = "region")
 ```
 
-If the source file does not have a usable ID column, `prepare_explodemap_input()`
-creates deterministic `unit_id` values from the geometry and labels. Feature-
-level handoffs then use those IDs instead of row numbers:
+If the source file does not have a usable ID column, `prepare_explodemap_input()` creates deterministic `unit_id` values from the geometry and labels. Feature-level handoffs then use those IDs instead of row numbers:
 
 ``` r
 prepared <- prepare_explodemap_input(
