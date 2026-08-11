@@ -7,7 +7,7 @@ absolute anchors into a `dragmapr_layout` list. The preferred path is
 now
 [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md),
 which emits a geometry-free
-[`dragmapr::dragmapr_state()`](https://prigasg.github.io/dragmapr/reference/dragmapr_state.html)
+[`dragmapr::d_state()`](https://prigasg.github.io/dragmapr/reference/d_state.html)
 – the shared editorial composition contract that `state =` arguments
 accept across
 [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md),

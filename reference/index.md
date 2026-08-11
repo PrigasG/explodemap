@@ -50,6 +50,17 @@ optional collision-aware refinement.
 - [`anchor_table()`](https://prigasg.github.io/explodemap/reference/anchor_table.md)
   : Access grouped-layout anchor data
 
+## Child geography layout
+
+Compute deterministic projected child placements and extract their
+renderer-neutral offsets or composed geometry.
+
+- [`layout_children()`](https://prigasg.github.io/explodemap/reference/layout_children.md)
+  : Lay out child geography around a parent
+- [`child_layout_offsets()`](https://prigasg.github.io/explodemap/reference/child_layout_offsets.md)
+  [`child_layout_geometry()`](https://prigasg.github.io/explodemap/reference/child_layout_offsets.md)
+  : Access a child layout
+
 ## State-first composition (dragmapr bridge)
 
 Hand a computed layout to the dragmapr editor as a reusable
@@ -88,8 +99,12 @@ helpers that support Shiny apps, examples, and preprocessing pipelines.
   : Assign generated spatial groups
 - [`group_palette()`](https://prigasg.github.io/explodemap/reference/group_palette.md)
   : Create a stable group palette
-- [`explodemap_fingerprint()`](https://prigasg.github.io/explodemap/reference/explodemap_fingerprint.md)
+- [`e_fingerprint()`](https://prigasg.github.io/explodemap/reference/e_fingerprint.md)
   : Fingerprint explodemap geometry and grouping
+- [`spatial_join_index()`](https://prigasg.github.io/explodemap/reference/spatial_join_index.md)
+  : Build a stable spatial join index
+- [`validate_spatial_join()`](https://prigasg.github.io/explodemap/reference/validate_spatial_join.md)
+  : Validate an external data-to-spatial join
 
 ## Layout quality and optimization
 

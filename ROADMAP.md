@@ -50,11 +50,11 @@ update_label_offset(state, label_id, dx_m, dy_m)
 hierarchy_state(root, children = list())
 ```
 
-Keep established names such as `dragmapr_state()`, `dragmapr_widget()`,
+Keep established names such as `d_state()`, `d_widget()`,
 `drag_map_prototype()`,
 [`prepare_explodemap_input()`](https://prigasg.github.io/explodemap/reference/prepare_explodemap_input.md),
 [`validate_explodemap_input()`](https://prigasg.github.io/explodemap/reference/validate_explodemap_input.md),
-[`explodemap_fingerprint()`](https://prigasg.github.io/explodemap/reference/explodemap_fingerprint.md),
+[`e_fingerprint()`](https://prigasg.github.io/explodemap/reference/e_fingerprint.md),
 and
 [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md)
 unless there is a deliberate breaking API cleanup.
@@ -121,7 +121,7 @@ Use the same pattern for state compatibility checks in `dragmapr`.
 ### Stable Identity
 
 Standardize
-[`explodemap_fingerprint()`](https://prigasg.github.io/explodemap/reference/explodemap_fingerprint.md)
+[`e_fingerprint()`](https://prigasg.github.io/explodemap/reference/e_fingerprint.md)
 across package interoperability, saved projects, and state compatibility
 checks. Fingerprints should cover the parts that make a saved state safe
 or unsafe to reuse:
@@ -241,7 +241,7 @@ The user-facing pattern should stay simple:
 
 layout <- explode_grouped(prepared, region_col = "region")
 state <- as_dragmapr_state(layout)
-editor <- dragmapr_edit(layout, state = state)
+editor <- d_edit(layout, state = state)
 ```
 
 ### 5. CRS Decisions
@@ -716,7 +716,7 @@ Keep these outside the packages:
     [`validate_explodemap_input()`](https://prigasg.github.io/explodemap/reference/validate_explodemap_input.md)
     structured results.
 3.  Standardize
-    [`explodemap_fingerprint()`](https://prigasg.github.io/explodemap/reference/explodemap_fingerprint.md)
+    [`e_fingerprint()`](https://prigasg.github.io/explodemap/reference/e_fingerprint.md)
     for interoperability.
 4.  Formalize
     [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md)

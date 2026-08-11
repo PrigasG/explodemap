@@ -9,7 +9,7 @@ The bridge between them is a single, reusable **composition object**: a
 The workflow is **compute once, then compose and render from the
 state**:
 
-    explode_grouped()  ->  as_dragmapr_state()  ->  dragmapr_edit()  ->  focus_map(state = )
+    explode_grouped()  ->  as_dragmapr_state()  ->  d_edit()  ->  focus_map(state = )
        (geometry)            (handoff)                (compose)            render_dragged_map(state = )
 
 ## 1. Compute the layout
@@ -93,6 +93,11 @@ state
 #> $selected_feature
 #> NULL
 #> 
+#> $styles
+#> [1] region        fill          stroke        stroke_width  opacity      
+#> [6] label_visible highlight    
+#> <0 rows> (or 0-length row.names)
+#> 
 #> $region_col
 #> [1] "region"
 #> 
@@ -108,7 +113,7 @@ state
 #> 
 #> 
 #> $schema_version
-#> [1] "1.1.0"
+#> [1] "1.2.0"
 #> 
 #> $package_version
 #> [1] "0.3.1"
@@ -128,11 +133,11 @@ state
 
 Open the dragmapr editor seeded with the state. In Shiny, capture each
 edit back into a state with
-[`dragmapr::dragmapr_widget_state()`](https://prigasg.github.io/dragmapr/reference/dragmapr_widget_state.html):
+[`dragmapr::d_widget_state()`](https://prigasg.github.io/dragmapr/reference/d_widget_state.html):
 
 ``` r
 
-dragmapr::dragmapr_edit(layout, state = state)
+dragmapr::d_edit(layout, state = state)
 ```
 
 ## 4. Render the composed state

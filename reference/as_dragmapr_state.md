@@ -1,7 +1,7 @@
 # Convert a grouped layout to a dragmapr editing state
 
 Produces a
-[`dragmapr::dragmapr_state()`](https://prigasg.github.io/dragmapr/reference/dragmapr_state.html)
+[`dragmapr::d_state()`](https://prigasg.github.io/dragmapr/reference/d_state.html)
 – the shared editorial composition contract – from a
 `grouped_exploded_map`. Unlike
 [`as_dragmapr()`](https://prigasg.github.io/explodemap/reference/as_dragmapr.md),
@@ -37,7 +37,7 @@ as_dragmapr_state(result, geometry_id = NULL, level = NULL)
 ## Value
 
 A `dragmapr_state` (see
-[`dragmapr::dragmapr_state()`](https://prigasg.github.io/dragmapr/reference/dragmapr_state.html)).
+[`dragmapr::d_state()`](https://prigasg.github.io/dragmapr/reference/d_state.html)).
 
 ## Details
 

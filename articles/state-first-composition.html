@@ -72,7 +72,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>State-first composition with dragmapr</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/PrigasG/explodemap/blob/0.4.0/vignettes/state-first-composition.Rmd" class="external-link"><code>vignettes/state-first-composition.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PrigasG/explodemap/blob/master/vignettes/state-first-composition.Rmd" class="external-link"><code>vignettes/state-first-composition.Rmd</code></a></small>
       <div class="d-none name"><code>state-first-composition.Rmd</code></div>
     </div>
 
@@ -85,7 +85,7 @@ bridge between them is a single, reusable <strong>composition
 object</strong>: a <code>dragmapr_state</code>.</p>
 <p>The workflow is <strong>compute once, then compose and render from
 the state</strong>:</p>
-<pre><code>explode_grouped()  -&gt;  as_dragmapr_state()  -&gt;  dragmapr_edit()  -&gt;  focus_map(state = )
+<pre><code>explode_grouped()  -&gt;  as_dragmapr_state()  -&gt;  d_edit()  -&gt;  focus_map(state = )
    (geometry)            (handoff)                (compose)            render_dragged_map(state = )</code></pre>
 <div class="section level2">
 <h2 id="compute-the-layout">1. Compute the layout<a class="anchor" aria-label="anchor" href="#compute-the-layout"></a>
@@ -161,6 +161,11 @@ durable, reproducible composition:</p>
 <span><span class="co">#&gt; $selected_feature</span></span>
 <span><span class="co">#&gt; NULL</span></span>
 <span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $styles</span></span>
+<span><span class="co">#&gt; [1] region        fill          stroke        stroke_width  opacity      </span></span>
+<span><span class="co">#&gt; [6] label_visible highlight    </span></span>
+<span><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $region_col</span></span>
 <span><span class="co">#&gt; [1] "region"</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -176,7 +181,7 @@ durable, reproducible composition:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $schema_version</span></span>
-<span><span class="co">#&gt; [1] "1.1.0"</span></span>
+<span><span class="co">#&gt; [1] "1.2.0"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $package_version</span></span>
 <span><span class="co">#&gt; [1] "0.3.1"</span></span>
@@ -195,9 +200,9 @@ supported as a low-level escape hatch, but
 </h2>
 <p>Open the dragmapr editor seeded with the state. In Shiny, capture
 each edit back into a state with
-<code><a href="https://prigasg.github.io/dragmapr/reference/dragmapr_widget_state.html" class="external-link">dragmapr::dragmapr_widget_state()</a></code>:</p>
+<code><a href="https://prigasg.github.io/dragmapr/reference/d_widget_state.html" class="external-link">dragmapr::d_widget_state()</a></code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">dragmapr</span><span class="fu">::</span><span class="fu"><a href="https://prigasg.github.io/dragmapr/reference/dragmapr_edit.html" class="external-link">dragmapr_edit</a></span><span class="op">(</span><span class="va">layout</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">dragmapr</span><span class="fu">::</span><span class="fu"><a href="https://prigasg.github.io/dragmapr/reference/d_edit.html" class="external-link">d_edit</a></span><span class="op">(</span><span class="va">layout</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="render-the-composed-state">4. Render the composed state<a class="anchor" aria-label="anchor" href="#render-the-composed-state"></a>

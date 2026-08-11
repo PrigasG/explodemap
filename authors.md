@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/PrigasG/explodemap/blob/0.4.0/inst/CITATION)
+[`inst/CITATION`](https://github.com/PrigasG/explodemap/blob/master/inst/CITATION)
 
 Arthur, G. (2026). explodemap: Hierarchical Exploded-View Cartography. R
 package version 0.2.0.

@@ -202,7 +202,7 @@ count_geometry_vertices(my_sf)
 simplify_to_vertex_budget(my_sf, target_vertices = 350000)
 assign_spatial_groups(my_sf, method = "clusters", groups = 6)
 group_palette(my_sf$region)
-explodemap_fingerprint(my_sf, id_col = "geoid", group_col = "region")
+e_fingerprint(my_sf, id_col = "geoid", group_col = "region")
 ```
 
 ## Improve A Layout
@@ -231,7 +231,7 @@ library(dragmapr)
 
 state <- as_dragmapr_state(better)
 state$region_col
-dragmapr_edit(better, state = state)
+d_edit(better, state = state)
 ```
 
 Render the same edited state in either package:

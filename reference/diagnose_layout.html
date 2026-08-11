@@ -41,7 +41,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Diagnose grouped layout quality</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PrigasG/explodemap/blob/0.4.0/R/layout_quality.R" class="external-link"><code>R/layout_quality.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PrigasG/explodemap/blob/master/R/layout_quality.R" class="external-link"><code>R/layout_quality.R</code></a></small>
       <div class="d-none name"><code>diagnose_layout.Rd</code></div>
     </div>
 
@@ -71,8 +71,9 @@
 
 
 <dt id="arg-state">state<a class="anchor" aria-label="anchor" href="#arg-state"></a></dt>
-<dd><p>Optional dragmapr state. Reserved for post-drag diagnostics;
-when supplied, the report records that manual state was considered.</p></dd>
+<dd><p>Optional <code>dragmapr_state</code>. When supplied, its manual offsets
+are applied to the grouped layout before every geometry, label, gap, and
+displacement diagnostic is calculated.</p></dd>
 
 </dl></div>
     <div class="section level2">

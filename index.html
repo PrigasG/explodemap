@@ -240,7 +240,7 @@
 <span><span class="fu"><a href="reference/simplify_to_vertex_budget.html">simplify_to_vertex_budget</a></span><span class="op">(</span><span class="va">my_sf</span>, target_vertices <span class="op">=</span> <span class="fl">350000</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/assign_spatial_groups.html">assign_spatial_groups</a></span><span class="op">(</span><span class="va">my_sf</span>, method <span class="op">=</span> <span class="st">"clusters"</span>, groups <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/group_palette.html">group_palette</a></span><span class="op">(</span><span class="va">my_sf</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/explodemap_fingerprint.html">explodemap_fingerprint</a></span><span class="op">(</span><span class="va">my_sf</span>, id_col <span class="op">=</span> <span class="st">"geoid"</span>, group_col <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/e_fingerprint.html">e_fingerprint</a></span><span class="op">(</span><span class="va">my_sf</span>, id_col <span class="op">=</span> <span class="st">"geoid"</span>, group_col <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="improve-a-layout">Improve A Layout<a class="anchor" aria-label="anchor" href="#improve-a-layout"></a>
@@ -261,7 +261,7 @@
 <span></span>
 <span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/as_dragmapr_state.html">as_dragmapr_state</a></span><span class="op">(</span><span class="va">better</span><span class="op">)</span></span>
 <span><span class="va">state</span><span class="op">$</span><span class="va">region_col</span></span>
-<span><span class="fu"><a href="https://prigasg.github.io/dragmapr/reference/dragmapr_edit.html" class="external-link">dragmapr_edit</a></span><span class="op">(</span><span class="va">better</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://prigasg.github.io/dragmapr/reference/d_edit.html" class="external-link">d_edit</a></span><span class="op">(</span><span class="va">better</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span></code></pre></div>
 <p>Render the same edited state in either package:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/focus_map.html">focus_map</a></span><span class="op">(</span><span class="va">better</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span>

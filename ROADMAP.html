@@ -41,7 +41,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="logo.png" class="logo" alt=""><h1>explodemap + dragmapr roadmap</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PrigasG/explodemap/blob/0.4.0/ROADMAP.md" class="external-link"><code>ROADMAP.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PrigasG/explodemap/blob/master/ROADMAP.md" class="external-link"><code>ROADMAP.md</code></a></small>
     </div>
 
 <div id="explodemap--dragmapr-roadmap" class="section level1">
@@ -70,7 +70,7 @@ final spatial composition</code></pre>
 <span><span class="fu">update_region_offset</span><span class="op">(</span><span class="va">state</span>, <span class="va">region</span>, <span class="va">dx_m</span>, <span class="va">dy_m</span><span class="op">)</span></span>
 <span><span class="fu">update_label_offset</span><span class="op">(</span><span class="va">state</span>, <span class="va">label_id</span>, <span class="va">dx_m</span>, <span class="va">dy_m</span><span class="op">)</span></span>
 <span><span class="fu">hierarchy_state</span><span class="op">(</span><span class="va">root</span>, children <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Keep established names such as <code>dragmapr_state()</code>, <code>dragmapr_widget()</code>, <code>drag_map_prototype()</code>, <code><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input()</a></code>, <code><a href="reference/validate_explodemap_input.html">validate_explodemap_input()</a></code>, <code><a href="reference/explodemap_fingerprint.html">explodemap_fingerprint()</a></code>, and <code><a href="reference/as_dragmapr_state.html">as_dragmapr_state()</a></code> unless there is a deliberate breaking API cleanup.</p>
+<p>Keep established names such as <code>d_state()</code>, <code>d_widget()</code>, <code>drag_map_prototype()</code>, <code><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input()</a></code>, <code><a href="reference/validate_explodemap_input.html">validate_explodemap_input()</a></code>, <code><a href="reference/e_fingerprint.html">e_fingerprint()</a></code>, and <code><a href="reference/as_dragmapr_state.html">as_dragmapr_state()</a></code> unless there is a deliberate breaking API cleanup.</p>
 </div>
 <div class="section level2">
 <h2 id="shared-foundation">Shared Foundation<a class="anchor" aria-label="anchor" href="#shared-foundation"></a></h2>
@@ -114,7 +114,7 @@ final spatial composition</code></pre>
 </div>
 <div class="section level3">
 <h3 id="stable-identity">Stable Identity<a class="anchor" aria-label="anchor" href="#stable-identity"></a></h3>
-<p>Standardize <code><a href="reference/explodemap_fingerprint.html">explodemap_fingerprint()</a></code> across package interoperability, saved projects, and state compatibility checks. Fingerprints should cover the parts that make a saved state safe or unsafe to reuse:</p>
+<p>Standardize <code><a href="reference/e_fingerprint.html">e_fingerprint()</a></code> across package interoperability, saved projects, and state compatibility checks. Fingerprints should cover the parts that make a saved state safe or unsafe to reuse:</p>
 <ul><li>stable feature IDs;</li>
 <li>parent/group IDs;</li>
 <li>CRS;</li>
@@ -187,7 +187,7 @@ final spatial composition</code></pre>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">layout</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explode_grouped.html">explode_grouped</a></span><span class="op">(</span><span class="va">prepared</span>, region_col <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span>
 <span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/as_dragmapr_state.html">as_dragmapr_state</a></span><span class="op">(</span><span class="va">layout</span><span class="op">)</span></span>
-<span><span class="va">editor</span> <span class="op">&lt;-</span> <span class="fu">dragmapr_edit</span><span class="op">(</span><span class="va">layout</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">editor</span> <span class="op">&lt;-</span> <span class="fu">d_edit</span><span class="op">(</span><span class="va">layout</span>, state <span class="op">=</span> <span class="va">state</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="id_5-crs-decisions">5. CRS Decisions<a class="anchor" aria-label="anchor" href="#id_5-crs-decisions"></a></h3>
@@ -534,7 +534,7 @@ final_dx_m, final_dy_m   base + manual</code></pre>
 <h3 id="explodemap">explodemap<a class="anchor" aria-label="anchor" href="#explodemap"></a></h3>
 <ol style="list-style-type: decimal"><li>Stabilize <code><a href="reference/prepare_explodemap_input.html">prepare_explodemap_input()</a></code> return contract.</li>
 <li>Expand <code><a href="reference/validate_explodemap_input.html">validate_explodemap_input()</a></code> structured results.</li>
-<li>Standardize <code><a href="reference/explodemap_fingerprint.html">explodemap_fingerprint()</a></code> for interoperability.</li>
+<li>Standardize <code><a href="reference/e_fingerprint.html">e_fingerprint()</a></code> for interoperability.</li>
 <li>Formalize <code><a href="reference/as_dragmapr_state.html">as_dragmapr_state()</a></code> as the bridge.</li>
 <li>Expand <code><a href="reference/diagnose_layout.html">diagnose_layout()</a></code> with actionable findings.</li>
 <li>Add <code><a href="reference/layout_offsets.html">layout_offsets()</a></code>.</li>
