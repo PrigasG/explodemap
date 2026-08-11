@@ -47,9 +47,9 @@ update_label_offset(state, label_id, dx_m, dy_m)
 hierarchy_state(root, children = list())
 ```
 
-Keep established names such as `dragmapr_state()`, `dragmapr_widget()`,
+Keep established names such as `d_state()`, `d_widget()`,
 `drag_map_prototype()`, `prepare_explodemap_input()`,
-`validate_explodemap_input()`, `explodemap_fingerprint()`, and
+`validate_explodemap_input()`, `e_fingerprint()`, and
 `as_dragmapr_state()` unless there is a deliberate breaking API cleanup.
 
 ## Shared Foundation
@@ -107,7 +107,7 @@ Use the same pattern for state compatibility checks in `dragmapr`.
 
 ### Stable Identity
 
-Standardize `explodemap_fingerprint()` across package interoperability, saved
+Standardize `e_fingerprint()` across package interoperability, saved
 projects, and state compatibility checks. Fingerprints should cover the parts
 that make a saved state safe or unsafe to reuse:
 
@@ -215,7 +215,7 @@ The user-facing pattern should stay simple:
 ```r
 layout <- explode_grouped(prepared, region_col = "region")
 state <- as_dragmapr_state(layout)
-editor <- dragmapr_edit(layout, state = state)
+editor <- d_edit(layout, state = state)
 ```
 
 ### 5. CRS Decisions
@@ -658,7 +658,7 @@ Keep these outside the packages:
 
 1. Stabilize `prepare_explodemap_input()` return contract.
 2. Expand `validate_explodemap_input()` structured results.
-3. Standardize `explodemap_fingerprint()` for interoperability.
+3. Standardize `e_fingerprint()` for interoperability.
 4. Formalize `as_dragmapr_state()` as the bridge.
 5. Expand `diagnose_layout()` with actionable findings.
 6. Add `layout_offsets()`.

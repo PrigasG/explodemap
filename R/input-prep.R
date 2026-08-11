@@ -10,7 +10,13 @@
 #' @export
 count_geometry_vertices <- function(x) {
   geom <- if (inherits(x, "sfc")) x else sf::st_geometry(x)
-  nrow(sf::st_coordinates(geom))
+  count_one <- function(value) {
+    if (is.matrix(value)) return(nrow(value))
+    if (is.numeric(value)) return(if (length(value)) 1L else 0L)
+    if (is.list(value)) return(sum(vapply(value, count_one, integer(1))))
+    0L
+  }
+  sum(vapply(unclass(geom), count_one, integer(1)))
 }
 
 #' Create a stable group palette
@@ -70,18 +76,6 @@ assign_spatial_groups <- function(x,
   if (!inherits(x, "sf")) {
     stop("`x` must be an sf object.", call. = FALSE)
   }
-  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
-    get(".Random.seed", envir = .GlobalEnv)
-  } else {
-    NULL
-  }
-  on.exit({
-    if (!is.null(old_seed)) {
-      assign(".Random.seed", old_seed, envir = .GlobalEnv)
-    } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
-      rm(".Random.seed", envir = .GlobalEnv)
-    }
-  }, add = TRUE)
   method <- match.arg(method)
   if (!is.character(group_col) || length(group_col) != 1L || !nzchar(group_col)) {
     stop("`group_col` must be a single non-empty string.", call. = FALSE)
@@ -92,8 +86,15 @@ assign_spatial_groups <- function(x,
     return(x)
   }
 
-  points <- suppressWarnings(sf::st_point_on_surface(sf::st_geometry(x)))
-  coords <- sf::st_coordinates(points)
+  # Bounding-box centers are deterministic, inexpensive, and avoid GEOS point
+  # constructors that can initialize R's global RNG as a side effect.
+  coords <- t(vapply(seq_len(nrow(x)), function(i) {
+    bb <- sf::st_bbox(sf::st_geometry(x)[i])
+    c(
+      x = as.numeric(bb["xmin"] + bb["xmax"]) / 2,
+      y = as.numeric(bb["ymin"] + bb["ymax"]) / 2
+    )
+  }, numeric(2)))
 
   if (identical(method, "quadrants")) {
     mx <- stats::median(coords[, 1], na.rm = TRUE)
@@ -110,15 +111,73 @@ assign_spatial_groups <- function(x,
   }
 
   groups <- max(2L, min(as.integer(groups %||% 6L), nrow(x)))
-  set.seed(seed)
+  seed <- suppressWarnings(as.integer(seed))
+  if (length(seed) != 1L || is.na(seed)) {
+    stop("`seed` must be a single whole number.", call. = FALSE)
+  }
   scaled <- scale(coords)
   bad_cols <- !is.finite(colSums(scaled))
   if (any(bad_cols)) {
     scaled[, bad_cols] <- 0
   }
-  fit <- stats::kmeans(scaled, centers = groups, nstart = 20)
-  x[[group_col]] <- paste("Group", fit$cluster)
+  centers <- deterministic_cluster_centers(scaled, groups = groups, seed = seed)
+  cluster <- deterministic_kmeans(scaled, centers = centers, iter.max = 100L)
+  x[[group_col]] <- paste("Group", cluster)
   x
+}
+
+# Deterministic farthest-point initialization avoids mutating `.Random.seed`
+# while still giving k-means well-separated starting centers. `seed` selects a
+# stable first row; every subsequent center maximizes distance from the chosen
+# set, with row order providing deterministic tie-breaking.
+deterministic_cluster_centers <- function(x, groups, seed) {
+  x <- as.matrix(x)
+  distinct <- !duplicated(as.data.frame(x))
+  candidates <- which(distinct)
+  if (length(candidates) < groups) {
+    stop(
+      "`groups` exceeds the number of distinct spatial point locations.",
+      call. = FALSE
+    )
+  }
+  first <- candidates[(abs(as.double(seed)) %% length(candidates)) + 1L]
+  chosen <- first
+  while (length(chosen) < groups) {
+    remaining <- setdiff(candidates, chosen)
+    min_distance <- vapply(remaining, function(i) {
+      min(rowSums((x[chosen, , drop = FALSE] -
+                     matrix(x[i, ], nrow = length(chosen), ncol = ncol(x),
+                            byrow = TRUE))^2))
+    }, numeric(1))
+    chosen <- c(chosen, remaining[which.max(min_distance)])
+  }
+  x[chosen, , drop = FALSE]
+}
+
+# A small deterministic Lloyd iteration. `stats::kmeans()` may initialize the
+# global RNG even when explicit centers are supplied, so keeping this loop
+# local is what makes `assign_spatial_groups()` genuinely RNG-neutral.
+deterministic_kmeans <- function(x, centers, iter.max = 100L) {
+  x <- as.matrix(x)
+  centers <- as.matrix(centers)
+  cluster <- integer(nrow(x))
+  for (iter in seq_len(iter.max)) {
+    distance <- vapply(seq_len(nrow(centers)), function(k) {
+      rowSums((x - matrix(
+        centers[k, ], nrow = nrow(x), ncol = ncol(x), byrow = TRUE
+      ))^2)
+    }, numeric(nrow(x)))
+    next_cluster <- max.col(-distance, ties.method = "first")
+    if (identical(next_cluster, cluster)) break
+    cluster <- next_cluster
+    for (k in seq_len(nrow(centers))) {
+      members <- which(cluster == k)
+      if (length(members)) {
+        centers[k, ] <- colMeans(x[members, , drop = FALSE])
+      }
+    }
+  }
+  cluster
 }
 
 #' Validate explodemap input
@@ -549,7 +608,7 @@ prepare_explodemap_input <- function(x,
         warnings = character()
       ),
       simplification = report$simplification,
-      fingerprint = explodemap_fingerprint(out, id_col = "unit_id", group_col = "region"),
+      fingerprint = e_fingerprint(out, id_col = "unit_id", group_col = "region"),
       roles = list(id = "unit_id", label = "unit_name", parent = "region"),
       mapping = list(id_col = id_col, label_col = label_col, group_col = group_col,
                      group_method = group_method),
@@ -593,7 +652,7 @@ print.explodemap_prepared_input <- function(x, ...) {
 #'
 #' @return A stable MD5 fingerprint string.
 #' @export
-explodemap_fingerprint <- function(x,
+e_fingerprint <- function(x,
                                    id_col = NULL,
                                    group_col = NULL,
                                    include_geometry = TRUE,

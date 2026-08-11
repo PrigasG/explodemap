@@ -13,8 +13,9 @@ diagnose_layout(result, label_col = NULL, label_size = NULL, state = NULL)
 
 \item{label_size}{Approximate label size in map units.}
 
-\item{state}{Optional dragmapr state. Reserved for post-drag diagnostics;
-when supplied, the report records that manual state was considered.}
+\item{state}{Optional \code{dragmapr_state}. When supplied, its manual offsets
+are applied to the grouped layout before every geometry, label, gap, and
+displacement diagnostic is calculated.}
 }
 \value{
 A \code{layout_quality_report} list.

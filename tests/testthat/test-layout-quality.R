@@ -21,6 +21,27 @@ test_that("diagnose_layout reports grouped layout metrics", {
   ) >= 0))
 })
 
+test_that("diagnose_layout applies dragmapr state before measuring", {
+  skip_if_not_installed("dragmapr")
+  x <- make_grouped_sf()
+  out <- explode_grouped(x, region_col = "region", mode = "auto", plot = FALSE)
+  state <- make_dragmapr_state(
+    region_col = "region",
+    region_offsets = data.frame(region = "R1", dx_m = 1e6, dy_m = -250)
+  )
+
+  before <- diagnose_layout(out)
+  after <- diagnose_layout(out, state = state)
+
+  expect_false(before$summary$post_drag)
+  expect_true(after$summary$post_drag)
+  expect_gt(after$maximum_displacement, before$maximum_displacement)
+  expect_equal(
+    after$anchors$anchor_x[after$anchors$region == "R1"],
+    before$anchors$anchor_x[before$anchors$region == "R1"] + 1e6
+  )
+})
+
 test_that("layout score uses dimensionless report terms", {
   report_a <- list(
     polygon_overlap_fraction = 0.1,
@@ -120,7 +141,7 @@ test_that("drag handoff and update_exploded_layout preserve grouped object", {
 
 test_that("dragmapr_state handoff round-trips through grouped layout", {
   skip_if_not_installed("dragmapr")
-  skip_if_not("dragmapr_state" %in% getNamespaceExports("dragmapr"))
+  skip_if_not("d_state" %in% getNamespaceExports("dragmapr"))
   x <- make_grouped_sf()
   out <- explode_grouped(x, region_col = "region", mode = "auto", plot = FALSE)
 

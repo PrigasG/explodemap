@@ -64,7 +64,7 @@ if (interactive()) print(plot(report))
 state <- as_dragmapr_state(layout, geometry_id = "service-territory-demo-v1")
 
 # Simulate a small editorial pass. In a real session this state comes back from:
-#   state <- dragmapr_widget_state(input$map_state)
+#   state <- d_widget_state(input$map_state)
 state$region_offsets$dx_m[state$region_offsets$region == "East"] <- 25000
 state$region_offsets$dy_m[state$region_offsets$region == "East"] <- -8000
 state$region_offsets$dx_m[state$region_offsets$region == "South"] <- -12000
@@ -78,7 +78,7 @@ write_dragmapr_state(state, state_path)
 message("Saved composition state to: ", state_path)
 
 if (interactive()) {
-  editor <- dragmapr_edit(layout, state = state, label_col = "unit_name")
+  editor <- d_edit(layout, state = state, label_col = "unit_name")
   print(editor)
 
   focus <- focus_map(

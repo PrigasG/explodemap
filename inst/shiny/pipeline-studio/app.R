@@ -170,7 +170,7 @@ assign_cluster_regions <- function(x, groups = 6L, seed = 1L) {
 }
 
 geometry_fingerprint <- function(x) {
-  explodemap_fingerprint(x, id_col = "unit_id", group_col = "region")
+  e_fingerprint(x, id_col = "unit_id", group_col = "region")
 }
 
 project_upload <- function(x) {
@@ -404,8 +404,38 @@ hhs_canonical_layout <- function() {
   }
 }
 
+# Label-aware search renders and diagnoses every candidate layout. It is useful
+# for compact state/county layouts, but becomes disproportionately expensive
+# for municipal layers with many features or parent groups.
+OPTIMIZE_MAX_FEATURES <- 1000L
+OPTIMIZE_MAX_GROUPS <- 50L
+
+optimization_limit_message <- function(units) {
+  feature_count <- nrow(units)
+  group_count <- if ("region" %in% names(units)) {
+    length(unique(as.character(units$region)))
+  } else {
+    0L
+  }
+  if (feature_count <= OPTIMIZE_MAX_FEATURES && group_count <= OPTIMIZE_MAX_GROUPS) {
+    return(NULL)
+  }
+  paste0(
+    "Label-aware search was skipped for this large layout (",
+    format(feature_count, big.mark = ","), " features, ",
+    format(group_count, big.mark = ","), " groups). ",
+    "The standard layout was built instead."
+  )
+}
+
 # Compute a grouped layout, with an optional label-aware parameter search.
 compute_layout <- function(units, optimize = FALSE) {
+  limit_message <- if (isTRUE(optimize)) optimization_limit_message(units) else NULL
+  if (!is.null(limit_message)) {
+    out <- explode_grouped(units, region_col = "region", plot = FALSE, quiet = TRUE)
+    out$optimization_notice <- limit_message
+    return(out)
+  }
   if (isTRUE(optimize)) {
     grid <- expand.grid(
       kappa = c(1.4, 2.0),
@@ -708,6 +738,17 @@ ui <- page_navbar(
         )),
         h6("Selection"),
         selectInput("sel_region", "Focus a region", choices = NULL),
+        tableOutput("selected_feature_table"),
+        div(
+          class = "d-grid gap-2 mb-3",
+          actionButton("delete_selected_region", "Remove selected geography",
+                       class = "btn-outline-danger"),
+          div(
+            class = "btn-group w-100",
+            actionButton("undo_geometry_edit", "Undo", class = "btn-outline-secondary"),
+            actionButton("redo_geometry_edit", "Redo", class = "btn-outline-secondary")
+          )
+        ),
         h6("Display"),
         checkboxInput("editor_labels", "Show labels", TRUE),
         checkboxInput("show_origin", "Origin outlines", FALSE),
@@ -759,7 +800,7 @@ server <- function(input, output, session) {
   process_depth <- reactiveVal(0L)
 
   show_process <- function(message, delay = 200L) {
-    process_depth(process_depth() + 1L)
+    process_depth(isolate(process_depth()) + 1L)
     session$sendCustomMessage(
       "pipeline-process-show",
       list(text = message, delay = delay)
@@ -771,7 +812,7 @@ server <- function(input, output, session) {
   }
 
   hide_process <- function() {
-    remaining <- max(0L, process_depth() - 1L)
+    remaining <- max(0L, isolate(process_depth()) - 1L)
     process_depth(remaining)
     if (remaining == 0L) {
       session$sendCustomMessage("pipeline-process-hide", list())
@@ -779,14 +820,32 @@ server <- function(input, output, session) {
   }
 
   run_process <- function(message, task, delay = 200L) {
+    # R executes these jobs synchronously. Queuing another expensive job while
+    # one is pending only makes the overlay appear stuck, so accept one job at
+    # a time and discard duplicate clicks/events until it finishes.
+    if (isolate(process_depth()) > 0L) {
+      showNotification(
+        "A Pipeline Studio task is already running. Please let it finish.",
+        type = "warning",
+        duration = 4
+      )
+      return(invisible(FALSE))
+    }
     show_process(message, delay = delay)
     runner <- function() {
       on.exit(hide_process(), add = TRUE)
-      tryCatch(
-        task(),
-        error = function(e) {
-          showNotification(conditionMessage(e), type = "error", duration = 10)
-        }
+      # `later` callbacks run after the observer that scheduled them has
+      # returned, so they do not have an active reactive consumer. The tasks
+      # intentionally take a point-in-time snapshot of inputs and session
+      # state; isolate supplies the required read context without registering
+      # dependencies on a consumer that no longer exists.
+      isolate(
+        tryCatch(
+          task(),
+          error = function(e) {
+            showNotification(conditionMessage(e), type = "error", duration = 10)
+          }
+        )
       )
     }
     if (requireNamespace("later", quietly = TRUE)) {
@@ -794,7 +853,7 @@ server <- function(input, output, session) {
     } else {
       runner()
     }
-    invisible(NULL)
+    invisible(TRUE)
   }
 
   state_summary <- function(s) {
@@ -829,7 +888,9 @@ server <- function(input, output, session) {
   rv <- reactiveValues(layout = NULL, state = NULL, draft = NULL,
                        source = MAP_SOURCES[[1]], level = "county",
                        key = NULL, saved = list(), fallback = NULL,
-                       palette = NULL, egen = 0L)
+                       palette = NULL, egen = 0L,
+                       editor_generation = NULL,
+                       undo_stack = list(), redo_stack = list())
 
   upload_source <- reactiveValues(path = NULL, name = NULL, size = NULL,
                                   type = NULL, layers = character(),
@@ -889,9 +950,19 @@ server <- function(input, output, session) {
     rv$source <- source
     rv$level <- level
     rv$key <- key
+    rv$undo_stack <- list()
+    rv$redo_stack <- list()
+    rv$editor_generation <- NULL
     rv$egen <- rv$egen + 1L
     regions <- sort(unique(as.character(rv$state$region_offsets$region)))
     updateSelectInput(session, "sel_region", choices = regions)
+    if (!is.null(res$layout$optimization_notice)) {
+      showNotification(
+        res$layout$optimization_notice,
+        type = "warning",
+        duration = 8
+      )
+    }
     invisible(TRUE)
   }
 
@@ -902,6 +973,104 @@ server <- function(input, output, session) {
       rv$saved[[rv$key]] <- list(canonical = rv$state, draft = rv$draft,
                                  palette = rv$palette)
     }
+  }
+
+  app_snapshot <- function(label = "edit") {
+    list(
+      label = label,
+      layout = rv$layout,
+      state = rv$state,
+      draft = rv$draft,
+      palette = rv$palette,
+      source = rv$source,
+      level = rv$level,
+      key = rv$key,
+      fallback = rv$fallback,
+      timestamp = Sys.time()
+    )
+  }
+
+  restore_app_snapshot <- function(snapshot) {
+    rv$layout <- snapshot$layout
+    rv$state <- snapshot$state
+    rv$draft <- snapshot$draft
+    rv$palette <- snapshot$palette
+    rv$source <- snapshot$source
+    rv$level <- snapshot$level
+    rv$key <- snapshot$key
+    rv$fallback <- snapshot$fallback
+    rv$editor_generation <- NULL
+    rv$egen <- rv$egen + 1L
+    regions <- sort(unique(as.character(rv$draft$region_offsets$region)))
+    selected <- rv$draft$selected_feature %||%
+      if (length(regions)) regions[[1L]] else ""
+    updateSelectInput(session, "sel_region", choices = regions, selected = selected)
+    remember_current()
+  }
+
+  push_app_history <- function(label = "edit") {
+    rv$undo_stack <- c(rv$undo_stack, list(app_snapshot(label)))
+    rv$redo_stack <- list()
+  }
+
+  prune_state_regions <- function(state, regions) {
+    state <- validate_dragmapr_state(state)
+    keep_regions <- !as.character(state$region_offsets$region) %in% regions
+    keep_labels <- !as.character(state$label_offsets$region) %in% regions
+    d_state(
+      level = state$level,
+      region_offsets = state$region_offsets[keep_regions, , drop = FALSE],
+      label_offsets = state$label_offsets[keep_labels, , drop = FALSE],
+      expanded_groups = setdiff(state$expanded_groups, regions),
+      view = state$view,
+      version = state$version + 1L,
+      crs = state$crs,
+      geometry_id = state$geometry_id,
+      selected_feature = NULL,
+      styles = if (is.null(state$styles)) NULL else
+        state$styles[!state$styles$region %in% regions, , drop = FALSE]
+    )
+  }
+
+  delete_regions_from_layout <- function(regions) {
+    req(rv$layout, rv$draft)
+    regions <- as.character(regions)
+    regions <- regions[!is.na(regions) & nzchar(regions)]
+    if (!length(regions)) return(invisible(FALSE))
+    existing <- sort(unique(as.character(rv$layout$sf_grouped$region)))
+    regions <- intersect(regions, existing)
+    if (!length(regions)) return(invisible(FALSE))
+    if (length(setdiff(existing, regions)) < 1L) {
+      showNotification("At least one geography must remain in the layout.",
+                       type = "warning")
+      return(invisible(FALSE))
+    }
+
+    push_app_history(paste("remove", paste(regions, collapse = ", ")))
+    rv$layout$sf_grouped <- remove_spatial_features(
+      rv$layout$sf_grouped,
+      ids = regions,
+      key_col = "region"
+    )
+    rv$state <- prune_state_regions(rv$state, regions)
+    rv$draft <- prune_state_regions(rv$draft, regions)
+    if (!is.null(rv$palette)) {
+      rv$palette <- rv$palette[!names(rv$palette) %in% regions]
+    }
+    rv$egen <- rv$egen + 1L
+    remaining <- sort(unique(as.character(rv$draft$region_offsets$region)))
+    updateSelectInput(
+      session,
+      "sel_region",
+      choices = remaining,
+      selected = if (length(remaining)) remaining[[1L]] else ""
+    )
+    remember_current()
+    showNotification(
+      sprintf("Removed %s. Use Undo to restore it.", paste(regions, collapse = ", ")),
+      type = "message"
+    )
+    invisible(TRUE)
   }
 
   active_palette <- reactive({
@@ -956,16 +1125,22 @@ server <- function(input, output, session) {
   })
 
   output$compute_action <- renderUI({
+    busy <- process_depth() > 0L
     if (identical(input$map_source, "UPLOAD")) {
       issues <- prepared_upload_issues()
       actionButton(
         "compute",
-        "Explode uploaded layer",
+        if (busy) "Building..." else "Explode uploaded layer",
         class = "btn-primary w-100 mb-2",
-        disabled = if (length(issues)) "disabled" else NULL
+        disabled = if (busy || length(issues)) "disabled" else NULL
       )
     } else {
-      actionButton("compute", "Render layout", class = "btn-primary w-100 mb-2")
+      actionButton(
+        "compute",
+        if (busy) "Building..." else "Render layout",
+        class = "btn-primary w-100 mb-2",
+        disabled = if (busy) "disabled" else NULL
+      )
     }
   })
 
@@ -1442,12 +1617,12 @@ server <- function(input, output, session) {
   output$editor <- renderDragmapr({
     req(rv$layout)
     rv$egen
-    dragmapr_widget(
+    d_widget(
       rv$layout$sf_grouped,
       region_col = "region",
       state = isolate(rv$draft),
       labels = isTRUE(input$editor_labels),
-      display_options = isolate(dragmapr_display_options(
+      display_options = isolate(d_display_options(
         region_palette = active_palette(),
         show_origin_outlines = isTRUE(input$show_origin),
         show_movement_connectors = isTRUE(input$show_connectors),
@@ -1460,9 +1635,27 @@ server <- function(input, output, session) {
   # instead of flashing blank when you switch to Refine.
   outputOptions(output, "editor", suspendWhenHidden = FALSE)
 
+  current_editor_generation <- function() {
+    rv$editor_generation %||% (input$editor_ready$generation %||% NULL)
+  }
+
+  is_current_editor_message <- function(value) {
+    if (is.null(value) || is.null(value$generation)) return(TRUE)
+    active <- current_editor_generation()
+    is.null(active) || identical(as.character(value$generation), as.character(active))
+  }
+
+  observeEvent(input$editor_ready, {
+    ready <- input$editor_ready
+    if (!is.null(ready$generation)) {
+      rv$editor_generation <- ready$generation
+    }
+  }, ignoreInit = TRUE)
+
   # Every browser edit rebuilds the draft (not the canonical state).
   observeEvent(input$editor_state, {
-    edit <- dragmapr_widget_state(input$editor_state)
+    if (!is_current_editor_message(input$editor_state)) return()
+    edit <- d_widget_state(input$editor_state)
     if (!is.null(edit)) rv$draft <- edit
   })
 
@@ -1470,22 +1663,114 @@ server <- function(input, output, session) {
 
   # Live display toggles - update in place, never rebuild (edits are preserved).
   observeEvent(input$show_origin, {
-    updateDragmapr(session, "editor", show_origin_outlines = isTRUE(input$show_origin))
+    updateDragmapr(session, "editor",
+                   show_origin_outlines = isTRUE(input$show_origin),
+                   generation = current_editor_generation())
   }, ignoreInit = TRUE)
   observeEvent(input$show_connectors, {
-    updateDragmapr(session, "editor", show_movement_connectors = isTRUE(input$show_connectors))
+    updateDragmapr(session, "editor",
+                   show_movement_connectors = isTRUE(input$show_connectors),
+                   generation = current_editor_generation())
   }, ignoreInit = TRUE)
   observeEvent(input$show_trail, {
-    updateDragmapr(session, "editor", show_drag_trail = isTRUE(input$show_trail))
+    updateDragmapr(session, "editor",
+                   show_drag_trail = isTRUE(input$show_trail),
+                   generation = current_editor_generation())
   }, ignoreInit = TRUE)
   observeEvent(input$map_bg, {
-    updateDragmapr(session, "editor", map_background = input$map_bg)
+    updateDragmapr(session, "editor",
+                   map_background = input$map_bg,
+                   generation = current_editor_generation())
   }, ignoreInit = TRUE)
 
   # Selecting a region immediately highlights it in the editor (no extra click).
   observeEvent(input$sel_region, {
     req(input$sel_region)
-    updateDragmapr(session, "editor", selected_feature = input$sel_region)
+    updateDragmapr(session, "editor",
+                   selected_feature = input$sel_region,
+                   generation = current_editor_generation())
+  }, ignoreInit = TRUE)
+
+  output$selected_feature_table <- renderTable({
+    req(rv$layout)
+    selected <- input$sel_region %||% rv$draft$selected_feature
+    if (is.null(selected) || !nzchar(selected)) {
+      return(data.frame(Message = "Select a geography to inspect."))
+    }
+    tbl <- spatial_feature_table(rv$layout$sf_grouped, key_col = "region")
+    tbl <- tbl[as.character(tbl$.feature_id) == as.character(selected), , drop = FALSE]
+    if (nrow(tbl) == 0L) {
+      return(data.frame(Message = "No matching geography."))
+    }
+    drop_cols <- grep("^\\.", names(tbl), value = TRUE)
+    show <- tbl[, setdiff(names(tbl), drop_cols), drop = FALSE]
+    utils::head(show, 6L)
+  }, striped = TRUE, bordered = TRUE, spacing = "xs", width = "100%")
+
+  observeEvent(input$delete_selected_region, {
+    selected <- input$sel_region %||% rv$draft$selected_feature
+    if (is.null(selected) || !nzchar(selected)) {
+      showNotification("Select a geography before removing it.", type = "warning")
+      return()
+    }
+    showModal(modalDialog(
+      title = "Remove selected geography?",
+      tags$p(sprintf(
+        "This removes '%s' from the draft source geometry and the live editor.",
+        selected
+      )),
+      tags$p("Undo will restore it if this was the wrong deletion."),
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("confirm_delete_selected_region", "Remove", class = "btn-danger")
+      ),
+      easyClose = TRUE
+    ))
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$confirm_delete_selected_region, {
+    removeModal()
+    selected <- input$sel_region %||% rv$draft$selected_feature
+    updateDragmapr(session, "editor",
+                   remove_features = selected,
+                   generation = current_editor_generation())
+    delete_regions_from_layout(selected)
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$editor_feature_delete, {
+    if (!is_current_editor_message(input$editor_feature_delete)) return()
+    deleted <- input$editor_feature_delete$removed_features %||% character()
+    if (length(deleted)) {
+      delete_regions_from_layout(deleted)
+    }
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$undo_geometry_edit, {
+    stack <- rv$undo_stack
+    if (!length(stack)) {
+      showNotification("Nothing to undo yet.", type = "message")
+      return()
+    }
+    current <- app_snapshot("redo")
+    snapshot <- stack[[length(stack)]]
+    rv$undo_stack <- stack[-length(stack)]
+    rv$redo_stack <- c(rv$redo_stack, list(current))
+    restore_app_snapshot(snapshot)
+    showNotification("Restored the previous geography edit.", type = "message")
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$redo_geometry_edit, {
+    stack <- rv$redo_stack
+    if (!length(stack)) {
+      showNotification("Nothing to redo yet.", type = "message")
+      return()
+    }
+    current <- app_snapshot("undo")
+    snapshot <- stack[[length(stack)]]
+    rv$redo_stack <- stack[-length(stack)]
+    rv$undo_stack <- c(rv$undo_stack, list(current))
+    restore_app_snapshot(snapshot)
+    showNotification("Reapplied the geography edit.", type = "message")
   }, ignoreInit = TRUE)
 
   # Push the draft back: it becomes the new canonical face of explodemap.

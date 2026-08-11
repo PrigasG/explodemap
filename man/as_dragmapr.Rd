@@ -17,7 +17,7 @@ Legacy / low-level handoff (superseded, but not deprecated).
 
 This is the original handoff: it bundles the grouped geometry and
 the absolute anchors into a \code{dragmapr_layout} list. The preferred path is now
-\code{\link[=as_dragmapr_state]{as_dragmapr_state()}}, which emits a geometry-free \code{dragmapr::dragmapr_state()}
+\code{\link[=as_dragmapr_state]{as_dragmapr_state()}}, which emits a geometry-free \code{dragmapr::d_state()}
 -- the shared editorial composition contract that \verb{state =} arguments accept
 across \code{focus_map()}, \code{render_dragged_map()}, and \code{update_exploded_layout()}.
 

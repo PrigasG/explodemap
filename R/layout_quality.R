@@ -3,27 +3,35 @@
 #' @param result A `grouped_exploded_map` object.
 #' @param label_col Optional label column for approximate label overlap checks.
 #' @param label_size Approximate label size in map units.
-#' @param state Optional dragmapr state. Reserved for post-drag diagnostics;
-#'   when supplied, the report records that manual state was considered.
+#' @param state Optional `dragmapr_state`. When supplied, its manual offsets
+#'   are applied to the grouped layout before every geometry, label, gap, and
+#'   displacement diagnostic is calculated.
 #' @return A `layout_quality_report` list.
 #' @export
 diagnose_layout <- function(result, label_col = NULL, label_size = NULL, state = NULL) {
   if (!inherits(result, "grouped_exploded_map")) {
     stop("`result` must be a grouped_exploded_map object.", call. = FALSE)
   }
-  region_col <- result$diagnostics$region_col
-  sf_grouped <- result$sf_grouped
+  diagnostic_result <- if (is.null(state)) {
+    result
+  } else {
+    update_exploded_layout(result, state, update_plots = FALSE)
+  }
+  region_col <- diagnostic_result$diagnostics$region_col
+  sf_grouped <- diagnostic_result$sf_grouped
 
   overlap <- .polygon_overlap_report(sf_grouped, region_col)
   gaps <- .group_gap_report(sf_grouped, region_col)
-  displacement <- .region_displacement_report(result$sf_orig, sf_grouped, region_col)
+  displacement <- .region_displacement_report(
+    diagnostic_result$sf_orig, sf_grouped, region_col
+  )
   bbox <- sf::st_bbox(sf_grouped)
   width <- as.numeric(bbox["xmax"] - bbox["xmin"])
   height <- as.numeric(bbox["ymax"] - bbox["ymin"])
   hull_area <- as.numeric(sf::st_area(sf::st_convex_hull(sf::st_union(sf::st_geometry(sf_grouped)))))
   canvas_area <- width * height
   polygon_area <- sum(as.numeric(sf::st_area(sf_grouped)), na.rm = TRUE)
-  original_bbox <- sf::st_bbox(result$sf_orig)
+  original_bbox <- sf::st_bbox(diagnostic_result$sf_orig)
   original_width <- as.numeric(original_bbox["xmax"] - original_bbox["xmin"])
   original_height <- as.numeric(original_bbox["ymax"] - original_bbox["ymin"])
   original_diagonal <- sqrt(original_width^2 + original_height^2)
@@ -84,7 +92,7 @@ diagnose_layout <- function(result, label_col = NULL, label_size = NULL, state =
     canvas_utilization = if (canvas_area > 0) hull_area / canvas_area else NA_real_,
     aspect_ratio = if (height > 0) width / height else NA_real_,
     mental_map_stability = displacement$stability,
-    anchors = result$anchors,
+    anchors = diagnostic_result$anchors,
     region_col = region_col,
     plot_data = list(group_gaps = gaps$pairs)
   )
@@ -361,7 +369,7 @@ optimize_grouped_layout <- function(x,
 #'
 #' This is the original handoff: it bundles the grouped geometry and
 #' the absolute anchors into a `dragmapr_layout` list. The preferred path is now
-#' [as_dragmapr_state()], which emits a geometry-free `dragmapr::dragmapr_state()`
+#' [as_dragmapr_state()], which emits a geometry-free `dragmapr::d_state()`
 #' -- the shared editorial composition contract that `state =` arguments accept
 #' across `focus_map()`, `render_dragged_map()`, and `update_exploded_layout()`.
 #'
@@ -390,7 +398,7 @@ as_dragmapr <- function(result) {
 
 #' Convert a grouped layout to a dragmapr editing state
 #'
-#' Produces a `dragmapr::dragmapr_state()` -- the shared editorial composition
+#' Produces a `dragmapr::d_state()` -- the shared editorial composition
 #' contract -- from a `grouped_exploded_map`. Unlike [as_dragmapr()], which
 #' bundles geometry and absolute anchors into a handoff list, this emits the
 #' geometry-free *state* that the interactive editor and static renderers
@@ -408,7 +416,7 @@ as_dragmapr <- function(result) {
 #' @param geometry_id Optional single string identifying the source geometry.
 #'   Defaults to the layout label in `result$diagnostics$label`.
 #' @param level Optional geography-level label. Defaults to the region column.
-#' @return A `dragmapr_state` (see `dragmapr::dragmapr_state()`).
+#' @return A `dragmapr_state` (see `dragmapr::d_state()`).
 #' @export
 as_dragmapr_state <- function(result, geometry_id = NULL, level = NULL) {
   if (!inherits(result, "grouped_exploded_map")) {
@@ -421,10 +429,10 @@ as_dragmapr_state <- function(result, geometry_id = NULL, level = NULL) {
       call. = FALSE
     )
   }
-  if (!"dragmapr_state" %in% getNamespaceExports("dragmapr")) {
+  if (!"d_state" %in% getNamespaceExports("dragmapr")) {
     stop(
       "as_dragmapr_state() requires a version of dragmapr that exports ",
-      "dragmapr_state(). Install/update dragmapr before using this bridge.",
+      "d_state(). Install/update dragmapr before using this bridge.",
       call. = FALSE
     )
   }
@@ -455,7 +463,7 @@ as_dragmapr_state <- function(result, geometry_id = NULL, level = NULL) {
   crs <- tryCatch(sf::st_crs(result$sf_grouped), error = function(e) NULL)
   crs_arg <- if (is.null(crs) || is.na(crs)) NULL else crs
 
-  dragmapr_state <- getExportedValue("dragmapr", "dragmapr_state")
+  state_constructor <- getExportedValue("dragmapr", "d_state")
   args <- list(
     level = level,
     region_offsets = region_offsets,
@@ -463,11 +471,11 @@ as_dragmapr_state <- function(result, geometry_id = NULL, level = NULL) {
     crs = crs_arg,
     geometry_id = geometry_id
   )
-  if ("region_col" %in% names(formals(dragmapr_state))) {
+  if ("region_col" %in% names(formals(state_constructor))) {
     args$region_col <- region_col
     args$label_id_col <- "label_id"
   }
-  do.call(dragmapr_state, args)
+  do.call(state_constructor, args)
 }
 
 #' Update an exploded grouped layout after manual composition

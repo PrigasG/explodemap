@@ -103,6 +103,13 @@ reference:
   - estimate_block_radii
   - original_geometry
   - anchor_table
+- title: Child geography layout
+  desc: |
+    Compute deterministic projected child placements and extract their
+    renderer-neutral offsets or composed geometry.
+  contents:
+  - layout_children
+  - child_layout_offsets
 - title: State-first composition (dragmapr bridge)
   desc: |
     Hand a computed layout to the dragmapr editor as a reusable dragmapr_state, then apply edited compositions back. Feature-level handoffs use stable IDs from source columns or prepare_explodemap_input(). as_dragmapr_state() is the preferred handoff; as_dragmapr() is the legacy low-level handoff.
@@ -124,7 +131,9 @@ reference:
   - simplify_to_vertex_budget
   - assign_spatial_groups
   - group_palette
-  - explodemap_fingerprint
+  - e_fingerprint
+  - spatial_join_index
+  - validate_spatial_join
 - title: Layout quality and optimization
   desc: |
     Score a grouped layout and search for better region placements.

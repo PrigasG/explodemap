@@ -25,7 +25,7 @@ is a single, reusable **composition object**: a `dragmapr_state`.
 The workflow is **compute once, then compose and render from the state**:
 
 ```
-explode_grouped()  ->  as_dragmapr_state()  ->  dragmapr_edit()  ->  focus_map(state = )
+explode_grouped()  ->  as_dragmapr_state()  ->  d_edit()  ->  focus_map(state = )
    (geometry)            (handoff)                (compose)            render_dragged_map(state = )
 ```
 
@@ -74,10 +74,10 @@ state
 ## 3. Compose
 
 Open the dragmapr editor seeded with the state. In Shiny, capture each edit back
-into a state with `dragmapr::dragmapr_widget_state()`:
+into a state with `dragmapr::d_widget_state()`:
 
 ```{r compose, eval = FALSE}
-dragmapr::dragmapr_edit(layout, state = state)
+dragmapr::d_edit(layout, state = state)
 ```
 
 ## 4. Render the composed state

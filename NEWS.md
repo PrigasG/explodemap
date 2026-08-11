@@ -1,5 +1,36 @@
 # explodemap 0.4.0
 
+* Cleaned up the remaining package-prefixed API name:
+  `explodemap_fingerprint()` is now `e_fingerprint()`. The old name is no
+  longer exported. Object class names and persisted fingerprint values are
+  unchanged.
+* Updated all dragmapr integration points and the bundled Pipeline Studio for
+  dragmapr's concise `d_*` function API. The `as_dragmapr_state()` bridge now
+  targets `dragmapr::d_state()` while continuing to emit the unchanged
+  `dragmapr_state` serialized class contract.
+* Added `layout_children()`, a projected-coordinate child geography solver
+  extracted from the mature Bloom workflow. It performs radial geographic
+  expansion, real feature bounding-box or circle collision refinement,
+  attraction toward geographic targets, bearing-drift limits, optional canvas
+  confinement, and final collision cleanup. Renderer-neutral base offsets and
+  composed `sf` geometry are exposed through `child_layout_offsets()` and
+  `child_layout_geometry()` so browsers no longer need to own the canonical
+  spatial math.
+* `diagnose_layout(state = )` now applies the supplied `dragmapr_state` before
+  measuring polygon/label overlap, gaps, utilization, displacement, and
+  stability. Before/after editorial quality comparisons therefore diagnose the
+  actual composed geometry instead of only setting a post-drag flag.
+* Added generic `spatial_join_index()` and `validate_spatial_join()` contracts
+  for stable-ID matching and structured unmatched, ambiguous, duplicate, and
+  wrong-parent findings. Census aliases, CSV parsing, jurisdiction rules, and
+  thematic classification intentionally remain application responsibilities.
+* `assign_spatial_groups()` now uses deterministic bounding-box centers,
+  farthest-point initialization, and a local Lloyd iteration, eliminating all
+  reads/writes and incidental initialization of `.Random.seed`. Geometry
+  vertex counting now also supports mixed `sfc_GEOMETRY` collections.
+* Synchronized the bundled Pipeline Studio with dragmapr's generation-safe
+  editor, spatial feature deletion/undo support, reactive-safe single-flight
+  processing, and large-layout optimization guard.
 * Added renderer-neutral accessors for computed layouts: `original_geometry()`,
   `local_geometry()`, `final_geometry()`, `group_geometry()`, `anchor_table()`,
   `layout_offsets()`, `transition_data()`, and `connector_geometry()`. These
@@ -35,7 +66,7 @@
   primitives: `count_geometry_vertices()`, `simplify_to_vertex_budget()`,
   `assign_spatial_groups()`, `validate_explodemap_input()`,
   `prepare_explodemap_input()`, `group_palette()`, and
-  `explodemap_fingerprint()`. These functions move proven geometry,
+  `e_fingerprint()`. These functions move proven geometry,
   validation, palette, simplification, grouping, and compatibility helpers out
   of the app layer while keeping upload policy and UI orchestration in Pipeline
   Studio.
@@ -54,7 +85,7 @@
   cross-package example covering layout optimization, diagnostics, editable
   state, JSON persistence, `focus_map()`, and `dragmapr::render_dragged_map()`.
 * `as_dragmapr_state()` is the preferred state-first bridge to `dragmapr`,
-  emitting a `dragmapr::dragmapr_state()` that `state =` arguments accept across
+  emitting a `dragmapr::d_state()` that `state =` arguments accept across
   `focus_map()`, `render_dragged_map()`, and `update_exploded_layout()`. The
   older `as_dragmapr()` is now documented as legacy/low-level (still supported,
   not deprecated).
@@ -63,7 +94,7 @@
   feature, reproducing a saved composition's focus. The behavior is fully
   opt-in, so default renders are unchanged.
 * New `inst/examples/state_first_workflow.R` shows the canonical pipeline:
-  `explode_grouped()` -> `as_dragmapr_state()` -> `dragmapr_edit()` ->
+  `explode_grouped()` -> `as_dragmapr_state()` -> `d_edit()` ->
   `focus_map(state = )` / `render_dragged_map(state = )`.
 * `update_focus_palette()` now preserves the palette's names so the browser can
   key `groupPalette` by group. Previously the colours were sent as an unnamed

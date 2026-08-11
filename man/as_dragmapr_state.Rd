@@ -15,10 +15,10 @@ Defaults to the layout label in \code{result$diagnostics$label}.}
 \item{level}{Optional geography-level label. Defaults to the region column.}
 }
 \value{
-A \code{dragmapr_state} (see \code{dragmapr::dragmapr_state()}).
+A \code{dragmapr_state} (see \code{dragmapr::d_state()}).
 }
 \description{
-Produces a \code{dragmapr::dragmapr_state()} -- the shared editorial composition
+Produces a \code{dragmapr::d_state()} -- the shared editorial composition
 contract -- from a \code{grouped_exploded_map}. Unlike \code{\link[=as_dragmapr]{as_dragmapr()}}, which
 bundles geometry and absolute anchors into a handoff list, this emits the
 geometry-free \emph{state} that the interactive editor and static renderers

@@ -4,6 +4,13 @@ test_that("count_geometry_vertices counts polygon coordinate rows", {
 
   empty <- x[0, ]
   expect_equal(count_geometry_vertices(empty), 0L)
+
+  mixed <- sf::st_sfc(
+    sf::st_point(c(0, 0)),
+    sf::st_linestring(rbind(c(0, 0), c(1, 1))),
+    crs = 3857
+  )
+  expect_equal(count_geometry_vertices(mixed), 3L)
 })
 
 test_that("group_palette preserves existing assignments", {
@@ -145,34 +152,34 @@ test_that("prepared input print surfaces invalid validation", {
   expect_true(any(grepl("Errors:", output, fixed = TRUE)))
 })
 
-test_that("explodemap_fingerprint changes when grouping changes", {
+test_that("e_fingerprint changes when grouping changes", {
   x <- make_grouped_sf()
   x$unit_id <- paste0("id", seq_len(nrow(x)))
-  fp1 <- explodemap_fingerprint(x, id_col = "unit_id", group_col = "region")
+  fp1 <- e_fingerprint(x, id_col = "unit_id", group_col = "region")
   x$region[1] <- paste0(x$region[1], "-changed")
-  fp2 <- explodemap_fingerprint(x, id_col = "unit_id", group_col = "region")
+  fp2 <- e_fingerprint(x, id_col = "unit_id", group_col = "region")
 
   expect_type(fp1, "character")
   expect_false(identical(fp1, fp2))
 })
 
-test_that("explodemap_fingerprint uses consistent fallback ID types", {
+test_that("e_fingerprint uses consistent fallback ID types", {
   x <- make_grouped_sf()
   x$id <- NULL
   x$row_id <- as.character(seq_len(nrow(x)))
 
   expect_equal(
-    explodemap_fingerprint(x),
-    explodemap_fingerprint(x, id_col = "row_id")
+    e_fingerprint(x),
+    e_fingerprint(x, id_col = "row_id")
   )
 })
 
-test_that("explodemap_fingerprint can require stable IDs", {
+test_that("e_fingerprint can require stable IDs", {
   x <- make_grouped_sf()
   x$id <- NULL
 
   expect_error(
-    explodemap_fingerprint(x, require_stable_id = TRUE),
+    e_fingerprint(x, require_stable_id = TRUE),
     "stable feature ID"
   )
 })

@@ -2,10 +2,10 @@
 #
 #   explode_grouped()      compute a mathematically valid exploded layout
 #        |
-#   as_dragmapr_state()    hand it over as a dragmapr_state (the shared
+#   as_dragmapr_state()    hand it over as a d_state (the shared
 #        |                 editorial composition contract: deltas + crs + id)
 #        |
-#   dragmapr_edit()        compose: edit the layout interactively (optional)
+#   d_edit()        compose: edit the layout interactively (optional)
 #        |
 #   focus_map(state = )    render the composed state interactively, and
 #   render_dragged_map()   reproduce it as a static image -- no recomputation
@@ -53,9 +53,9 @@ if (have_dragmapr) {
   message("  regions:     ", paste(state$region_offsets$region, collapse = ", "))
 
   # In RStudio / Shiny this opens the draggable editor seeded with the layout.
-  # Capture edits back into a state with dragmapr::dragmapr_widget_state().
+  # Capture edits back into a state with dragmapr::d_widget_state().
   if (interactive()) {
-    editor <- dragmapr::dragmapr_edit(layout, state = state)
+    editor <- dragmapr::d_edit(layout, state = state)
     print(editor)
   }
 

@@ -39,6 +39,7 @@ Suggests:
     ggiraph,
     jsonlite,
     knitr,
+    later,
     rmarkdown,
     shiny,
     testthat (>= 3.0.0),

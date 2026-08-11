@@ -1,5 +1,76 @@
 # Changelog
 
+## explodemap 0.4.0
+
+- Cleaned up the remaining package-prefixed API name:
+  `explodemap_fingerprint()` is now
+  [`e_fingerprint()`](https://prigasg.github.io/explodemap/reference/e_fingerprint.md).
+  The old name is no longer exported. Object class names and persisted
+  fingerprint values are unchanged.
+- Updated all dragmapr integration points and the bundled Pipeline
+  Studio for dragmapr’s concise `d_*` function API. The
+  [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md)
+  bridge now targets
+  [`dragmapr::d_state()`](https://prigasg.github.io/dragmapr/reference/d_state.html)
+  while continuing to emit the unchanged `dragmapr_state` serialized
+  class contract.
+- Added
+  [`layout_children()`](https://prigasg.github.io/explodemap/reference/layout_children.md),
+  a projected-coordinate child geography solver extracted from the
+  mature Bloom workflow. It performs radial geographic expansion, real
+  feature bounding-box or circle collision refinement, attraction toward
+  geographic targets, bearing-drift limits, optional canvas confinement,
+  and final collision cleanup. Renderer-neutral base offsets and
+  composed `sf` geometry are exposed through
+  [`child_layout_offsets()`](https://prigasg.github.io/explodemap/reference/child_layout_offsets.md)
+  and
+  [`child_layout_geometry()`](https://prigasg.github.io/explodemap/reference/child_layout_offsets.md)
+  so browsers no longer need to own the canonical spatial math.
+- `diagnose_layout(state = )` now applies the supplied `dragmapr_state`
+  before measuring polygon/label overlap, gaps, utilization,
+  displacement, and stability. Before/after editorial quality
+  comparisons therefore diagnose the actual composed geometry instead of
+  only setting a post-drag flag.
+- Added generic
+  [`spatial_join_index()`](https://prigasg.github.io/explodemap/reference/spatial_join_index.md)
+  and
+  [`validate_spatial_join()`](https://prigasg.github.io/explodemap/reference/validate_spatial_join.md)
+  contracts for stable-ID matching and structured unmatched, ambiguous,
+  duplicate, and wrong-parent findings. Census aliases, CSV parsing,
+  jurisdiction rules, and thematic classification intentionally remain
+  application responsibilities.
+- [`assign_spatial_groups()`](https://prigasg.github.io/explodemap/reference/assign_spatial_groups.md)
+  now uses deterministic bounding-box centers, farthest-point
+  initialization, and a local Lloyd iteration, eliminating all
+  reads/writes and incidental initialization of `.Random.seed`. Geometry
+  vertex counting now also supports mixed `sfc_GEOMETRY` collections.
+- Synchronized the bundled Pipeline Studio with dragmapr’s
+  generation-safe editor, spatial feature deletion/undo support,
+  reactive-safe single-flight processing, and large-layout optimization
+  guard.
+- Added renderer-neutral accessors for computed layouts:
+  [`original_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md),
+  [`local_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md),
+  [`final_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md),
+  [`group_geometry()`](https://prigasg.github.io/explodemap/reference/original_geometry.md),
+  [`anchor_table()`](https://prigasg.github.io/explodemap/reference/anchor_table.md),
+  [`layout_offsets()`](https://prigasg.github.io/explodemap/reference/layout_offsets.md),
+  [`transition_data()`](https://prigasg.github.io/explodemap/reference/transition_data.md),
+  and
+  [`connector_geometry()`](https://prigasg.github.io/explodemap/reference/connector_geometry.md).
+  These provide stable geometry, movement, animation-order, and
+  connector contracts without requiring downstream renderers to inspect
+  layout internals.
+- Feature-level handoffs now require stable identifiers by default.
+  Input preparation generates deterministic geometry-and-label-based
+  `unit_id` values when no source ID is supplied, so reordering features
+  does not change persistent handoff identities. Legacy row-number
+  fallback remains explicitly available with
+  `require_stable_id = FALSE`.
+- Strengthened `dragmapr` interoperability with explicit region and
+  label ID metadata where supported, parameter-aware geometry
+  fingerprints, and stable computed-versus-editorial offset contracts.
+
 ## explodemap 0.3.1
 
 - Layout objective terms are now dimensionless, making objective weights
@@ -30,7 +101,7 @@
   [`prepare_explodemap_input()`](https://prigasg.github.io/explodemap/reference/prepare_explodemap_input.md),
   [`group_palette()`](https://prigasg.github.io/explodemap/reference/group_palette.md),
   and
-  [`explodemap_fingerprint()`](https://prigasg.github.io/explodemap/reference/explodemap_fingerprint.md).
+  [`e_fingerprint()`](https://prigasg.github.io/explodemap/reference/e_fingerprint.md).
   These functions move proven geometry, validation, palette,
   simplification, grouping, and compatibility helpers out of the app
   layer while keeping upload policy and UI orchestration in Pipeline
@@ -56,7 +127,7 @@
   [`dragmapr::render_dragged_map()`](https://prigasg.github.io/dragmapr/reference/render_dragged_map.html).
 - [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md)
   is the preferred state-first bridge to `dragmapr`, emitting a
-  [`dragmapr::dragmapr_state()`](https://prigasg.github.io/dragmapr/reference/dragmapr_state.html)
+  [`dragmapr::d_state()`](https://prigasg.github.io/dragmapr/reference/d_state.html)
   that `state =` arguments accept across
   [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md),
   [`render_dragged_map()`](https://prigasg.github.io/dragmapr/reference/render_dragged_map.html),
@@ -77,7 +148,7 @@
   -\>
   [`as_dragmapr_state()`](https://prigasg.github.io/explodemap/reference/as_dragmapr_state.md)
   -\>
-  [`dragmapr_edit()`](https://prigasg.github.io/dragmapr/reference/dragmapr_edit.html)
+  [`d_edit()`](https://prigasg.github.io/dragmapr/reference/d_edit.html)
   -\> `focus_map(state = )` / `render_dragged_map(state = )`.
 - [`update_focus_palette()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md)
   now preserves the palette’s names so the browser can key

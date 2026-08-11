@@ -140,7 +140,7 @@ test_that("focus_map restore_selection carries a stable id_col selection", {
 
   # selected_feature is a stable id ("b1") that is NOT a label or group value,
   # so it can only resolve through properties.id (the id_col path).
-  state <- dragmapr::dragmapr_state(
+  state <- make_dragmapr_state(
     region_offsets = data.frame(region = c("A", "B"), dx_m = 0, dy_m = 0),
     selected_feature = "b1"
   )
@@ -326,7 +326,7 @@ test_that("focusMapProxy validates palette names", {
 
 test_that("focus_map accepts dragmapr_state for grouped layouts", {
   skip_if_not_installed("dragmapr")
-  skip_if_not("dragmapr_state" %in% getNamespaceExports("dragmapr"))
+  skip_if_not("d_state" %in% getNamespaceExports("dragmapr"))
   x <- make_grouped_sf()
   layout <- explode_grouped(x, region_col = "region", mode = "auto", plot = FALSE)
   state <- as_dragmapr_state(layout)
