@@ -110,7 +110,22 @@ assign_spatial_groups <- function(x,
     return(x)
   }
 
-  groups <- max(2L, min(as.integer(groups %||% 6L), nrow(x)))
+  groups <- groups %||% 6L
+  groups_num <- suppressWarnings(as.numeric(groups))
+  if (length(groups_num) != 1L || is.na(groups_num) || groups_num != trunc(groups_num)) {
+    stop("`groups` must be a single whole number.", call. = FALSE)
+  }
+  groups <- as.integer(groups_num)
+  if (groups < 1L) {
+    stop("`groups` must be at least 1.", call. = FALSE)
+  }
+  if (groups > nrow(x)) {
+    stop(
+      "`groups` (", groups, ") exceeds the number of features (", nrow(x), ").",
+      call. = FALSE
+    )
+  }
+  groups <- max(2L, min(groups, nrow(x)))
   seed <- suppressWarnings(as.integer(seed))
   if (length(seed) != 1L || is.na(seed)) {
     stop("`seed` must be a single whole number.", call. = FALSE)
@@ -240,6 +255,15 @@ validate_explodemap_input <- function(x,
   if (any(sf::st_is_empty(x))) {
     errors <- c(errors, "`x` contains empty geometries.")
   }
+  if (metrics$invalid > 0) {
+    errors <- c(errors, paste0(
+      "`x` contains ", metrics$invalid, " invalid geometries. ",
+      "Repair with sf::st_make_valid() first."
+    ))
+  }
+  if (!is.na(crs) && isTRUE(sf::st_is_longlat(x))) {
+    errors <- c(errors, "`x` is in geographic (lon/lat) coordinates; project it first.")
+  }
   if (!all(grepl("POLYGON", metrics$geometry_types))) {
     errors <- c(errors, "`x` must contain polygon or multipolygon geometries.")
   }
@@ -289,6 +313,12 @@ new_explodemap_validation <- function(errors, warnings, metrics) {
   suggestions <- character()
   if (any(grepl("coordinate reference system", messages, fixed = TRUE))) {
     suggestions <- c(suggestions, "Assign the source CRS with sf::st_set_crs() before preparation.")
+  }
+  if (any(grepl("lon/lat", messages, fixed = TRUE))) {
+    suggestions <- c(suggestions, "Project to a planar CRS with sf::st_transform() before preparation.")
+  }
+  if (any(grepl("invalid geometries", messages, fixed = TRUE))) {
+    suggestions <- c(suggestions, "Repair geometries with sf::st_make_valid() before validation.")
   }
   if (any(grepl("polygon or multipolygon", messages, fixed = TRUE))) {
     suggestions <- c(suggestions, "Supply polygon or multipolygon features only.")
@@ -645,8 +675,8 @@ print.explodemap_prepared_input <- function(x, ...) {
 #' @param id_col Optional feature ID column.
 #' @param group_col Optional group column.
 #' @param include_geometry Include EWKB geometry bytes.
-#' @param include_parameters Include layout parameters and package version when
-#'   `x` is a grouped explodemap layout.
+#' @param include_parameters Include layout parameters (when `x` is a grouped
+#'   explodemap layout) and the package version in the fingerprint.
 #' @param require_stable_id Require a real feature ID column instead of
 #'   row-number fallback IDs.
 #'

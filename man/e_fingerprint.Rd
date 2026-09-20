@@ -22,8 +22,8 @@ e_fingerprint(
 
 \item{include_geometry}{Include EWKB geometry bytes.}
 
-\item{include_parameters}{Include layout parameters and package version when
-\code{x} is a grouped explodemap layout.}
+\item{include_parameters}{Include layout parameters (when \code{x} is a grouped
+explodemap layout) and the package version in the fingerprint.}
 
 \item{require_stable_id}{Require a real feature ID column instead of
 row-number fallback IDs.}
