@@ -49,7 +49,10 @@ radians.}
 \item{bounds}{Optional bounding box supplied as an \code{sf}/\code{sfc} object,
 \code{st_bbox}, or numeric \code{c(xmin, ymin, xmax, ymax)}.}
 
-\item{max_iter}{Maximum collision-refinement iterations.}
+\item{max_iter}{Maximum collision-refinement iterations. Each iteration scans
+all feature pairs, so cost grows quadratically with the number of
+features: for large \code{x}, lower this (the iteration cap is also reduced
+automatically above 2,000 features) or lay out a subset of children.}
 }
 \value{
 An \code{explodemap_child_layout} with \code{offsets}, composed \code{geometry},

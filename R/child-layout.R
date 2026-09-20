@@ -25,7 +25,10 @@
 #'   radians.
 #' @param bounds Optional bounding box supplied as an `sf`/`sfc` object,
 #'   `st_bbox`, or numeric `c(xmin, ymin, xmax, ymax)`.
-#' @param max_iter Maximum collision-refinement iterations.
+#' @param max_iter Maximum collision-refinement iterations. Each iteration scans
+#'   all feature pairs, so cost grows quadratically with the number of
+#'   features: for large `x`, lower this (the iteration cap is also reduced
+#'   automatically above 2,000 features) or lay out a subset of children.
 #'
 #' @return An `explodemap_child_layout` with `offsets`, composed `geometry`,
 #'   source geometry, diagnostics, and parameters. `offsets` contains stable
@@ -75,6 +78,16 @@ layout_children <- function(x,
   max_iter <- suppressWarnings(as.integer(max_iter))
   if (length(max_iter) != 1L || is.na(max_iter) || max_iter < 1L) {
     stop("`max_iter` must be a positive whole number.", call. = FALSE)
+  }
+  # Pairwise collision scan is O(n^2) per iteration: cap iterations for large
+  # feature counts so a heavy default cannot stall a session.
+  if (nrow(x) > 2000L && max_iter > 50L) {
+    warning(
+      "Capping `max_iter` at 50 for ", nrow(x), " features: each iteration ",
+      "scans all feature pairs, so cost grows quadratically.",
+      call. = FALSE
+    )
+    max_iter <- 50L
   }
   parent <- if (is.null(parent)) "parent" else as.character(parent)
   if (length(parent) != 1L || is.na(parent) || !nzchar(parent)) {
