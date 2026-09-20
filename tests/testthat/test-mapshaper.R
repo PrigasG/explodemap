@@ -31,12 +31,17 @@ test_that("export_topojson removes stale output and reports mapshaper failure", 
   # Fake a failing mapshaper on PATH
   fake_bin <- tempfile("fakebin")
   dir.create(fake_bin)
-  script <- file.path(fake_bin, "mapshaper")
-  writeLines(c("#!/bin/sh", "echo 'mapshaper boom' >&2", "exit 1"), script)
-  Sys.chmod(script, "755")
+  on_windows <- .Platform$OS.type == "windows"
+  script <- file.path(fake_bin, if (on_windows) "mapshaper.bat" else "mapshaper")
+  if (on_windows) {
+    writeLines(c("@echo off", "echo mapshaper boom 1>&2", "exit /b 1"), script)
+  } else {
+    writeLines(c("#!/bin/sh", "echo 'mapshaper boom' >&2", "exit 1"), script)
+    Sys.chmod(script, "755")
+  }
 
   old_path <- Sys.getenv("PATH")
-  Sys.setenv(PATH = paste(fake_bin, old_path, sep = ":"))
+  Sys.setenv(PATH = paste(fake_bin, old_path, sep = .Platform$path.sep))
   on.exit(Sys.setenv(PATH = old_path), add = TRUE)
 
   out <- tempfile(fileext = ".topojson")
