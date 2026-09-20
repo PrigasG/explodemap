@@ -213,6 +213,12 @@
   county_region <- counties |>
     dplyr::left_join(region_df, by = c("NAME" = "county_name"))
 
+  # A pre-existing `region` column would collide with the join below
+  # (region.x / region.y); the explicit mapping replaces it.
+  if ("region" %in% names(sf_obj)) {
+    sf_obj$region <- NULL
+  }
+
   sf_result <- sf_obj |>
     dplyr::left_join(county_region |> dplyr::select("COUNTYFP", "region"),
                      by = "COUNTYFP")
@@ -346,6 +352,13 @@
     name_col <- if ("NAME" %in% names(sf_obj)) "NAME" else
       stop("County sf must have a NAME column for named region_map assignment.",
            call. = FALSE)
+
+    # A pre-existing `region` column would collide with the join below
+    # (region.x / region.y), leaving `region` NULL; the explicit mapping
+    # replaces it.
+    if ("region" %in% names(sf_obj)) {
+      sf_obj$region <- NULL
+    }
 
     sf_result <- sf_obj |>
       dplyr::left_join(region_df, by = "NAME")

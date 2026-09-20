@@ -612,9 +612,7 @@ update_exploded_layout <- function(result,
 }
 
 .group_gap_report <- function(sf_obj, region_col) {
-  reg <- sf_obj |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  reg <- .union_by_group(sf_obj, region_col)
   n <- nrow(reg)
   pairs <- data.frame(region_i = character(), region_j = character(), gap = numeric())
   if (n < 2) return(list(minimum_group_gap = NA_real_, pairs = pairs))
@@ -655,9 +653,7 @@ update_exploded_layout <- function(result,
 }
 
 .region_centroids <- function(sf_obj, region_col, centroid_fun = "centroid") {
-  reg <- sf_obj |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  reg <- .union_by_group(sf_obj, region_col)
   xy <- sf::st_coordinates(centroid_geoms(reg, centroid_fun))
   out <- data.frame(
     region = reg[[region_col]],

@@ -277,11 +277,9 @@ hhs_focus_map <- function(states,
 }
 
 .hhs_region_label_points <- function(states) {
-  labels_sf <- suppressWarnings(sf::st_centroid(dplyr::summarize(
-    dplyr::group_by(states, .data$hhs_region),
-    geometry = sf::st_union(.data$geometry),
-    .groups = "drop"
-  )))
+  labels_sf <- suppressWarnings(sf::st_centroid(
+    .union_by_group(states, "hhs_region")
+  ))
   coords <- sf::st_coordinates(labels_sf)
   dplyr::arrange(
     data.frame(

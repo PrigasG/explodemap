@@ -32,9 +32,7 @@ final_geometry <- function(layout) {
 group_geometry <- function(layout) {
   validate_grouped_layout(layout)
   region_col <- layout$diagnostics$region_col
-  layout$sf_grouped |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  .union_by_group(layout$sf_grouped, region_col)
 }
 
 #' Access grouped-layout anchor data

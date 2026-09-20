@@ -176,10 +176,13 @@ displacement_magnitudes <- function(layout) {
 #' cmp$summary
 #' }
 compare_layouts <- function(before, after) {
-  cls_ok <- (inherits(before, "exploded_map") &&
-               inherits(after, "exploded_map")) ||
-    (inherits(before, "grouped_exploded_map") &&
-       inherits(after, "grouped_exploded_map"))
+  # Compare primary classes: grouped_exploded_map inherits from exploded_map,
+  # so inherits() alone cannot tell the two layouts apart.
+  primary_class <- function(x) class(x)[1]
+  cls_before <- primary_class(before)
+  cls_after <- primary_class(after)
+  cls_ok <- cls_before %in% c("exploded_map", "grouped_exploded_map") &&
+    identical(cls_before, cls_after)
   if (!cls_ok) {
     stop(
       "`before` and `after` must both be `exploded_map` objects or both be ",

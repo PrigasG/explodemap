@@ -641,6 +641,23 @@ update_focus_data <- function(proxy, data, ...) {
   stop("x must be an sf, exploded_map, or grouped_exploded_map.", call. = FALSE)
 }
 
+#' @keywords internal
+.apply_dragmapr_offsets <- function(sf_obj, state, region_col) {
+  # Resolved at runtime: the installed dragmapr may predate
+  # apply_dragmapr_state(), and a `dragmapr::` reference would trip the
+  # "missing or unexported object" check on such versions.
+  if (!"apply_dragmapr_state" %in% getNamespaceExports("dragmapr")) {
+    stop(
+      "Applying a dragmapr state requires a dragmapr version that exports ",
+      "apply_dragmapr_state().",
+      call. = FALSE
+    )
+  }
+  getExportedValue("dragmapr", "apply_dragmapr_state")(
+    sf_obj, state, region_col = region_col
+  )
+}
+
 .apply_focus_state <- function(x, state, group_col) {
   if (is.null(state)) {
     return(x)
@@ -658,7 +675,7 @@ update_focus_data <- function(proxy, data, ...) {
     region_col <- x$diagnostics$region_col %||% group_col %||%
       state$region_col %||% state$binding$region_col %||% state$level
     out <- x
-    out$sf_exp <- dragmapr::apply_dragmapr_state(out$sf_exp, state, region_col = region_col)
+    out$sf_exp <- .apply_dragmapr_offsets(out$sf_exp, state, region_col = region_col)
     out$sf_exp_wgs <- sf::st_transform(out$sf_exp, 4326)
     return(out)
   }
@@ -669,7 +686,7 @@ update_focus_data <- function(proxy, data, ...) {
       stop("`group_col` is required when applying `state` to a raw sf object.",
            call. = FALSE)
     }
-    return(dragmapr::apply_dragmapr_state(x, state, region_col = region_col))
+    return(.apply_dragmapr_offsets(x, state, region_col = region_col))
   }
   x
 }

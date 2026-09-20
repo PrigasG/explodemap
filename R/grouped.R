@@ -53,9 +53,7 @@ estimate_block_radii <- function(sf_obj, region_col,
                                  centroid_fun = c("centroid", "point_on_surface")) {
   centroid_fun <- match.arg(centroid_fun)
 
-  reg_sf <- sf_obj |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  reg_sf <- .union_by_group(sf_obj, region_col)
 
   rc <- sf::st_coordinates(centroid_geoms(reg_sf, centroid_fun))
 
@@ -473,9 +471,7 @@ explode_grouped <- function(sf_obj, region_col,
 
   if (!quiet) message("Applying anchor displacement...")
 
-  reg_sf <- sf_local |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  reg_sf <- .union_by_group(sf_local, region_col)
 
   rc_now <- sf::st_coordinates(centroid_geoms(reg_sf, centroid_fun))
 

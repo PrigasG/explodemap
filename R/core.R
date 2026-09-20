@@ -34,6 +34,22 @@ centroid_geoms <- function(x, centroid_fun = c("centroid", "point_on_surface")) 
   )
 }
 
+#' Union geometries by group, preserving the active geometry column name
+#'
+#' Hardcoding `.data$geometry` inside `dplyr::summarise()` breaks sf objects
+#' whose geometry column has another name; resolve it from the sf object.
+#' @keywords internal
+.union_by_group <- function(sf_obj, region_col) {
+  geom_col <- attr(sf_obj, "sf_column")
+  if (is.null(geom_col) || !(geom_col %in% names(sf_obj))) {
+    geom_col <- "geometry"
+  }
+  sf_obj |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
+    dplyr::summarise(!!geom_col := sf::st_union(.data[[geom_col]]),
+                     .groups = "drop")
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # INPUT VALIDATION
@@ -159,9 +175,7 @@ compute_stats <- function(sf_obj, region_col,
   w_bar <- stats::median(sqrt(4 * areas / pi), na.rm = TRUE)
 
   # Region centroids (warning-free)
-  reg_sf <- sf_obj |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  reg_sf <- .union_by_group(sf_obj, region_col)
   rc <- sf::st_coordinates(centroid_geoms(reg_sf, centroid_fun))
   D_region <- if (nrow(rc) > 1) stats::median(as.numeric(stats::dist(rc))) else NA_real_
 
@@ -284,9 +298,7 @@ explode_sf_core <- function(sf_obj, region_col,
   )[1, ]
 
   # Region centroids — warning-free
-  reg_sf <- sf_obj |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  reg_sf <- .union_by_group(sf_obj, region_col)
   rc <- sf::st_coordinates(centroid_geoms(reg_sf, centroid_fun))
 
   reg_df <- reg_sf |>

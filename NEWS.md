@@ -59,6 +59,22 @@
   `dragmapr` handoff shows Shiny state capture via `d_widget_state()`.
 * Removed `ggiraph` from Suggests (unused) and removed the stray
   `tests/testthat/Rplots.pdf` from version control.
+* `compare_layouts()` compares primary layout classes, so mixing an
+  `exploded_map` with a `grouped_exploded_map` (which inherits from it) is
+  rejected with the documented class-mismatch error instead of a confusing
+  feature-count error.
+* Grouped geometry unions (in `compute_stats()`, `explode_sf_core()`,
+  `explode_grouped()` internals, `estimate_block_radii()`, `group_geometry()`,
+  `.region_centroids()`, `.group_gap_report()`, and `.hhs_region_label_points()`)
+  resolve the active geometry column instead of hardcoding `"geometry"`, so
+  inputs with a renamed geometry column work end to end.
+* Named `region_map` assignment in `.attach_regions_county()` and
+  `.attach_regions_tiger()` replaces a pre-existing `region` column instead
+  of producing a broken `region.x` / `region.y` join.
+* dragmapr integration is version-tolerant: `apply_dragmapr_state()` is
+  resolved at runtime (no `dragmapr::` check warning on older dragmapr), and
+  dragmapr-dependent tests skip cleanly when the installed dragmapr predates
+  the state API.
 
 # explodemap 0.4.0
 
