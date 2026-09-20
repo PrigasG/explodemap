@@ -23,3 +23,29 @@ test_that("export_topojson validates simplify", {
     "between 0 and 1"
   )
 })
+
+
+test_that("export_topojson removes stale output and reports mapshaper failure", {
+  x <- make_test_sf()
+
+  # Fake a failing mapshaper on PATH
+  fake_bin <- tempfile("fakebin")
+  dir.create(fake_bin)
+  script <- file.path(fake_bin, "mapshaper")
+  writeLines(c("#!/bin/sh", "echo 'mapshaper boom' >&2", "exit 1"), script)
+  Sys.chmod(script, "755")
+
+  old_path <- Sys.getenv("PATH")
+  Sys.setenv(PATH = paste(fake_bin, old_path, sep = ":"))
+  on.exit(Sys.setenv(PATH = old_path), add = TRUE)
+
+  out <- tempfile(fileext = ".topojson")
+  writeLines("stale", out)
+
+  expect_error(
+    export_topojson(x, out, overwrite = TRUE),
+    "exited with status 1"
+  )
+  # The stale file must be gone: a failed run must not masquerade as success
+  expect_false(file.exists(out))
+})

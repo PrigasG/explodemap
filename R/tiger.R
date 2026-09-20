@@ -181,6 +181,17 @@
 
 #' Attach region labels to TIGER/Line data via county names
 #' @keywords internal
+# Eight-wind compass label for a displacement vector, measured counter-clockwise
+# from East (angle = atan2(dy, dx)). Top-level (not a closure) so it can be
+# unit-tested.
+.compass_dir <- function(dx, dy) {
+  angle <- atan2(dy, dx) * 180 / pi            # -180..180
+  dirs  <- c("East", "Northeast", "North", "Northwest",
+             "West", "Southwest", "South", "Southeast")
+  idx   <- floor(((angle + 22.5) %% 360) / 45) + 1
+  dirs[idx]
+}
+
 .attach_regions_tiger <- function(sf_obj, fips, region_map, quiet = FALSE) {
   region_df <- dplyr::bind_rows(lapply(names(region_map), function(r)
     data.frame(county_name = region_map[[r]], region = r,
@@ -400,15 +411,7 @@
   rel_x         <- centers[, 1] - overall_x
   rel_y         <- centers[, 2] - overall_y
 
-  .compass <- function(dx, dy) {
-    angle <- atan2(dy, dx) * 180 / pi            # -180..180
-    dirs  <- c("East","Northeast","North","Northwest",
-               "West","Southwest","South","Southeast")
-    idx   <- floor(((angle + 22.5) %% 360) / 45) + 1
-    dirs[idx]
-  }
-
-  raw_names  <- mapply(.compass, rel_x, rel_y)
+  raw_names  <- mapply(.compass_dir, rel_x, rel_y)
   # Disambiguate duplicates by appending 2/3
   seen       <- table(raw_names)
   counters   <- integer(length(raw_names))

@@ -59,3 +59,21 @@ test_that("focus_map carries context options into widget payload", {
   expect_equal(widget$x$options$contextOpacity, 0.2)
   expect_match(widget$x$geojson_str, '"context"')
 })
+
+
+test_that("explode_section errors clearly when region_col is degenerate in the section", {
+  x <- make_test_sf()
+
+  # region_col defaults to section_col: after selecting section "A" only one
+  # distinct value remains, so nothing can be exploded
+  expect_error(
+    explode_section(
+      x,
+      section_col = "region",
+      section = "A",
+      plot = FALSE,
+      quiet = TRUE
+    ),
+    "fewer than 2 distinct"
+  )
+})

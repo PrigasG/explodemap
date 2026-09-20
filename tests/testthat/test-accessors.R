@@ -62,3 +62,11 @@ test_that("transition_data and connector_geometry are renderer-neutral", {
   expect_equal(nrow(lines), nrow(movement))
   expect_true(all(as.character(sf::st_geometry_type(lines)) == "LINESTRING"))
 })
+
+
+test_that("feature_ids rejects duplicated IDs", {
+  x <- make_test_sf()
+  x$id[2] <- x$id[1]
+
+  expect_error(feature_ids(x, "id"), "unique")
+})

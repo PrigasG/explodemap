@@ -79,3 +79,25 @@ test_that("explode_grouped accepts visual alias arguments", {
   expect_equal(out$params$delta, 50)
   expect_equal(out$params$padding_sep, 75)
 })
+
+
+test_that("explode_grouped rejects 'Other' by default, keeps it when allowed", {
+  x <- make_grouped_sf()
+  x$region[1] <- "Other"
+
+  expect_error(
+    explode_grouped(x, region_col = "region", mode = "auto", plot = FALSE, quiet = TRUE),
+    "Other"
+  )
+
+  out <- explode_grouped(
+    x,
+    region_col = "region",
+    mode = "auto",
+    allow_other = TRUE,
+    plot = FALSE,
+    quiet = TRUE
+  )
+  expect_s3_class(out, "grouped_exploded_map")
+  expect_equal(nrow(out$sf_grouped), nrow(x))
+})
