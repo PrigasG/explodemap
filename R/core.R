@@ -313,8 +313,8 @@ explode_sf_core <- function(sf_obj, region_col,
 
   # Apply rigid-body translation (Proposition 1)
   sf_exp <- sf_obj
-  sf_exp$geometry <- sf::st_sfc(
-    purrr::pmap(list(sf_obj$geometry, df$x_off, df$y_off),
+  sf::st_geometry(sf_exp) <- sf::st_sfc(
+    purrr::pmap(list(sf::st_geometry(sf_obj), df$x_off, df$y_off),
                 function(g, dx, dy) g + c(dx, dy)),
     crs = orig_crs
   )
@@ -323,7 +323,7 @@ explode_sf_core <- function(sf_obj, region_col,
 
 .translate_by_offsets <- function(sf_obj, x_off, y_off) {
   out <- sf_obj
-  out$geometry <- sf::st_sfc(
+  sf::st_geometry(out) <- sf::st_sfc(
     purrr::pmap(
       list(sf::st_geometry(sf_obj), x_off, y_off),
       function(g, dx, dy) g + c(dx, dy)

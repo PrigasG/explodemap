@@ -508,7 +508,7 @@ explode_grouped <- function(sf_obj, region_col,
   )
 
   sf_grouped <- sf_local
-  sf_grouped$geometry <- sf::st_sfc(new_geoms, crs = orig_crs)
+  sf::st_geometry(sf_grouped) <- sf::st_sfc(new_geoms, crs = orig_crs)
   sf_grouped <- sf::st_as_sf(sf_grouped)
   sf_grouped_wgs <- sf::st_transform(sf_grouped, 4326)
 
