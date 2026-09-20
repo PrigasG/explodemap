@@ -375,6 +375,8 @@ layout_regions <- function(sf_obj, region_col,
 #'   visual effect rather than the solver term.
 #' @param max_iter Max collision iterations (default 60)
 #' @param fix_invalid Auto-repair invalid geometries (default TRUE)
+#' @param allow_other Keep features labeled `"Other"` in the output without
+#'   moving them. Defaults to `FALSE` (error on `"Other"` unless handled).
 #' @param centroid_fun "centroid" or "point_on_surface"
 #' @param plot Print plots (default TRUE). Automatically suppressed inside a
 #'   live Shiny session; use [plot.grouped_exploded_map()] inside `renderPlot()`.
@@ -403,6 +405,7 @@ explode_grouped <- function(sf_obj, region_col,
                             block_sep     = NULL,
                             max_iter     = 60,
                             fix_invalid  = TRUE,
+                            allow_other  = FALSE,
                             centroid_fun = c("centroid", "point_on_surface"),
                             plot         = TRUE,
                             export       = NULL,
@@ -419,7 +422,7 @@ explode_grouped <- function(sf_obj, region_col,
   sf_obj <- validate_input(
     sf_obj,
     region_col,
-    allow_other = TRUE,
+    allow_other = allow_other,
     fix_invalid = fix_invalid
   )
 

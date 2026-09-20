@@ -26,6 +26,7 @@ explode_grouped(
   block_sep = NULL,
   max_iter = 60,
   fix_invalid = TRUE,
+  allow_other = FALSE,
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
@@ -74,6 +75,9 @@ visual effect rather than the solver term.}
 \item{max_iter}{Max collision iterations (default 60)}
 
 \item{fix_invalid}{Auto-repair invalid geometries (default TRUE)}
+
+\item{allow_other}{Keep features labeled \code{"Other"} in the output without
+moving them. Defaults to \code{FALSE} (error on \code{"Other"} unless handled).}
 
 \item{centroid_fun}{"centroid" or "point_on_surface"}
 
