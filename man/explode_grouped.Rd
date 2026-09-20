@@ -49,7 +49,7 @@ explode_grouped(
 \item{preserve_manual}{When \code{TRUE}, use \code{initial_layout} as starting anchors
 so parameter changes refine an existing composition instead of replacing it.}
 
-\item{alpha_l}{Local expansion parameter for Level 1 (metres)}
+\item{alpha_l}{Local expansion parameter for Level 1 (in CRS units)}
 
 \item{p}{Distance scaling exponent (default 1.25)}
 

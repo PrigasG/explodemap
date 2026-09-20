@@ -90,7 +90,7 @@ hhs_palette <- function() {
 #' HHS reference-layout display offsets
 #'
 #' These offsets are a small documented finishing step for the national HHS
-#' reference view. They are interpreted in metres for projected layouts.
+#' reference view. They are interpreted in the layout's CRS units for projected layouts.
 #'
 #' @return A data frame with `region`, `dx_m`, and `dy_m`.
 #' @export
@@ -223,7 +223,7 @@ hhs_layout <- function(states,
   )
 }
 
-#' Create a focus-map widget for HHS regions
+#' [Experimental] Create a focus-map widget for HHS regions
 #'
 #' @param states An `sf` object of state or territory polygons.
 #' @param apply_offsets Logical. Apply `hhs_display_offsets()` before drawing?

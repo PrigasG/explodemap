@@ -363,7 +363,7 @@ layout_regions <- function(sf_obj, region_col,
 #'   `preserve_manual = TRUE`.
 #' @param preserve_manual When `TRUE`, use `initial_layout` as starting anchors
 #'   so parameter changes refine an existing composition instead of replacing it.
-#' @param alpha_l Local expansion parameter for Level 1 (metres)
+#' @param alpha_l Local expansion parameter for Level 1 (in CRS units)
 #' @param p Distance scaling exponent (default 1.25)
 #' @param gamma_l Local clearance coefficient (default 1.136); used if alpha_l is NULL
 #' @param kappa Radial expansion factor (default 1.8)

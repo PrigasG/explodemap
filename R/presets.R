@@ -4,7 +4,7 @@
 
 #' Focus-map option presets
 #'
-#' Returns a named list of [focus_map()] arguments for common interactive
+#' [Experimental] Returns a named list of [focus_map()] arguments for common interactive
 #' mapping workflows. Presets are intentionally plain lists so they can be
 #' inspected, modified, or passed through `do.call()`.
 #'

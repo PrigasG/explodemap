@@ -4,7 +4,7 @@
 
 #' Explode a US state from TIGER/Line data
 #'
-#' Downloads administrative boundaries automatically, groups them into regions,
+#' [Experimental] Downloads administrative boundaries automatically, groups them into regions,
 #' derives displacement parameters via Analytical Results 1-2, and returns an
 #' `exploded_map` S3 object.
 #'
@@ -46,9 +46,9 @@
 #' @param gamma_r Regional clearance coefficient (default 3.0)
 #' @param gamma_l Local clearance coefficient (default 1.136)
 #' @param p Distance scaling exponent (default 1.25)
-#' @param alpha_r Optional manual override for regional separation (metres).
+#' @param alpha_r Optional manual override for regional separation (in CRS units).
 #'   May be supplied independently of `alpha_l`.
-#' @param alpha_l Optional manual override for local expansion (metres).
+#' @param alpha_l Optional manual override for local expansion (in CRS units).
 #'   May be supplied independently of `alpha_r`.
 #' @param refine If TRUE, apply a bounded collision-refinement pass after the
 #'   analytical displacement. Default is FALSE.
@@ -180,9 +180,9 @@ explode_state <- function(state_fips    = NULL,
 #' @param gamma_r Regional clearance coefficient (default 3.0)
 #' @param gamma_l Local clearance coefficient (default 1.136)
 #' @param p Distance scaling exponent (default 1.25)
-#' @param alpha_r Optional manual override for regional separation (metres).
+#' @param alpha_r Optional manual override for regional separation (in CRS units).
 #'   May be supplied independently of `alpha_l`.
-#' @param alpha_l Optional manual override for local expansion (metres).
+#' @param alpha_l Optional manual override for local expansion (in CRS units).
 #'   May be supplied independently of `alpha_r`.
 #' @param refine If TRUE, apply a bounded collision-refinement pass after the
 #'   analytical displacement. Default is FALSE.

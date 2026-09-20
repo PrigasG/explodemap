@@ -119,7 +119,7 @@ arguments supplied by the user override preset defaults.}
 
 \item{simplify}{Controls geometry simplification for rendering
 performance. \code{TRUE} (default) applies a conservative tolerance of
-approximately one metre. Longitude/latitude data is simplified in a local metric
+approximately one map unit. Longitude/latitude data is simplified in a local metric
 projection to avoid latitude-dependent distortion. A positive number sets
 a custom tolerance in the data's coordinate units; longitude/latitude
 tolerances above 0.1 degrees are rejected as unsafe. \code{FALSE}
@@ -236,7 +236,7 @@ to \code{label_col}.}
 An \code{htmlwidgets} object.
 }
 \description{
-Renders spatial features as a smooth, interactive SVG map. Click any
+[Experimental] Renders spatial features as a smooth, interactive SVG map. Click any
 polygon to zoom in and lift it from the map with a "toast" effect;
 right-click or press Escape to reset. Camera transitions use D3's
 optimal zoom interpolation for fluid 60 fps motion with zero server

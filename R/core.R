@@ -266,8 +266,8 @@ derive_params <- function(stats, gamma_r = 3.0, gamma_l = 1.136, p = 1.25) {
 #'
 #' @param sf_obj Projected sf object with region column
 #' @param region_col Grouping column name
-#' @param alpha_r Regional separation magnitude (metres)
-#' @param alpha_l Local expansion magnitude (metres)
+#' @param alpha_r Regional separation magnitude (in CRS units)
+#' @param alpha_l Local expansion magnitude (in CRS units)
 #' @param p Distance scaling exponent (default 1.25)
 #' @param centroid_fun "centroid" (default) or "point_on_surface"
 #' @return Exploded sf object (same CRS as input)

@@ -1,5 +1,27 @@
 # explodemap (development version)
 
+## New features
+
+* New `as_sf()` converts an `exploded_map` or `grouped_exploded_map` back to
+  a plain `sf` data frame (displaced, local, or original layer) for
+  downstream GIS work.
+* New `displacement_magnitudes()` reports per-feature displacement (`dx`,
+  `dy`, `distance`) in the layout's CRS units.
+* New `compare_layouts()` summarises per-feature and aggregate displacement
+  changes between two layouts of the same input (e.g. parameter tuning or
+  before/after refinement).
+* New `explodemap_units()` returns the CRS unit string (e.g. `"m"`) for a
+  layout or `sf` object; documentation now says "CRS units" wherever the
+  code does not actually enforce metres.
+* New vignette `explode-edit-render` walks the full explode-measure-edit-
+  compare-render loop, including a scripted editorial pass via
+  `update_exploded_layout()` and export back to `sf`.
+* Added `codemeta.json` metadata.
+* `focus_map()` and friends, `focus_map_preset()`, `explode_state()`, and
+  `hhs_focus_map()` are now marked `[Experimental]` in their documentation.
+
+## Bug fixes and hardening
+
 * Geometry replacement now goes through `sf::st_geometry()` in
   `explode_sf_core()`, `.translate_by_offsets()`, and `explode_grouped()`, so
   inputs whose geometry column is not named `"geometry"` translate correctly.
