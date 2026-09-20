@@ -228,7 +228,7 @@ explode_sf <- function(sf_obj,
 
   sf_obj <- validate_input(sf_obj, region_col, allow_other, fix_invalid)
 
-  sf_for_stats <- if (allow_other && any(sf_obj[[region_col]] == "Other"))
+  sf_for_stats <- if (allow_other && any(sf_obj[[region_col]] == "Other", na.rm = TRUE))
     sf_obj[sf_obj[[region_col]] != "Other", ] else sf_obj
 
   .run_explode(sf_obj, sf_for_stats,

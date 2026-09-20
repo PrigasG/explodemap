@@ -41,8 +41,9 @@ centroid_geoms <- function(x, centroid_fun = c("centroid", "point_on_surface")) 
 
 #' Validate inputs before explosion
 #'
-#' Checks CRS, empty geometries, invalid geometries, region count, and
-#' unmatched "Other" units. Optionally repairs invalid geometries.
+#' Checks CRS (present, projected, metre-based with a warning otherwise),
+#' empty geometries, invalid geometries, missing/empty group values, region
+#' count, and unmatched "Other" units. Optionally repairs invalid geometries.
 #'
 #' @param sf_obj sf object to validate
 #' @param region_col Name of the grouping column
@@ -59,12 +60,27 @@ validate_input <- function(sf_obj, region_col,
   if (!(region_col %in% names(sf_obj)))
     stop("Column '", region_col, "' not found. Available: ",
          paste(names(sf_obj), collapse = ", "), call. = FALSE)
+  groups <- as.character(sf_obj[[region_col]])
+  if (anyNA(groups) || any(!nzchar(trimws(groups)))) {
+    stop("`region_col` ('", region_col, "') contains missing or empty group values. ",
+         "Assign every feature to a named group.", call. = FALSE)
+  }
   if (is.na(sf::st_crs(sf_obj)))
     stop("`sf_obj` has no CRS. Set one with st_set_crs() or st_transform().",
          call. = FALSE)
   if (sf::st_is_longlat(sf_obj))
     stop("`sf_obj` is in geographic (lon/lat) coordinates. ",
          "Project first with st_transform().", call. = FALSE)
+  units <- sf::st_crs(sf_obj)$units
+  if (!is.null(units) && length(units) == 1L && !is.na(units) &&
+      !tolower(units) %in% c("m", "metre", "meter")) {
+    warning(
+      "`sf_obj` uses map units '", units, "' instead of metres. ",
+      "Distance parameters (alpha_r, alpha_l, gaps, ...) are interpreted in metres; ",
+      "consider reprojecting to a metre-based CRS.",
+      call. = FALSE
+    )
+  }
   if (any(sf::st_is_empty(sf_obj)))
     stop(sum(sf::st_is_empty(sf_obj)), " empty geometries found. ",
          "Remove with sf_obj[!st_is_empty(sf_obj), ]", call. = FALSE)

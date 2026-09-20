@@ -27,7 +27,8 @@ full layer.}
 
 \item{region_col}{Column used for the explosion inside the selected section.
 Defaults to \code{section_col}. For municipality drill-downs, this is often a
-county column.}
+county column. Must have at least two distinct values within the selected
+section; the \code{section_col} default is only usable with \code{section = "all"}.}
 
 \item{layout}{\code{"explode"} for \code{\link[=explode_sf]{explode_sf()}} or \code{"grouped"} for
 \code{\link[=explode_grouped]{explode_grouped()}}.}

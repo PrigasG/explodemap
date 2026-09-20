@@ -17,7 +17,8 @@
 #'   full layer.
 #' @param region_col Column used for the explosion inside the selected section.
 #'   Defaults to `section_col`. For municipality drill-downs, this is often a
-#'   county column.
+#'   county column. Must have at least two distinct values within the selected
+#'   section; the `section_col` default is only usable with `section = "all"`.
 #' @param layout `"explode"` for [explode_sf()] or `"grouped"` for
 #'   [explode_grouped()].
 #' @param context `"fade"` or `"hide"` keeps non-selected features in the
@@ -125,6 +126,18 @@ explode_section <- function(sf_obj,
   sf_context <- sf_obj[!focus_idx, , drop = FALSE]
   sf_focus[[role_col]] <- "focus"
   sf_context[[role_col]] <- "context"
+
+  focus_regions <- unique(as.character(sf_focus[[region_col]]))
+  focus_regions <- focus_regions[!is.na(focus_regions) & nzchar(focus_regions)]
+  if (length(focus_regions) < 2L) {
+    stop(
+      "The selected section has fewer than 2 distinct `region_col` values ",
+      "('", region_col, "'). Pass a finer `region_col` (e.g. a county column) ",
+      "so the section can be exploded, or use `section = \"all\"` to explode ",
+      "the full layer by `section_col`.",
+      call. = FALSE
+    )
+  }
 
   result <- .explode_section_dispatch(sf_focus, region_col, layout, ...)
 
