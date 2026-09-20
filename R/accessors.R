@@ -58,15 +58,17 @@ anchor_table <- function(layout) {
 #' @param id_col Optional feature ID column for `level = "feature"`.
 #' @param require_stable_id Require a real feature ID column for feature-level
 #'   persistent handoffs. When `TRUE`, row-number fallback IDs are rejected.
+#'   Defaults to `TRUE` when `level = "feature"`, `FALSE` otherwise.
 #'
 #' @return A data frame of computed offsets.
 #' @export
 layout_offsets <- function(layout,
                            level = c("group", "feature"),
                            id_col = NULL,
-                           require_stable_id = identical(level, "feature")) {
+                           require_stable_id = NULL) {
   validate_grouped_layout(layout)
   level <- match.arg(level)
+  if (is.null(require_stable_id)) require_stable_id <- identical(level, "feature")
   region_col <- layout$diagnostics$region_col
   centroid_fun <- layout$diagnostics$centroid_fun %||% "centroid"
 
@@ -128,7 +130,7 @@ transition_data <- function(layout,
                             level = c("group", "feature"),
                             id_col = NULL,
                             ordering = NULL,
-                            require_stable_id = identical(level, "feature")) {
+                            require_stable_id = NULL) {
   level <- match.arg(level)
   offsets <- layout_offsets(
     layout,
@@ -177,7 +179,7 @@ connector_geometry <- function(layout,
                                id_col = NULL,
                                threshold_m = 1,
                                include_unmoved = FALSE,
-                               require_stable_id = identical(level, "feature")) {
+                               require_stable_id = NULL) {
   validate_grouped_layout(layout)
   level <- match.arg(level)
   threshold_m <- numeric_scalar(threshold_m, "`threshold_m`", min = 0)
@@ -260,6 +262,9 @@ feature_ids <- function(x, id_col = NULL, require_stable_id = FALSE) {
   }
   if (anyNA(ids) || any(!nzchar(ids))) {
     stop("Feature IDs cannot be missing.", call. = FALSE)
+  }
+  if (anyDuplicated(ids) > 0) {
+    stop("Feature IDs must be unique.", call. = FALSE)
   }
   ids
 }
