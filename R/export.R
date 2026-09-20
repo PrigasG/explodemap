@@ -198,6 +198,13 @@ export_topojson <- function(x, file, simplify = NULL, overwrite = FALSE) {
     )
   }
 
+  # Remove any stale output before running mapshaper: otherwise a failed run
+  # would leave the old file behind and the existence check below would
+  # mistake it for fresh output.
+  if (isTRUE(overwrite) && file.exists(file)) {
+    unlink(file)
+  }
+
   if (.shiny_is_running()) {
     warning(
       "export_topojson() calls system2() which blocks the R process synchronously. ",
@@ -245,6 +252,16 @@ export_topojson <- function(x, file, simplify = NULL, overwrite = FALSE) {
       )
     }
   )
+
+  status <- attr(cmd_out, "status")
+  if (!is.null(status) && !identical(as.integer(status), 0L)) {
+    detail <- if (length(cmd_out)) paste(cmd_out, collapse = "\n") else ""
+    stop(
+      "TopoJSON export failed; mapshaper exited with status ", status, ".",
+      if (nzchar(detail)) paste0("\nMapshaper output:\n", detail) else "",
+      call. = FALSE
+    )
+  }
 
   if (!file.exists(out_path)) {
     detail <- if (length(cmd_out)) paste(cmd_out, collapse = "\n") else ""
