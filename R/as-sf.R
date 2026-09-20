@@ -45,6 +45,10 @@
 #' }
 as_sf <- function(layout, which = c("exploded", "original")) {
   if (inherits(layout, "grouped_exploded_map")) {
+    if (identical(which, c("exploded", "original"))) {
+      # Untouched generic default: resolve to the displaced layer.
+      which <- "grouped"
+    }
     which <- match.arg(which, c("grouped", "local", "original"))
     layer <- switch(
       which,

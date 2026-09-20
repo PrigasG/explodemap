@@ -12,7 +12,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-have_dragmapr <- requireNamespace("dragmapr", quietly = TRUE)
+have_dragmapr <- requireNamespace("dragmapr", quietly = TRUE) &&
+  "d_state" %in% getNamespaceExports("dragmapr")
 ```
 
 The full `explodemap` loop is **explode, measure, edit, compare, render**:

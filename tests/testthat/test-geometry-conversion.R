@@ -34,6 +34,13 @@ test_that("as_sf handles grouped layouts", {
   expect_s3_class(grouped, "sf")
   expect_equal(nrow(grouped), nrow(x))
 
+  # Untouched default resolves to the displaced "grouped" layer
+  defaulted <- as_sf(layout)
+  expect_true(isTRUE(all.equal(
+    sf::st_geometry(defaulted), sf::st_geometry(grouped),
+    check.attributes = FALSE
+  )))
+
   local <- as_sf(layout, which = "local")
   expect_s3_class(local, "sf")
 
