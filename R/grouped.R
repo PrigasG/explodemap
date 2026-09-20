@@ -236,7 +236,10 @@ estimate_block_radii <- function(sf_obj, region_col,
 #' @param quantile_p Quantile for block radius estimation (default 0.85)
 #' @param centroid_fun "centroid" or "point_on_surface"
 #' @param quiet If `TRUE`, suppress `message()` output. Default `FALSE`.
-#' @return data.frame with region, anchor_x, anchor_y, block_radius, n_units
+#' @return A data.frame with one row per region: the `region_col` column,
+#'   source centroid (`cx`, `cy`), estimated `block_radius`, `n_units`, and the
+#'   computed `anchor_x`/`anchor_y` (plus solver `target_x`/`target_y`; the
+#'   `auto_collision` mode adds `.converged`/`.iterations`).
 #' @export
 layout_regions <- function(sf_obj, region_col,
                            mode = c("auto", "auto_collision", "manual"),
