@@ -384,9 +384,14 @@ focus_map <- function(x,
   sf_obj <- .repair_widget_geometry(sf_obj)
 
   if (identical(coordinate_system, "longlat")) {
-    # Ensure WGS 84
+    # Ensure WGS 84. A missing CRS is a hard error: guessing WGS 84 would
+    # silently misplace every feature.
     if (is.na(sf::st_crs(sf_obj))) {
-      sf_obj <- sf::st_set_crs(sf_obj, 4326)
+      stop(
+        "`sf_obj` has no CRS. Set it with sf::st_set_crs() before calling ",
+        "focus_map().",
+        call. = FALSE
+      )
     } else if (!identical(sf::st_crs(sf_obj)$epsg, 4326L)) {
       sf_obj <- sf::st_transform(sf_obj, 4326)
     }

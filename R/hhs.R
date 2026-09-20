@@ -162,7 +162,12 @@ as_hhs_states <- function(states, crs = 5070) {
   }
 
   if (is.na(sf::st_crs(states))) {
-    sf::st_crs(states) <- 4326
+    # Guessing WGS 84 here would silently misplace every state.
+    stop(
+      "`states` has no CRS. Set it with sf::st_set_crs() before calling ",
+      "as_hhs_states().",
+      call. = FALSE
+    )
   }
   if (isTRUE(sf::st_is_longlat(states))) {
     states <- sf::st_transform(states, crs)
