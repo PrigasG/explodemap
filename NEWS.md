@@ -1,3 +1,43 @@
+# explodemap (development version)
+
+* Geometry replacement now goes through `sf::st_geometry()` in
+  `explode_sf_core()`, `.translate_by_offsets()`, and `explode_grouped()`, so
+  inputs whose geometry column is not named `"geometry"` translate correctly.
+* `validate_input()` rejects missing/empty group values and warns on non-metre
+  projected units; `explode_sf()` "Other" detection is NA-safe.
+* `explode_section()` errors with a targeted message when the selected section
+  has fewer than two distinct `region_col` values (the `section_col` default
+  only works with `section = "all"`).
+* TIGER helpers: fixed `.compass()` direction mapping (was ~180° off), named
+  `region_map` entries assigned to multiple regions now error, corrupt cache
+  files are dropped and re-downloaded, and zip listings are sanity-checked.
+* `explode_sf_with_lookup()` rejects duplicated join keys; named `region_map`
+  paths in the county/TIGER helpers reject counties mapped to multiple regions.
+* `export_topojson()` removes stale output before running mapshaper and checks
+  the mapshaper exit status.
+* `feature_ids()` rejects duplicated IDs; `layout_offsets()`,
+  `transition_data()`, and `connector_geometry()` now resolve the
+  `require_stable_id` default after `match.arg(level)`.
+* `explode_grouped()` gains `allow_other = FALSE` for parity with
+  `explode_sf()`.
+* `optimize_grouped_layout()` rejects empty grids and invalid weights; default
+  grid cost documented (81 full layouts).
+* `diagnose_layout()` per-group nearest gap considers both pair endpoints.
+* `validate_explodemap_input()` rejects invalid geometries and geographic
+  (lon/lat) CRS; `assign_spatial_groups()` validates `groups`.
+* `focus_map()` and `as_hhs_states()` error on a missing CRS instead of
+  silently assuming WGS 84.
+* `layout_children()` caps `max_iter` at 50 above 2,000 features (quadratic
+  per-iteration cost) with a warning.
+* Degenerate numeric inputs yield `NA` instead of `Inf`/`NaN` in implied gamma
+  and ratio statistics.
+* Added a real R-CMD-check workflow (macOS R 4.5, Windows release, Ubuntu
+  release/devel/oldrel-1); README badge now reflects it.
+* README: install block leads with the GitHub development version (0.4.0);
+  `dragmapr` handoff shows Shiny state capture via `d_widget_state()`.
+* Removed `ggiraph` from Suggests (unused) and removed the stray
+  `tests/testthat/Rplots.pdf` from version control.
+
 # explodemap 0.4.0
 
 * Cleaned up the remaining package-prefixed API name:

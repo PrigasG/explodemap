@@ -36,7 +36,6 @@ Imports:
 Suggests:
     bslib,
     dragmapr,
-    ggiraph,
     jsonlite,
     knitr,
     later,
