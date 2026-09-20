@@ -10,7 +10,7 @@ connector_geometry(
   id_col = NULL,
   threshold_m = 1,
   include_unmoved = FALSE,
-  require_stable_id = NULL
+  require_stable_id = identical(level, "feature")
 )
 }
 \arguments{

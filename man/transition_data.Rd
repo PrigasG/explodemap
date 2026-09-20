@@ -9,7 +9,7 @@ transition_data(
   level = c("group", "feature"),
   id_col = NULL,
   ordering = NULL,
-  require_stable_id = NULL
+  require_stable_id = identical(level, "feature")
 )
 }
 \arguments{

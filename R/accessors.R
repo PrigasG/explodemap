@@ -65,10 +65,9 @@ anchor_table <- function(layout) {
 layout_offsets <- function(layout,
                            level = c("group", "feature"),
                            id_col = NULL,
-                           require_stable_id = NULL) {
+                           require_stable_id = identical(level, "feature")) {
   validate_grouped_layout(layout)
   level <- match.arg(level)
-  if (is.null(require_stable_id)) require_stable_id <- identical(level, "feature")
   region_col <- layout$diagnostics$region_col
   centroid_fun <- layout$diagnostics$centroid_fun %||% "centroid"
 
@@ -130,7 +129,7 @@ transition_data <- function(layout,
                             level = c("group", "feature"),
                             id_col = NULL,
                             ordering = NULL,
-                            require_stable_id = NULL) {
+                            require_stable_id = identical(level, "feature")) {
   level <- match.arg(level)
   offsets <- layout_offsets(
     layout,
@@ -179,7 +178,7 @@ connector_geometry <- function(layout,
                                id_col = NULL,
                                threshold_m = 1,
                                include_unmoved = FALSE,
-                               require_stable_id = NULL) {
+                               require_stable_id = identical(level, "feature")) {
   validate_grouped_layout(layout)
   level <- match.arg(level)
   threshold_m <- numeric_scalar(threshold_m, "`threshold_m`", min = 0)
