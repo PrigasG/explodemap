@@ -268,6 +268,13 @@ explode_sf_with_lookup <- function(sf_obj,
     stop("lookup_key '", lookup_key, "' not found in lookup.", call. = FALSE)
   if (!region_col %in% names(lookup))
     stop("region_col '", region_col, "' not found in lookup.", call. = FALSE)
+  if (anyDuplicated(lookup[[lookup_key]]) > 0) {
+    stop(
+      "lookup_key '", lookup_key, "' has duplicated values in `lookup`. ",
+      "The join key must be unique or features will be silently duplicated.",
+      call. = FALSE
+    )
+  }
 
   sf_joined <- sf_obj |>
     dplyr::left_join(
@@ -390,11 +397,14 @@ explode_sf_with_lookup <- function(sf_obj,
   # Handle export: NULL = none, TRUE = auto-name, character = explicit path
   .handle_export(export, sf_exp_wgs, label)
 
-  # Implied gamma values (for calibration)
-  gamma_r_implied <- params$alpha_r /
-    (stats$w_bar / (2 * sin(pi / stats$n_regions)))
-  gamma_l_implied <- params$alpha_l /
-    (2 * stats$R_local / sqrt(stats$n_bar))
+  # Implied gamma values (for calibration); guard against degenerate
+  # zero-area / coincident-centroid inputs that would divide by zero
+  gamma_r_implied <- .safe_divide(
+    params$alpha_r, stats$w_bar / (2 * sin(pi / stats$n_regions))
+  )
+  gamma_l_implied <- .safe_divide(
+    params$alpha_l, 2 * stats$R_local / sqrt(stats$n_bar)
+  )
 
   result <- list(
     sf_orig         = sf_obj,

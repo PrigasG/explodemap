@@ -116,9 +116,10 @@ calibration_row <- function(x) {
     stop("Input must be an exploded_map object.", call. = FALSE)
   stats  <- x$stats
   params <- x$params
+  n_units <- if (!is.null(stats$n_units_input)) stats$n_units_input else stats$n_units
   data.frame(
     label           = x$diagnostics$label,
-    n_units         = stats$n_units,
+    n_units         = n_units,
     n_regions       = stats$n_regions,
     w_bar_km        = round(stats$w_bar / 1000, 2),
     R_local_km      = round(stats$R_local / 1000, 1),

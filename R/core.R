@@ -132,6 +132,11 @@ validate_input <- function(sf_obj, region_col,
 }
 
 
+#' @keywords internal
+.safe_divide <- function(num, den) {
+  if (length(den) == 1L && is.finite(den) && den != 0) num / den else NA_real_
+}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # GEOMETRY STATISTICS
 # ─────────────────────────────────────────────────────────────────────────────
@@ -200,7 +205,7 @@ compute_stats <- function(sf_obj, region_col,
     D_region       = D_region,
     n_regions      = n_regions,
     n_bar          = n_bar,
-    ratio          = R_local / w_bar,
+    ratio          = .safe_divide(R_local, w_bar),
     per_region     = d_max_tbl,
     region_summary = region_summary
   )
