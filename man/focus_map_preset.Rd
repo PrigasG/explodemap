@@ -18,7 +18,7 @@ cues. \code{"municipal_drilldown"} combines both.}
 A named list of \code{\link[=focus_map]{focus_map()}} arguments.
 }
 \description{
-Returns a named list of \code{\link[=focus_map]{focus_map()}} arguments for common interactive
+[Experimental] Returns a named list of \code{\link[=focus_map]{focus_map()}} arguments for common interactive
 mapping workflows. Presets are intentionally plain lists so they can be
 inspected, modified, or passed through \code{do.call()}.
 }

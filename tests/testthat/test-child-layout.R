@@ -52,3 +52,13 @@ test_that("layout_children validates stable ids and projected coordinates", {
   x <- sf::st_transform(x, 4326)
   expect_error(layout_children(x, "id"), "projected CRS")
 })
+
+test_that("layout_children rejects non-metre projected units", {
+  x <- make_test_sf()
+  x_ft <- sf::st_set_crs(x, 2272)
+
+  expect_error(
+    layout_children(x_ft, id_col = "id"),
+    "instead of metres"
+  )
+})

@@ -27,7 +27,17 @@
 }
 .cache_path   <- function(key) file.path(.cache_dir(), paste0(key, ".rds"))
 .cache_exists <- function(key) file.exists(.cache_path(key))
-.cache_load   <- function(key) readRDS(.cache_path(key))
+.cache_load   <- function(key) {
+  # A corrupt cache file must never kill the download path: drop it and let
+  # the caller re-download fresh data.
+  tryCatch(
+    readRDS(.cache_path(key)),
+    error = function(e) {
+      unlink(.cache_path(key), force = TRUE)
+      NULL
+    }
+  )
+}
 .cache_save   <- function(key, obj) {
   # withCallingHandlers muffles the "cannot open compressed file" warning that
   # gzfile emits on Windows when the target path is unwritable. The subsequent
@@ -94,8 +104,8 @@
   }
 
   key <- paste0("cousub_", fips)
-  if (.cache_exists(key)) {
-    obj <- .cache_load(key)
+  obj <- .cache_load(key)
+  if (!is.null(obj)) {
     if (!identical(sf::st_crs(obj)$epsg, as.integer(crs)))
       obj <- sf::st_transform(obj, crs)
     return(obj)
@@ -136,7 +146,8 @@
 #' @keywords internal
 .get_national_counties <- function() {
   key <- "counties_national"
-  if (.cache_exists(key)) return(.cache_load(key))
+  cached <- .cache_load(key)
+  if (!is.null(cached)) return(cached)
   url <- "https://www2.census.gov/geo/tiger/TIGER2025/COUNTY/tl_2025_us_county.zip"
   tmp <- tempfile(fileext = ".zip")
   .download_file_or_stop(url, tmp, "national county lookup")
@@ -170,10 +181,30 @@
 
 #' Attach region labels to TIGER/Line data via county names
 #' @keywords internal
+# Eight-wind compass label for a displacement vector, measured counter-clockwise
+# from East (angle = atan2(dy, dx)). Top-level (not a closure) so it can be
+# unit-tested.
+.compass_dir <- function(dx, dy) {
+  angle <- atan2(dy, dx) * 180 / pi            # -180..180
+  dirs  <- c("East", "Northeast", "North", "Northwest",
+             "West", "Southwest", "South", "Southeast")
+  idx   <- floor(((angle + 22.5) %% 360) / 45) + 1
+  dirs[idx]
+}
+
 .attach_regions_tiger <- function(sf_obj, fips, region_map, quiet = FALSE) {
   region_df <- dplyr::bind_rows(lapply(names(region_map), function(r)
     data.frame(county_name = region_map[[r]], region = r,
                stringsAsFactors = FALSE)))
+  dupes <- unique(region_df$county_name[duplicated(region_df$county_name)])
+  if (length(dupes)) {
+    stop(
+      "`region_map` assigns the same county to multiple regions: ",
+      paste(utils::head(dupes, 8), collapse = ", "),
+      if (length(dupes) > 8) paste0("... +", length(dupes) - 8, " more"),
+      call. = FALSE
+    )
+  }
 
   counties <- .get_national_counties() |>
     dplyr::filter(.data$STATEFP == fips) |>
@@ -181,6 +212,12 @@
 
   county_region <- counties |>
     dplyr::left_join(region_df, by = c("NAME" = "county_name"))
+
+  # A pre-existing `region` column would collide with the join below
+  # (region.x / region.y); the explicit mapping replaces it.
+  if ("region" %in% names(sf_obj)) {
+    sf_obj$region <- NULL
+  }
 
   sf_result <- sf_obj |>
     dplyr::left_join(county_region |> dplyr::select("COUNTYFP", "region"),
@@ -213,14 +250,22 @@
   }
 
   key <- paste0("county_", fips)
-  if (.cache_exists(key)) {
-    obj <- .cache_load(key)
+  obj <- .cache_load(key)
+  if (!is.null(obj)) {
     if (!identical(sf::st_crs(obj)$epsg, as.integer(crs)))
       obj <- sf::st_transform(obj, crs)
     return(obj)
   }
 
   read_shp_from_zip <- function(zip_path, label) {
+    listing <- tryCatch(
+      utils::unzip(zip_path, list = TRUE),
+      error = function(e) NULL
+    )
+    if (is.null(listing) || !nrow(listing)) {
+      stop("The ", label, " download appears to be corrupt (not a valid zip). ",
+           "Please try again.", call. = FALSE)
+    }
     d <- file.path(tempdir(), paste0("cty_", label, "_", Sys.getpid()))
     dir.create(d, showWarnings = FALSE)
     tryCatch(
@@ -256,9 +301,8 @@
 
   # Fall back to the national county file filtered by state FIPS
   nat_key <- "counties_national_geom"
-  if (.cache_exists(nat_key)) {
-    nat <- .cache_load(nat_key)
-  } else {
+  nat <- .cache_load(nat_key)
+  if (is.null(nat)) {
     nat_url <- "https://www2.census.gov/geo/tiger/TIGER2025/COUNTY/tl_2025_us_county.zip"
     nat_tmp <- tempfile(fileext = ".zip")
     .download_file_or_stop(nat_url, nat_tmp, "national county boundaries")
@@ -294,11 +338,27 @@
   if (!is.null(region_map)) {
     region_df <- dplyr::bind_rows(lapply(names(region_map), function(r)
       data.frame(NAME = region_map[[r]], region = r, stringsAsFactors = FALSE)))
+    dupes <- unique(region_df$NAME[duplicated(region_df$NAME)])
+    if (length(dupes)) {
+      stop(
+        "`region_map` assigns the same county to multiple regions: ",
+        paste(utils::head(dupes, 8), collapse = ", "),
+        if (length(dupes) > 8) paste0("... +", length(dupes) - 8, " more"),
+        call. = FALSE
+      )
+    }
 
     # sf_obj should have a NAME column from TIGER county download
     name_col <- if ("NAME" %in% names(sf_obj)) "NAME" else
       stop("County sf must have a NAME column for named region_map assignment.",
            call. = FALSE)
+
+    # A pre-existing `region` column would collide with the join below
+    # (region.x / region.y), leaving `region` NULL; the explicit mapping
+    # replaces it.
+    if ("region" %in% names(sf_obj)) {
+      sf_obj$region <- NULL
+    }
 
     sf_result <- sf_obj |>
       dplyr::left_join(region_df, by = "NAME")
@@ -364,15 +424,7 @@
   rel_x         <- centers[, 1] - overall_x
   rel_y         <- centers[, 2] - overall_y
 
-  .compass <- function(dx, dy) {
-    angle <- atan2(dy, dx) * 180 / pi            # -180..180
-    dirs  <- c("East","Northeast","North","Northwest",
-               "West","Southwest","South","Southeast")
-    idx   <- as.integer((angle + 202.5) / 45) %% 8 + 1
-    dirs[idx]
-  }
-
-  raw_names  <- mapply(.compass, rel_x, rel_y)
+  raw_names  <- mapply(.compass_dir, rel_x, rel_y)
   # Disambiguate duplicates by appending 2/3
   seen       <- table(raw_names)
   counters   <- integer(length(raw_names))

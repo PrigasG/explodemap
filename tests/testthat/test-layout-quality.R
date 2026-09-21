@@ -179,3 +179,45 @@ test_that("explode_grouped can preserve initial manual anchors", {
 
   expect_equal(updated$anchors$anchor_y, anchors$anchor_y)
 })
+
+
+test_that("optimize_grouped_layout rejects an empty grid", {
+  x <- make_grouped_sf()
+  grid <- data.frame(
+    kappa = numeric(0),
+    padding = numeric(0),
+    delta = numeric(0),
+    padding_sep = numeric(0)
+  )
+
+  expect_error(
+    optimize_grouped_layout(x, "region", grid = grid, plot = FALSE, quiet = TRUE),
+    "at least one parameter combination"
+  )
+})
+
+
+test_that("optimize_grouped_layout validates weights", {
+  x <- make_grouped_sf()
+  grid <- data.frame(kappa = 1.8, padding = 50000, delta = 15000, padding_sep = 20000)
+
+  expect_error(
+    optimize_grouped_layout(
+      x, "region",
+      grid = grid,
+      weights = c(overlap = 1),
+      plot = FALSE, quiet = TRUE
+    ),
+    "named numeric"
+  )
+
+  expect_error(
+    optimize_grouped_layout(
+      x, "region",
+      grid = grid,
+      weights = c(overlap = 1, displacement = 1, unused_space = 1, label_overlap = Inf),
+      plot = FALSE, quiet = TRUE
+    ),
+    "finite"
+  )
+})

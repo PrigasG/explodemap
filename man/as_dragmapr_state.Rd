@@ -23,7 +23,7 @@ contract -- from a \code{grouped_exploded_map}. Unlike \code{\link[=as_dragmapr]
 bundles geometry and absolute anchors into a handoff list, this emits the
 geometry-free \emph{state} that the interactive editor and static renderers
 consume: the exploded anchors (\code{anchor_x}/\code{anchor_y}) are converted to the
-metre deltas (\code{dx_m}/\code{dy_m}) relative to the current region centroids that
+deltas (\code{dx_m}/\code{dy_m}, in metres) relative to the current region centroids that
 \code{dragmapr} expects, and the projected CRS plus a provenance \code{geometry_id}
 are recorded so the state can be reapplied safely in a later session.
 }

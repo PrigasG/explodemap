@@ -1,6 +1,6 @@
 # explodemap <img src="man/figures/logo.png" alt="explodemap logo" align="right" height="130"/>
 
-[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/PrigasG/explodemap) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Live%20demo-ffcc4d)](https://huggingface.co/spaces/Prigas89/explodemap-gallery) [![Pipeline Studio](https://img.shields.io/badge/Hugging%20Face-Pipeline%20Studio-2b7fff)](https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio)
+[![R-CMD-check](https://github.com/PrigasG/explodemap/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PrigasG/explodemap/actions/workflows/R-CMD-check.yaml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Live%20demo-ffcc4d)](https://huggingface.co/spaces/Prigas89/explodemap-gallery) [![Pipeline Studio](https://img.shields.io/badge/Hugging%20Face-Pipeline%20Studio-2b7fff)](https://huggingface.co/spaces/Prigas89/spatial-pipeline-studio)
 
 `explodemap` makes exploded-view maps from polygon data. It separates crowded regions for display while keeping every polygon's shape intact.
 
@@ -14,11 +14,12 @@ Use it when you want to:
 ## Install
 
 ``` r
-install.packages("explodemap")
-
-# Development version
+# Development version (GitHub, currently 0.5.0)
 # install.packages("pak")
 # pak::pak("PrigasG/explodemap")
+
+# CRAN release (may lag the GitHub version)
+install.packages("explodemap")
 ```
 
 ## Try It
@@ -196,8 +197,26 @@ Then hand the layout to `dragmapr`:
 library(dragmapr)
 
 state <- as_dragmapr_state(better)
-state$region_col
 d_edit(better, state = state)
+```
+
+`d_edit()` renders the widget; it does not modify `state` in place. In Shiny,
+capture the user's edits back into R with `d_widget_state()` (the widget
+reports to `input$<outputId>_state`):
+
+``` r
+ui <- fluidPage(dragmaprOutput("editor"))
+
+server <- function(input, output, session) {
+  output$editor <- renderDragmapr({
+    d_edit(better, state = state)
+  })
+
+  observeEvent(input$editor_state, {
+    edited_state <- d_widget_state(input$editor_state)
+    # persist, merge, or re-render with edited_state ...
+  })
+}
 ```
 
 Render the same edited state in either package:

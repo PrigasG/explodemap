@@ -32,9 +32,7 @@ final_geometry <- function(layout) {
 group_geometry <- function(layout) {
   validate_grouped_layout(layout)
   region_col <- layout$diagnostics$region_col
-  layout$sf_grouped |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  .union_by_group(layout$sf_grouped, region_col)
 }
 
 #' Access grouped-layout anchor data
@@ -58,6 +56,7 @@ anchor_table <- function(layout) {
 #' @param id_col Optional feature ID column for `level = "feature"`.
 #' @param require_stable_id Require a real feature ID column for feature-level
 #'   persistent handoffs. When `TRUE`, row-number fallback IDs are rejected.
+#'   Defaults to `TRUE` when `level = "feature"`, `FALSE` otherwise.
 #'
 #' @return A data frame of computed offsets.
 #' @export
@@ -260,6 +259,9 @@ feature_ids <- function(x, id_col = NULL, require_stable_id = FALSE) {
   }
   if (anyNA(ids) || any(!nzchar(ids))) {
     stop("Feature IDs cannot be missing.", call. = FALSE)
+  }
+  if (anyDuplicated(ids) > 0) {
+    stop("Feature IDs must be unique.", call. = FALSE)
   }
   ids
 }

@@ -34,6 +34,22 @@ centroid_geoms <- function(x, centroid_fun = c("centroid", "point_on_surface")) 
   )
 }
 
+#' Union geometries by group, preserving the active geometry column name
+#'
+#' Hardcoding `.data$geometry` inside `dplyr::summarise()` breaks sf objects
+#' whose geometry column has another name; resolve it from the sf object.
+#' @keywords internal
+.union_by_group <- function(sf_obj, region_col) {
+  geom_col <- attr(sf_obj, "sf_column")
+  if (is.null(geom_col) || !(geom_col %in% names(sf_obj))) {
+    geom_col <- "geometry"
+  }
+  sf_obj |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
+    dplyr::summarise(!!geom_col := sf::st_union(.data[[geom_col]]),
+                     .groups = "drop")
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # INPUT VALIDATION
@@ -41,8 +57,10 @@ centroid_geoms <- function(x, centroid_fun = c("centroid", "point_on_surface")) 
 
 #' Validate inputs before explosion
 #'
-#' Checks CRS, empty geometries, invalid geometries, region count, and
-#' unmatched "Other" units. Optionally repairs invalid geometries.
+#' Checks CRS (present, projected, and metre-based -- anything else is an
+#' error), empty geometries, invalid geometries, missing/empty group values,
+#' region count, and unmatched "Other" units. Optionally repairs invalid
+#' geometries.
 #'
 #' @param sf_obj sf object to validate
 #' @param region_col Name of the grouping column
@@ -59,12 +77,27 @@ validate_input <- function(sf_obj, region_col,
   if (!(region_col %in% names(sf_obj)))
     stop("Column '", region_col, "' not found. Available: ",
          paste(names(sf_obj), collapse = ", "), call. = FALSE)
+  groups <- as.character(sf_obj[[region_col]])
+  if (anyNA(groups) || any(!nzchar(trimws(groups)))) {
+    stop("`region_col` ('", region_col, "') contains missing or empty group values. ",
+         "Assign every feature to a named group.", call. = FALSE)
+  }
   if (is.na(sf::st_crs(sf_obj)))
     stop("`sf_obj` has no CRS. Set one with st_set_crs() or st_transform().",
          call. = FALSE)
   if (sf::st_is_longlat(sf_obj))
     stop("`sf_obj` is in geographic (lon/lat) coordinates. ",
          "Project first with st_transform().", call. = FALSE)
+  units <- sf::st_crs(sf_obj)$units
+  if (!is.null(units) && length(units) == 1L && !is.na(units) &&
+      !tolower(units) %in% c("m", "metre", "meter")) {
+    stop(
+      "`sf_obj` uses map units '", units, "' instead of metres. ",
+      "Distance parameters (alpha_r, alpha_l, gaps, ...) are interpreted in metres; ",
+      "reproject to a metre-based CRS with st_transform().",
+      call. = FALSE
+    )
+  }
   if (any(sf::st_is_empty(sf_obj)))
     stop(sum(sf::st_is_empty(sf_obj)), " empty geometries found. ",
          "Remove with sf_obj[!st_is_empty(sf_obj), ]", call. = FALSE)
@@ -95,6 +128,23 @@ validate_input <- function(sf_obj, region_col,
   sf_obj
 }
 
+# Shared metre-unit enforcement for entry points that interpret distances in
+# metres (offsets, child-layout gaps/kicks, HHS display offsets). Call after
+# the CRS is known to be present and projected.
+.check_metre_crs <- function(x, arg = "x") {
+  units <- sf::st_crs(x)$units
+  if (!is.null(units) && length(units) == 1L && !is.na(units) &&
+      !tolower(units) %in% c("m", "metre", "meter")) {
+    stop(
+      "`", arg, "` uses map units '", units, "' instead of metres. ",
+      "Distances are interpreted in metres; ",
+      "reproject to a metre-based CRS with st_transform().",
+      call. = FALSE
+    )
+  }
+  invisible(x)
+}
+
 .validate_sf_geometry_column <- function(sf_obj) {
   geom_col <- attr(sf_obj, "sf_column")
   if (is.null(geom_col) || length(geom_col) != 1L || !nzchar(geom_col)) {
@@ -115,6 +165,11 @@ validate_input <- function(sf_obj, region_col,
   invisible(TRUE)
 }
 
+
+#' @keywords internal
+.safe_divide <- function(num, den) {
+  if (length(den) == 1L && is.finite(den) && den != 0) num / den else NA_real_
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GEOMETRY STATISTICS
@@ -138,9 +193,7 @@ compute_stats <- function(sf_obj, region_col,
   w_bar <- stats::median(sqrt(4 * areas / pi), na.rm = TRUE)
 
   # Region centroids (warning-free)
-  reg_sf <- sf_obj |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  reg_sf <- .union_by_group(sf_obj, region_col)
   rc <- sf::st_coordinates(centroid_geoms(reg_sf, centroid_fun))
   D_region <- if (nrow(rc) > 1) stats::median(as.numeric(stats::dist(rc))) else NA_real_
 
@@ -184,7 +237,7 @@ compute_stats <- function(sf_obj, region_col,
     D_region       = D_region,
     n_regions      = n_regions,
     n_bar          = n_bar,
-    ratio          = R_local / w_bar,
+    ratio          = .safe_divide(R_local, w_bar),
     per_region     = d_max_tbl,
     region_summary = region_summary
   )
@@ -245,8 +298,8 @@ derive_params <- function(stats, gamma_r = 3.0, gamma_l = 1.136, p = 1.25) {
 #'
 #' @param sf_obj Projected sf object with region column
 #' @param region_col Grouping column name
-#' @param alpha_r Regional separation magnitude (metres)
-#' @param alpha_l Local expansion magnitude (metres)
+#' @param alpha_r Regional separation magnitude (in metres)
+#' @param alpha_l Local expansion magnitude (in metres)
 #' @param p Distance scaling exponent (default 1.25)
 #' @param centroid_fun "centroid" (default) or "point_on_surface"
 #' @return Exploded sf object (same CRS as input)
@@ -263,9 +316,7 @@ explode_sf_core <- function(sf_obj, region_col,
   )[1, ]
 
   # Region centroids — warning-free
-  reg_sf <- sf_obj |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  reg_sf <- .union_by_group(sf_obj, region_col)
   rc <- sf::st_coordinates(centroid_geoms(reg_sf, centroid_fun))
 
   reg_df <- reg_sf |>
@@ -313,8 +364,8 @@ explode_sf_core <- function(sf_obj, region_col,
 
   # Apply rigid-body translation (Proposition 1)
   sf_exp <- sf_obj
-  sf_exp$geometry <- sf::st_sfc(
-    purrr::pmap(list(sf_obj$geometry, df$x_off, df$y_off),
+  sf::st_geometry(sf_exp) <- sf::st_sfc(
+    purrr::pmap(list(sf::st_geometry(sf_obj), df$x_off, df$y_off),
                 function(g, dx, dy) g + c(dx, dy)),
     crs = orig_crs
   )
@@ -323,7 +374,7 @@ explode_sf_core <- function(sf_obj, region_col,
 
 .translate_by_offsets <- function(sf_obj, x_off, y_off) {
   out <- sf_obj
-  out$geometry <- sf::st_sfc(
+  sf::st_geometry(out) <- sf::st_sfc(
     purrr::pmap(
       list(sf::st_geometry(sf_obj), x_off, y_off),
       function(g, dx, dy) g + c(dx, dy)

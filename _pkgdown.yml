@@ -53,6 +53,8 @@ navbar:
         href: articles/grouped-layouts.html
       - text: State-first composition with dragmapr
         href: articles/state-first-composition.html
+      - text: Explode, edit, compare, render
+        href: articles/explode-edit-render.html
       - text: '---'
       - text: Reproducing paper examples and drag helpers
         href: articles/reproducing-paper-examples.html
@@ -84,6 +86,14 @@ reference:
   - explode_sf
   - explode_sf_with_lookup
   - explode_state
+- title: Geometry conversion and displacement analysis
+  desc: |
+    Convert exploded layouts back to plain sf geometry
+    and measure or compare per-feature displacement.
+  contents:
+  - as_sf
+  - displacement_magnitudes
+  - compare_layouts
 - title: Interactive focus maps
   desc: |
     htmlwidgets and Shiny helpers for selected-feature focus, labels, and non-blocking information cards.
@@ -189,6 +199,8 @@ articles:
   contents: grouped-layouts
 - title: State-first composition
   contents: state-first-composition
+- title: Explode, edit, compare, render
+  contents: explode-edit-render
 - title: Paper replication and drag helpers
   contents: reproducing-paper-examples
 footer:

@@ -1,6 +1,6 @@
 #' Lay out child geography around a parent
 #'
-#' Computes a renderer-neutral child expansion in projected map units. Child
+#' Computes a renderer-neutral child expansion in metres. Child
 #' features move radially away from the parent anchor, then a bounded
 #' axis-aligned bounding-box or circle solver separates collisions while an
 #' attraction term and bearing guard preserve the source geography's mental
@@ -13,9 +13,9 @@
 #' @param parent_geometry Optional parent `sf`, `sfc`, or `sfg` geometry whose
 #'   representative point anchors the expansion. Defaults to the union of `x`.
 #' @param scale Radial expansion multiplier applied to source vectors.
-#' @param radial_kick Additional outward movement in projected map units.
+#' @param radial_kick Additional outward movement in metres.
 #'   Defaults to two percent of the child layer's bounding-box diagonal.
-#' @param gap Minimum separation in projected map units. Defaults to one
+#' @param gap Minimum separation in metres. Defaults to one
 #'   percent of the child layer's bounding-box diagonal.
 #' @param collision Collision approximation: feature bounding boxes or
 #'   centroid circles derived from those boxes.
@@ -25,7 +25,10 @@
 #'   radians.
 #' @param bounds Optional bounding box supplied as an `sf`/`sfc` object,
 #'   `st_bbox`, or numeric `c(xmin, ymin, xmax, ymax)`.
-#' @param max_iter Maximum collision-refinement iterations.
+#' @param max_iter Maximum collision-refinement iterations. Each iteration scans
+#'   all feature pairs, so cost grows quadratically with the number of
+#'   features: for large `x`, lower this (the iteration cap is also reduced
+#'   automatically above 2,000 features) or lay out a subset of children.
 #'
 #' @return An `explodemap_child_layout` with `offsets`, composed `geometry`,
 #'   source geometry, diagnostics, and parameters. `offsets` contains stable
@@ -66,6 +69,7 @@ layout_children <- function(x,
     stop("`x` must use a projected CRS; longitude/latitude is not supported.",
          call. = FALSE)
   }
+  .check_metre_crs(x)
   collision <- match.arg(collision)
   scale <- child_numeric_scalar(scale, "scale", min = 0)
   attraction <- child_numeric_scalar(attraction, "attraction", min = 0, max = 1)
@@ -75,6 +79,16 @@ layout_children <- function(x,
   max_iter <- suppressWarnings(as.integer(max_iter))
   if (length(max_iter) != 1L || is.na(max_iter) || max_iter < 1L) {
     stop("`max_iter` must be a positive whole number.", call. = FALSE)
+  }
+  # Pairwise collision scan is O(n^2) per iteration: cap iterations for large
+  # feature counts so a heavy default cannot stall a session.
+  if (nrow(x) > 2000L && max_iter > 50L) {
+    warning(
+      "Capping `max_iter` at 50 for ", nrow(x), " features: each iteration ",
+      "scans all feature pairs, so cost grows quadratically.",
+      call. = FALSE
+    )
+    max_iter <- 50L
   }
   parent <- if (is.null(parent)) "parent" else as.character(parent)
   if (length(parent) != 1L || is.na(parent) || !nzchar(parent)) {

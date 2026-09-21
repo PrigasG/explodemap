@@ -11,5 +11,5 @@ A data frame with \code{region}, \code{dx_m}, and \code{dy_m}.
 }
 \description{
 These offsets are a small documented finishing step for the national HHS
-reference view. They are interpreted in metres for projected layouts.
+reference view. They are interpreted in metres.
 }

@@ -60,7 +60,10 @@ before optional collision refinement.}
 \item{quiet}{If \code{TRUE}, suppress \code{message()} output. Default \code{FALSE}.}
 }
 \value{
-data.frame with region, anchor_x, anchor_y, block_radius, n_units
+A data.frame with one row per region: the \code{region_col} column,
+source centroid (\code{cx}, \code{cy}), estimated \code{block_radius}, \code{n_units}, and the
+computed \code{anchor_x}/\code{anchor_y} (plus solver \code{target_x}/\code{target_y}; the
+\code{auto_collision} mode adds \code{.converged}/\code{.iterations}).
 }
 \description{
 Implements the anchor layout procedure from Section 12.

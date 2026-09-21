@@ -26,6 +26,7 @@ explode_grouped(
   block_sep = NULL,
   max_iter = 60,
   fix_invalid = TRUE,
+  allow_other = FALSE,
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
@@ -48,7 +49,7 @@ explode_grouped(
 \item{preserve_manual}{When \code{TRUE}, use \code{initial_layout} as starting anchors
 so parameter changes refine an existing composition instead of replacing it.}
 
-\item{alpha_l}{Local expansion parameter for Level 1 (metres)}
+\item{alpha_l}{Local expansion parameter for Level 1 (in metres)}
 
 \item{p}{Distance scaling exponent (default 1.25)}
 
@@ -74,6 +75,10 @@ visual effect rather than the solver term.}
 \item{max_iter}{Max collision iterations (default 60)}
 
 \item{fix_invalid}{Auto-repair invalid geometries (default TRUE)}
+
+\item{allow_other}{Keep features labeled \code{"Other"} in the output without
+moving them: they are excluded from the local explosion and anchor
+placement, then recombined unchanged. Defaults to \code{FALSE} (error on \code{"Other"} unless handled).}
 
 \item{centroid_fun}{"centroid" or "point_on_surface"}
 

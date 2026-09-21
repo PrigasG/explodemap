@@ -4,7 +4,7 @@
 
 #' Interactive focus-map viewer
 #'
-#' Renders spatial features as a smooth, interactive SVG map. Click any
+#' [Experimental] Renders spatial features as a smooth, interactive SVG map. Click any
 #' polygon to zoom in and lift it from the map with a "toast" effect;
 #' right-click or press Escape to reset. Camera transitions use D3's
 #' optimal zoom interpolation for fluid 60 fps motion with zero server
@@ -57,7 +57,7 @@
 #'   arguments supplied by the user override preset defaults.
 #' @param simplify Controls geometry simplification for rendering
 #'   performance. \code{TRUE} (default) applies a conservative tolerance of
-#'   approximately one metre. Longitude/latitude data is simplified in a local metric
+#'   approximately one map unit. Longitude/latitude data is simplified in a local metric
 #'   projection to avoid latitude-dependent distortion. A positive number sets
 #'   a custom tolerance in the data's coordinate units; longitude/latitude
 #'   tolerances above 0.1 degrees are rejected as unsafe. \code{FALSE}
@@ -384,9 +384,14 @@ focus_map <- function(x,
   sf_obj <- .repair_widget_geometry(sf_obj)
 
   if (identical(coordinate_system, "longlat")) {
-    # Ensure WGS 84
+    # Ensure WGS 84. A missing CRS is a hard error: guessing WGS 84 would
+    # silently misplace every feature.
     if (is.na(sf::st_crs(sf_obj))) {
-      sf_obj <- sf::st_set_crs(sf_obj, 4326)
+      stop(
+        "`sf_obj` has no CRS. Set it with sf::st_set_crs() before calling ",
+        "focus_map().",
+        call. = FALSE
+      )
     } else if (!identical(sf::st_crs(sf_obj)$epsg, 4326L)) {
       sf_obj <- sf::st_transform(sf_obj, 4326)
     }
@@ -549,7 +554,7 @@ renderFocusmap <- function(expr, env = parent.frame(), quoted = FALSE) {
 
 # ── internal helpers ─────────────────────────────────────────────────────────
 
-#' Focus-map Shiny proxy
+#' [Experimental] Focus-map Shiny proxy
 #'
 #' @param outputId Shiny output ID for an existing `focus_map()`.
 #' @param session Shiny session. Defaults to the current reactive domain.
@@ -636,6 +641,23 @@ update_focus_data <- function(proxy, data, ...) {
   stop("x must be an sf, exploded_map, or grouped_exploded_map.", call. = FALSE)
 }
 
+#' @keywords internal
+.apply_dragmapr_offsets <- function(sf_obj, state, region_col) {
+  # Resolved at runtime: the installed dragmapr may predate
+  # apply_dragmapr_state(), and a `dragmapr::` reference would trip the
+  # "missing or unexported object" check on such versions.
+  if (!"apply_dragmapr_state" %in% getNamespaceExports("dragmapr")) {
+    stop(
+      "Applying a dragmapr state requires a dragmapr version that exports ",
+      "apply_dragmapr_state().",
+      call. = FALSE
+    )
+  }
+  getExportedValue("dragmapr", "apply_dragmapr_state")(
+    sf_obj, state, region_col = region_col
+  )
+}
+
 .apply_focus_state <- function(x, state, group_col) {
   if (is.null(state)) {
     return(x)
@@ -653,7 +675,7 @@ update_focus_data <- function(proxy, data, ...) {
     region_col <- x$diagnostics$region_col %||% group_col %||%
       state$region_col %||% state$binding$region_col %||% state$level
     out <- x
-    out$sf_exp <- dragmapr::apply_dragmapr_state(out$sf_exp, state, region_col = region_col)
+    out$sf_exp <- .apply_dragmapr_offsets(out$sf_exp, state, region_col = region_col)
     out$sf_exp_wgs <- sf::st_transform(out$sf_exp, 4326)
     return(out)
   }
@@ -664,7 +686,7 @@ update_focus_data <- function(proxy, data, ...) {
       stop("`group_col` is required when applying `state` to a raw sf object.",
            call. = FALSE)
     }
-    return(dragmapr::apply_dragmapr_state(x, state, region_col = region_col))
+    return(.apply_dragmapr_offsets(x, state, region_col = region_col))
   }
   x
 }

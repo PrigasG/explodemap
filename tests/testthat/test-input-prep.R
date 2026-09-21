@@ -183,3 +183,51 @@ test_that("e_fingerprint can require stable IDs", {
     "stable feature ID"
   )
 })
+
+
+test_that("assign_spatial_groups validates the groups argument", {
+  x <- make_test_sf()
+
+  expect_error(
+    assign_spatial_groups(x, method = "clusters", groups = 99),
+    "exceeds the number of features"
+  )
+  expect_error(
+    assign_spatial_groups(x, method = "clusters", groups = "three"),
+    "single whole number"
+  )
+  expect_error(
+    assign_spatial_groups(x, method = "clusters", groups = 2.5),
+    "single whole number"
+  )
+  expect_error(
+    assign_spatial_groups(x, method = "clusters", groups = 0),
+    "at least 2"
+  )
+  expect_error(
+    assign_spatial_groups(x, method = "clusters", groups = 1),
+    "at least 2"
+  )
+})
+
+
+test_that("validate_explodemap_input rejects invalid geometries and lon/lat CRS", {
+  x <- make_test_sf()
+
+  bowtie <- sf::st_polygon(list(matrix(
+    c(0, 0, 2, 2, 2, 0, 0, 2, 0, 0),
+    ncol = 2,
+    byrow = TRUE
+  )))
+  x_bad <- x
+  sf::st_geometry(x_bad)[1] <- sf::st_sfc(bowtie, crs = sf::st_crs(x))
+
+  v <- validate_explodemap_input(x_bad, "region", "id")
+  expect_false(v$valid)
+  expect_true(any(grepl("invalid geometries", v$errors)))
+
+  x_ll <- sf::st_transform(x, 4326)
+  v2 <- validate_explodemap_input(x_ll, "region", "id")
+  expect_false(v2$valid)
+  expect_true(any(grepl("lon/lat", v2$errors)))
+})

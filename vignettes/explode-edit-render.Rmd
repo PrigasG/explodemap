@@ -1,0 +1,132 @@
+---
+title: "Explode, edit, compare, render"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Explode, edit, compare, render}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+have_dragmapr <- requireNamespace("dragmapr", quietly = TRUE) &&
+  "d_state" %in% getNamespaceExports("dragmapr")
+```
+
+The full `explodemap` loop is **explode, measure, edit, compare, render**:
+
+```
+explode_grouped()  ->  displacement_magnitudes()  ->  d_edit()  ->  compare_layouts()  ->  as_sf()
+   (compute)              (measure)                   (compose)        (compare)             (export)
+```
+
+This vignette walks the whole loop on a small synthetic grid. The editorial
+pass is shown two ways: interactively in the dragmapr editor, and as a
+scripted nudge in pure R (handy for reproducible tweaks and for CI, where no
+browser is available).
+
+## 1. Explode
+
+```{r explode}
+library(explodemap)
+
+unit_square <- function(x0, y0, size = 40000) {
+  sf::st_polygon(list(rbind(
+    c(x0, y0), c(x0 + size, y0), c(x0 + size, y0 + size),
+    c(x0, y0 + size), c(x0, y0)
+  )))
+}
+
+grid <- expand.grid(col = 0:2, row = 0:2)
+regions <- sf::st_sf(
+  region = rep(c("A", "B", "C"), each = 3),
+  unit   = sprintf("u%02d", seq_len(9)),
+  geometry = sf::st_sfc(
+    lapply(seq_len(9), function(i) unit_square(grid$col[i] * 50000, grid$row[i] * 50000)),
+    crs = 3857
+  )
+)
+
+layout <- explode_grouped(regions, region_col = "region", plot = FALSE, quiet = TRUE)
+plot(layout)
+```
+
+## 2. Measure the layout
+
+Before editing, quantify what the algorithm did. `displacement_magnitudes()`
+gives the per-feature movement in metres:
+
+```{r measure}
+dm <- displacement_magnitudes(layout)
+tapply(dm$distance, as_sf(layout)$region, function(d) round(c(mean = mean(d), max = max(d))))
+```
+
+## 3. Hand off to dragmapr
+
+`as_dragmapr_state()` converts the computed anchors into a reusable
+`dragmapr_state` — the composition object the editor and the renderers share:
+
+```{r handoff, eval = have_dragmapr}
+state <- as_dragmapr_state(layout)
+state
+```
+
+## 4. Edit
+
+Open the editor seeded with the computed layout. In Shiny, capture each edit
+back into a state with `dragmapr::d_widget_state()`:
+
+```{r edit-interactive, eval = FALSE}
+dragmapr::d_edit(layout, state = state)
+```
+
+For a reproducible tweak — or anywhere without a browser — apply the same
+kind of edit as data. Here region "B" is nudged 50 km east:
+
+```{r edit-scripted}
+nudge <- data.frame(
+  region = "B",
+  dx_m = 50000,
+  dy_m = 0
+)
+edited <- update_exploded_layout(layout, nudge, update_plots = FALSE)
+```
+
+## 5. Compare before and after
+
+`compare_layouts()` summarises how the edit changed per-feature displacement:
+
+```{r compare}
+cmp <- compare_layouts(layout, edited)
+cmp$summary
+head(cmp$per_feature)
+```
+
+## 6. Render and export
+
+Render the edited composition statically (writes a PNG next to this
+document's working directory when run interactively):
+
+```{r render, eval = FALSE}
+dragmapr::render_dragged_map(
+  as_sf(edited, which = "grouped"),
+  region_col = "region",
+  state = state,
+  file = "edited.png"
+)
+```
+
+And convert the final layout back to plain `sf` for downstream GIS work —
+file export, spatial joins, or further `sf` analysis:
+
+```{r export}
+final_sf <- as_sf(edited)
+sf::st_write(final_sf, file.path(tempdir(), "edited.gpkg"), quiet = TRUE)
+list.files(tempdir(), pattern = "edited")
+```
+
+The loop closes: `final_sf` is an ordinary `sf` data frame, so anything that
+reads simple features can pick up where the editor left off.

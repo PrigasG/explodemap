@@ -79,3 +79,43 @@ test_that("explode_grouped accepts visual alias arguments", {
   expect_equal(out$params$delta, 50)
   expect_equal(out$params$padding_sep, 75)
 })
+
+
+test_that("explode_grouped rejects 'Other' by default, keeps it when allowed", {
+  x <- make_grouped_sf()
+  x$region[1] <- "Other"
+
+  expect_error(
+    explode_grouped(x, region_col = "region", mode = "auto", plot = FALSE, quiet = TRUE),
+    "Other"
+  )
+
+  out <- explode_grouped(
+    x,
+    region_col = "region",
+    mode = "auto",
+    allow_other = TRUE,
+    plot = FALSE,
+    quiet = TRUE
+  )
+  expect_s3_class(out, "grouped_exploded_map")
+  expect_equal(nrow(out$sf_grouped), nrow(x))
+
+  # "Other" features must survive completely unmoved: identical coordinates
+  # in both the local and grouped layers, in the original row order.
+  other_in <- x[x$region == "Other", ]
+  other_local <- out$sf_local[out$sf_local$region == "Other", ]
+  other_grouped <- out$sf_grouped[out$sf_grouped$region == "Other", ]
+  expect_equal(
+    sf::st_coordinates(other_local),
+    sf::st_coordinates(other_in)
+  )
+  expect_equal(
+    sf::st_coordinates(other_grouped),
+    sf::st_coordinates(other_in)
+  )
+  expect_equal(
+    out$sf_grouped$region,
+    x$region
+  )
+})

@@ -4,7 +4,7 @@
 
 #' Explode a US state from TIGER/Line data
 #'
-#' Downloads administrative boundaries automatically, groups them into regions,
+#' [Experimental] Downloads administrative boundaries automatically, groups them into regions,
 #' derives displacement parameters via Analytical Results 1-2, and returns an
 #' `exploded_map` S3 object.
 #'
@@ -46,9 +46,9 @@
 #' @param gamma_r Regional clearance coefficient (default 3.0)
 #' @param gamma_l Local clearance coefficient (default 1.136)
 #' @param p Distance scaling exponent (default 1.25)
-#' @param alpha_r Optional manual override for regional separation (metres).
+#' @param alpha_r Optional manual override for regional separation (in metres).
 #'   May be supplied independently of `alpha_l`.
-#' @param alpha_l Optional manual override for local expansion (metres).
+#' @param alpha_l Optional manual override for local expansion (in metres).
 #'   May be supplied independently of `alpha_r`.
 #' @param refine If TRUE, apply a bounded collision-refinement pass after the
 #'   analytical displacement. Default is FALSE.
@@ -180,9 +180,9 @@ explode_state <- function(state_fips    = NULL,
 #' @param gamma_r Regional clearance coefficient (default 3.0)
 #' @param gamma_l Local clearance coefficient (default 1.136)
 #' @param p Distance scaling exponent (default 1.25)
-#' @param alpha_r Optional manual override for regional separation (metres).
+#' @param alpha_r Optional manual override for regional separation (in metres).
 #'   May be supplied independently of `alpha_l`.
-#' @param alpha_l Optional manual override for local expansion (metres).
+#' @param alpha_l Optional manual override for local expansion (in metres).
 #'   May be supplied independently of `alpha_r`.
 #' @param refine If TRUE, apply a bounded collision-refinement pass after the
 #'   analytical displacement. Default is FALSE.
@@ -228,7 +228,7 @@ explode_sf <- function(sf_obj,
 
   sf_obj <- validate_input(sf_obj, region_col, allow_other, fix_invalid)
 
-  sf_for_stats <- if (allow_other && any(sf_obj[[region_col]] == "Other"))
+  sf_for_stats <- if (allow_other && any(sf_obj[[region_col]] == "Other", na.rm = TRUE))
     sf_obj[sf_obj[[region_col]] != "Other", ] else sf_obj
 
   .run_explode(sf_obj, sf_for_stats,
@@ -268,6 +268,13 @@ explode_sf_with_lookup <- function(sf_obj,
     stop("lookup_key '", lookup_key, "' not found in lookup.", call. = FALSE)
   if (!region_col %in% names(lookup))
     stop("region_col '", region_col, "' not found in lookup.", call. = FALSE)
+  if (anyDuplicated(lookup[[lookup_key]]) > 0) {
+    stop(
+      "lookup_key '", lookup_key, "' has duplicated values in `lookup`. ",
+      "The join key must be unique or features will be silently duplicated.",
+      call. = FALSE
+    )
+  }
 
   sf_joined <- sf_obj |>
     dplyr::left_join(
@@ -390,11 +397,14 @@ explode_sf_with_lookup <- function(sf_obj,
   # Handle export: NULL = none, TRUE = auto-name, character = explicit path
   .handle_export(export, sf_exp_wgs, label)
 
-  # Implied gamma values (for calibration)
-  gamma_r_implied <- params$alpha_r /
-    (stats$w_bar / (2 * sin(pi / stats$n_regions)))
-  gamma_l_implied <- params$alpha_l /
-    (2 * stats$R_local / sqrt(stats$n_bar))
+  # Implied gamma values (for calibration); guard against degenerate
+  # zero-area / coincident-centroid inputs that would divide by zero
+  gamma_r_implied <- .safe_divide(
+    params$alpha_r, stats$w_bar / (2 * sin(pi / stats$n_regions))
+  )
+  gamma_l_implied <- .safe_divide(
+    params$alpha_l, 2 * stats$R_local / sqrt(stats$n_bar)
+  )
 
   result <- list(
     sf_orig         = sf_obj,

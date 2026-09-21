@@ -5,7 +5,7 @@
 \alias{update_focus_labels}
 \alias{update_focus_palette}
 \alias{update_focus_data}
-\title{Focus-map Shiny proxy}
+\title{[Experimental] Focus-map Shiny proxy}
 \usage{
 focusMapProxy(outputId, session = NULL)
 

@@ -17,7 +17,7 @@ assign_spatial_groups(
 
 \item{method}{One of \code{"quadrants"}, \code{"clusters"}, or \code{"individual"}.}
 
-\item{groups}{Number of clusters for \code{method = "clusters"}.}
+\item{groups}{Number of clusters for \code{method = "clusters"} (minimum 2).}
 
 \item{seed}{Random seed for deterministic clustering.}
 

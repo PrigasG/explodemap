@@ -1,3 +1,96 @@
+# explodemap 0.5.0
+
+## New features
+
+* New `as_sf()` converts an `exploded_map` or `grouped_exploded_map` back to
+  a plain `sf` data frame (displaced, local, or original layer) for
+  downstream GIS work.
+* New `displacement_magnitudes()` reports per-feature displacement (`dx`,
+  `dy`, `distance`) in metres.
+* New `compare_layouts()` summarises per-feature and aggregate displacement
+  changes between two layouts of the same input (e.g. parameter tuning or
+  before/after refinement). It now verifies that both layouts cover the same
+  input features in the same order instead of only checking class and row
+  count.
+* New vignette `explode-edit-render` walks the full explode-measure-edit-
+  compare-render loop, including a scripted editorial pass via
+  `update_exploded_layout()` and export back to `sf`.
+* Added `codemeta.json` metadata.
+* `focus_map()` and friends, `focus_map_preset()`, `explode_state()`, and
+  `hhs_focus_map()` are now marked `[Experimental]` in their documentation.
+
+## Bug fixes and hardening
+
+* `validate_input()` now enforces metre-based projected CRSs: inputs in
+  non-metre map units (e.g. feet-based projections) are rejected with an
+  error instead of a warning, so kilometre/metre labels, calibration
+  columns, `_m` fields, offsets, and summaries are always in metres.
+  The same enforcement now applies to `apply_region_offsets()`,
+  `layout_children()`, and `as_hhs_states()`, which previously accepted
+  projected-feet data while treating their metre distances as feet.
+  Missing/empty group values are still rejected, and `explode_sf()` "Other"
+  detection is NA-safe.
+* `explode_grouped(allow_other = TRUE)` now honours its documentation:
+  `"Other"` features are excluded from the local explosion and anchor
+  placement, then recombined unchanged (original row order preserved).
+* `assign_spatial_groups()` rejects `groups < 2` for `method = "clusters"`
+  instead of silently promoting `1` to two groups.
+* `ggiraph` is restored to `Suggests`: it is used by the shipped
+  `inst/examples/hhs_app.R` example.
+* Geometry replacement now goes through `sf::st_geometry()` in
+  `explode_sf_core()`, `.translate_by_offsets()`, and `explode_grouped()`, so
+  inputs whose geometry column is not named `"geometry"` translate correctly.
+* `validate_input()` rejects missing/empty group values and warns on non-metre
+  projected units; `explode_sf()` "Other" detection is NA-safe.
+* `explode_section()` errors with a targeted message when the selected section
+  has fewer than two distinct `region_col` values (the `section_col` default
+  only works with `section = "all"`).
+* TIGER helpers: fixed `.compass()` direction mapping (was ~180° off), named
+  `region_map` entries assigned to multiple regions now error, corrupt cache
+  files are dropped and re-downloaded, and zip listings are sanity-checked.
+* `explode_sf_with_lookup()` rejects duplicated join keys; named `region_map`
+  paths in the county/TIGER helpers reject counties mapped to multiple regions.
+* `export_topojson()` removes stale output before running mapshaper and checks
+  the mapshaper exit status.
+* `feature_ids()` rejects duplicated IDs; `layout_offsets()`,
+  `transition_data()`, and `connector_geometry()` now resolve the
+  `require_stable_id` default after `match.arg(level)`.
+* `explode_grouped()` gains `allow_other = FALSE` for parity with
+  `explode_sf()`.
+* `optimize_grouped_layout()` rejects empty grids and invalid weights; default
+  grid cost documented (81 full layouts).
+* `diagnose_layout()` per-group nearest gap considers both pair endpoints.
+* `validate_explodemap_input()` rejects invalid geometries and geographic
+  (lon/lat) CRS; `assign_spatial_groups()` validates `groups`.
+* `focus_map()` and `as_hhs_states()` error on a missing CRS instead of
+  silently assuming WGS 84.
+* `layout_children()` caps `max_iter` at 50 above 2,000 features (quadratic
+  per-iteration cost) with a warning.
+* Degenerate numeric inputs yield `NA` instead of `Inf`/`NaN` in implied gamma
+  and ratio statistics.
+* Added a real R-CMD-check workflow (macOS R 4.5, Windows release, Ubuntu
+  release/devel/oldrel-1); README badge now reflects it.
+* README: install block leads with the GitHub development version (0.5.0);
+  `dragmapr` handoff shows Shiny state capture via `d_widget_state()`.
+* `ggiraph` restored to `Suggests` (used by `inst/examples/hhs_app.R`); removed
+  the stray `tests/testthat/Rplots.pdf` from version control.
+* `compare_layouts()` compares primary layout classes, so mixing an
+  `exploded_map` with a `grouped_exploded_map` (which inherits from it) is
+  rejected with the documented class-mismatch error instead of a confusing
+  feature-count error.
+* Grouped geometry unions (in `compute_stats()`, `explode_sf_core()`,
+  `explode_grouped()` internals, `estimate_block_radii()`, `group_geometry()`,
+  `.region_centroids()`, `.group_gap_report()`, and `.hhs_region_label_points()`)
+  resolve the active geometry column instead of hardcoding `"geometry"`, so
+  inputs with a renamed geometry column work end to end.
+* Named `region_map` assignment in `.attach_regions_county()` and
+  `.attach_regions_tiger()` replaces a pre-existing `region` column instead
+  of producing a broken `region.x` / `region.y` join.
+* dragmapr integration is version-tolerant: `apply_dragmapr_state()` is
+  resolved at runtime (no `dragmapr::` check warning on older dragmapr), and
+  dragmapr-dependent tests skip cleanly when the installed dragmapr predates
+  the state API.
+
 # explodemap 0.4.0
 
 * Cleaned up the remaining package-prefixed API name:

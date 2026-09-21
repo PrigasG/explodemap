@@ -31,10 +31,10 @@ representative point anchors the expansion. Defaults to the union of \code{x}.}
 
 \item{scale}{Radial expansion multiplier applied to source vectors.}
 
-\item{radial_kick}{Additional outward movement in projected map units.
+\item{radial_kick}{Additional outward movement in metres.
 Defaults to two percent of the child layer's bounding-box diagonal.}
 
-\item{gap}{Minimum separation in projected map units. Defaults to one
+\item{gap}{Minimum separation in metres. Defaults to one
 percent of the child layer's bounding-box diagonal.}
 
 \item{collision}{Collision approximation: feature bounding boxes or
@@ -49,7 +49,10 @@ radians.}
 \item{bounds}{Optional bounding box supplied as an \code{sf}/\code{sfc} object,
 \code{st_bbox}, or numeric \code{c(xmin, ymin, xmax, ymax)}.}
 
-\item{max_iter}{Maximum collision-refinement iterations.}
+\item{max_iter}{Maximum collision-refinement iterations. Each iteration scans
+all feature pairs, so cost grows quadratically with the number of
+features: for large \code{x}, lower this (the iteration cap is also reduced
+automatically above 2,000 features) or lay out a subset of children.}
 }
 \value{
 An \code{explodemap_child_layout} with \code{offsets}, composed \code{geometry},
@@ -58,7 +61,7 @@ IDs, source/final anchors, base offsets, distance, bearing, bearing drift,
 and residual collision counts.
 }
 \description{
-Computes a renderer-neutral child expansion in projected map units. Child
+Computes a renderer-neutral child expansion in metres. Child
 features move radially away from the parent anchor, then a bounded
 axis-aligned bounding-box or circle solver separates collisions while an
 attraction term and bearing guard preserve the source geography's mental

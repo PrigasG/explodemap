@@ -2,7 +2,7 @@
 % Please edit documentation in R/hhs.R
 \name{hhs_focus_map}
 \alias{hhs_focus_map}
-\title{Create a focus-map widget for HHS regions}
+\title{[Experimental] Create a focus-map widget for HHS regions}
 \usage{
 hhs_focus_map(
   states,

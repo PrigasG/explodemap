@@ -42,6 +42,11 @@ overlaps contribute zero, so the search result is identical to before.}
 
 \item{...}{Passed to \code{\link[=explode_grouped]{explode_grouped()}}.}
 }
+\details{
+The default grid evaluates 81 parameter combinations, each running
+a full \code{\link[=explode_grouped]{explode_grouped()}} layout plus diagnostics. Pass a smaller \code{grid}
+to cut compute time.
+}
 \value{
 A \code{grouped_exploded_map} with \code{optimization} metadata.
 }

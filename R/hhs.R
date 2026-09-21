@@ -90,7 +90,7 @@ hhs_palette <- function() {
 #' HHS reference-layout display offsets
 #'
 #' These offsets are a small documented finishing step for the national HHS
-#' reference view. They are interpreted in metres for projected layouts.
+#' reference view. They are interpreted in metres.
 #'
 #' @return A data frame with `region`, `dx_m`, and `dy_m`.
 #' @export
@@ -162,11 +162,17 @@ as_hhs_states <- function(states, crs = 5070) {
   }
 
   if (is.na(sf::st_crs(states))) {
-    sf::st_crs(states) <- 4326
+    # Guessing WGS 84 here would silently misplace every state.
+    stop(
+      "`states` has no CRS. Set it with sf::st_set_crs() before calling ",
+      "as_hhs_states().",
+      call. = FALSE
+    )
   }
   if (isTRUE(sf::st_is_longlat(states))) {
     states <- sf::st_transform(states, crs)
   }
+  .check_metre_crs(states, "states")
 
   states
 }
@@ -218,7 +224,7 @@ hhs_layout <- function(states,
   )
 }
 
-#' Create a focus-map widget for HHS regions
+#' [Experimental] Create a focus-map widget for HHS regions
 #'
 #' @param states An `sf` object of state or territory polygons.
 #' @param apply_offsets Logical. Apply `hhs_display_offsets()` before drawing?
@@ -272,11 +278,9 @@ hhs_focus_map <- function(states,
 }
 
 .hhs_region_label_points <- function(states) {
-  labels_sf <- suppressWarnings(sf::st_centroid(dplyr::summarize(
-    dplyr::group_by(states, .data$hhs_region),
-    geometry = sf::st_union(.data$geometry),
-    .groups = "drop"
-  )))
+  labels_sf <- suppressWarnings(sf::st_centroid(
+    .union_by_group(states, "hhs_region")
+  ))
   coords <- sf::st_coordinates(labels_sf)
   dplyr::arrange(
     data.frame(

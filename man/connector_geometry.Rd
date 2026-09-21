@@ -25,7 +25,8 @@ connector_geometry(
 \item{include_unmoved}{Include zero-distance rows.}
 
 \item{require_stable_id}{Require a real feature ID column for feature-level
-persistent handoffs. When \code{TRUE}, row-number fallback IDs are rejected.}
+persistent handoffs. When \code{TRUE}, row-number fallback IDs are rejected.
+Defaults to \code{TRUE} when \code{level = "feature"}, \code{FALSE} otherwise.}
 }
 \value{
 An \code{sf} line layer with movement attributes.

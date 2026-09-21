@@ -3,6 +3,11 @@ test_that("Pipeline Studio deferred work is reactive-safe and single-flight", {
   skip_if_not_installed("later")
   skip_if_not_installed("bslib")
   skip_if_not_installed("dragmapr")
+  # Sourcing the app needs dragmaprOutput(), which predates CRAN dragmapr 0.2.0.
+  skip_if_not(
+    "dragmaprOutput" %in% getNamespaceExports("dragmapr"),
+    "Pipeline Studio needs a dragmapr with dragmaprOutput()"
+  )
 
   app_env <- new.env(parent = globalenv())
   app_file <- system.file("shiny", "pipeline-studio", "app.R", package = "explodemap")

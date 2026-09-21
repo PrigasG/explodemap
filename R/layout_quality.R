@@ -49,12 +49,17 @@ diagnose_layout <- function(result, label_col = NULL, label_size = NULL, state =
   displacement_details <- displacement_details[, c(
     "group_id", "cx_orig", "cy_orig", "cx_grouped", "cy_grouped", "distance_m"
   ), drop = FALSE]
+  # Nearest gap per group: each pair contributes to BOTH endpoints, otherwise
+  # a group that only ever appears as region_j would get NA.
+  pair_gaps <- rbind(
+    data.frame(group_id = gaps$pairs$region_i, gap = gaps$pairs$gap),
+    data.frame(group_id = gaps$pairs$region_j, gap = gaps$pairs$gap)
+  )
   group_metrics <- displacement_details |>
     dplyr::left_join(
-      gaps$pairs |>
-        dplyr::group_by(.data$region_i) |>
-        dplyr::summarise(nearest_gap_m = min(.data$gap, na.rm = TRUE), .groups = "drop") |>
-        dplyr::rename(group_id = "region_i"),
+      pair_gaps |>
+        dplyr::group_by(.data$group_id) |>
+        dplyr::summarise(nearest_gap_m = min(.data$gap, na.rm = TRUE), .groups = "drop"),
       by = "group_id"
     )
   recommendations <- layout_recommendations(
@@ -286,6 +291,9 @@ layout_objective <- function(overlap = 10,
 #' @param kappa,padding,delta,padding_sep Candidate values used when `grid` is
 #'   `NULL`.
 #' @param ... Passed to [explode_grouped()].
+#' @details The default grid evaluates 81 parameter combinations, each running
+#'   a full [explode_grouped()] layout plus diagnostics. Pass a smaller `grid`
+#'   to cut compute time.
 #' @return A `grouped_exploded_map` with `optimization` metadata.
 #' @export
 optimize_grouped_layout <- function(x,
@@ -321,6 +329,19 @@ optimize_grouped_layout <- function(x,
   }
   if (!is.data.frame(grid) || !all(c("kappa", "padding", "delta", "padding_sep") %in% names(grid))) {
     stop("`grid` must contain kappa, padding, delta, and padding_sep columns.", call. = FALSE)
+  }
+  if (nrow(grid) == 0L) {
+    stop("`grid` must contain at least one parameter combination.", call. = FALSE)
+  }
+  required_weights <- c("overlap", "displacement", "unused_space", "label_overlap")
+  if (!is.numeric(weights) || is.null(names(weights)) ||
+      !all(required_weights %in% names(weights)) ||
+      any(!is.finite(weights[required_weights]))) {
+    stop(
+      "`weights` must be a named numeric vector with finite values for: ",
+      paste(required_weights, collapse = ", "), ". See layout_objective().",
+      call. = FALSE
+    )
   }
 
   runs <- vector("list", nrow(grid))
@@ -403,7 +424,7 @@ as_dragmapr <- function(result) {
 #' bundles geometry and absolute anchors into a handoff list, this emits the
 #' geometry-free *state* that the interactive editor and static renderers
 #' consume: the exploded anchors (`anchor_x`/`anchor_y`) are converted to the
-#' metre deltas (`dx_m`/`dy_m`) relative to the current region centroids that
+#' deltas (`dx_m`/`dy_m`, in metres) relative to the current region centroids that
 #' `dragmapr` expects, and the projected CRS plus a provenance `geometry_id`
 #' are recorded so the state can be reapplied safely in a later session.
 #'
@@ -591,9 +612,7 @@ update_exploded_layout <- function(result,
 }
 
 .group_gap_report <- function(sf_obj, region_col) {
-  reg <- sf_obj |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  reg <- .union_by_group(sf_obj, region_col)
   n <- nrow(reg)
   pairs <- data.frame(region_i = character(), region_j = character(), gap = numeric())
   if (n < 2) return(list(minimum_group_gap = NA_real_, pairs = pairs))
@@ -634,9 +653,7 @@ update_exploded_layout <- function(result,
 }
 
 .region_centroids <- function(sf_obj, region_col, centroid_fun = "centroid") {
-  reg <- sf_obj |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(region_col))) |>
-    dplyr::summarise(geometry = sf::st_union(.data$geometry), .groups = "drop")
+  reg <- .union_by_group(sf_obj, region_col)
   xy <- sf::st_coordinates(centroid_geoms(reg, centroid_fun))
   out <- data.frame(
     region = reg[[region_col]],
