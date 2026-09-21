@@ -26,7 +26,7 @@ assign_spatial_groups(
 
 - groups:
 
-  Number of clusters for `method = "clusters"`.
+  Number of clusters for `method = "clusters"` (minimum 2).
 
 - seed:
 

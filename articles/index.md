@@ -20,6 +20,11 @@
 - [State-first composition with
   dragmapr](https://prigasg.github.io/explodemap/articles/state-first-composition.md):
 
+### Explode, edit, compare, render
+
+- [Explode, edit, compare,
+  render](https://prigasg.github.io/explodemap/articles/explode-edit-render.md):
+
 ### Paper replication and drag helpers
 
 - [Reproducing the paper

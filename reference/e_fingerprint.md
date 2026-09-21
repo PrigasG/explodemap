@@ -35,8 +35,8 @@ e_fingerprint(
 
 - include_parameters:
 
-  Include layout parameters and package version when `x` is a grouped
-  explodemap layout.
+  Include layout parameters (when `x` is a grouped explodemap layout)
+  and the package version in the fingerprint.
 
 - require_stable_id:
 

@@ -1,8 +1,8 @@
 # Explode a US state from TIGER/Line data
 
-Downloads administrative boundaries automatically, groups them into
-regions, derives displacement parameters via Analytical Results 1-2, and
-returns an `exploded_map` S3 object.
+\[Experimental\] Downloads administrative boundaries automatically,
+groups them into regions, derives displacement parameters via Analytical
+Results 1-2, and returns an `exploded_map` S3 object.
 
 ## Usage
 
@@ -89,13 +89,13 @@ explode_state(
 
 - alpha_r:
 
-  Optional manual override for regional separation (metres). May be
+  Optional manual override for regional separation (in metres). May be
   supplied independently of `alpha_l`.
 
 - alpha_l:
 
-  Optional manual override for local expansion (metres). May be supplied
-  independently of `alpha_r`.
+  Optional manual override for local expansion (in metres). May be
+  supplied independently of `alpha_r`.
 
 - refine:
 

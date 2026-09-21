@@ -37,7 +37,8 @@ transition_data(
 - require_stable_id:
 
   Require a real feature ID column for feature-level persistent
-  handoffs. When `TRUE`, row-number fallback IDs are rejected.
+  handoffs. When `TRUE`, row-number fallback IDs are rejected. Defaults
+  to `TRUE` when `level = "feature"`, `FALSE` otherwise.
 
 ## Value
 

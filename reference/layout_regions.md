@@ -99,4 +99,7 @@ layout_regions(
 
 ## Value
 
-data.frame with region, anchor_x, anchor_y, block_radius, n_units
+A data.frame with one row per region: the `region_col` column, source
+centroid (`cx`, `cy`), estimated `block_radius`, `n_units`, and the
+computed `anchor_x`/`anchor_y` (plus solver `target_x`/`target_y`; the
+`auto_collision` mode adds `.converged`/`.iterations`).

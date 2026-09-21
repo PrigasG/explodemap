@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">explodemap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@
     <li><a class="dropdown-item" href="../articles/workflow-guide.html">Choosing a workflow</a></li>
     <li><a class="dropdown-item" href="../articles/grouped-layouts.html">Grouped layouts and anchor placement</a></li>
     <li><a class="dropdown-item" href="../articles/state-first-composition.html">State-first composition with dragmapr</a></li>
+    <li><a class="dropdown-item" href="../articles/explode-edit-render.html">Explode, edit, compare, render</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing paper examples and drag helpers</a></li>
   </ul></li>
@@ -74,6 +75,36 @@
         </dt>
         <dd>Explode a US state from TIGER/Line data</dd>
       </dl></div><div class="section level2">
+      <h2 id="geometry-conversion-and-displacement-analysis">Geometry conversion and displacement analysis<a class="anchor" aria-label="anchor" href="#geometry-conversion-and-displacement-analysis"></a></h2>
+
+      <div class="section-desc"><p>Convert exploded layouts back to plain sf geometry and measure or compare per-feature displacement.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="as_sf.html">as_sf()</a></code>
+
+        </dt>
+        <dd>Extract plain sf geometry from an exploded layout</dd>
+
+        <dt>
+
+          <code><a href="displacement_magnitudes.html">displacement_magnitudes()</a></code>
+
+        </dt>
+        <dd>Per-feature displacement magnitudes of an exploded layout</dd>
+
+        <dt>
+
+          <code><a href="compare_layouts.html">compare_layouts()</a></code>
+
+        </dt>
+        <dd>Compare displacement between two exploded layouts</dd>
+      </dl></div><div class="section level2">
       <h2 id="interactive-focus-maps">Interactive focus maps<a class="anchor" aria-label="anchor" href="#interactive-focus-maps"></a></h2>
 
       <div class="section-desc"><p>htmlwidgets and Shiny helpers for selected-feature focus, labels, and non-blocking information cards.</p></div>
@@ -109,7 +140,7 @@
           <code><a href="focusMapProxy.html">focusMapProxy()</a></code> <code><a href="focusMapProxy.html">update_focus_labels()</a></code> <code><a href="focusMapProxy.html">update_focus_palette()</a></code> <code><a href="focusMapProxy.html">update_focus_data()</a></code>
 
         </dt>
-        <dd>Focus-map Shiny proxy</dd>
+        <dd>[Experimental] Focus-map Shiny proxy</dd>
       </dl></div><div class="section level2">
       <h2 id="grouped-layouts">Grouped layouts<a class="anchor" aria-label="anchor" href="#grouped-layouts"></a></h2>
 
@@ -433,7 +464,7 @@
           <code><a href="hhs_focus_map.html">hhs_focus_map()</a></code>
 
         </dt>
-        <dd>Create a focus-map widget for HHS regions</dd>
+        <dd>[Experimental] Create a focus-map widget for HHS regions</dd>
 
         <dt>
 

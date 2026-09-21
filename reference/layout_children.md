@@ -1,12 +1,11 @@
 # Lay out child geography around a parent
 
-Computes a renderer-neutral child expansion in projected map units.
-Child features move radially away from the parent anchor, then a bounded
-axis-aligned bounding-box or circle solver separates collisions while an
-attraction term and bearing guard preserve the source geography's mental
-map. The returned base offsets are algorithmic movement;
-manual/editorial movement belongs in a `dragmapr_state` and can be
-composed downstream.
+Computes a renderer-neutral child expansion in metres. Child features
+move radially away from the parent anchor, then a bounded axis-aligned
+bounding-box or circle solver separates collisions while an attraction
+term and bearing guard preserve the source geography's mental map. The
+returned base offsets are algorithmic movement; manual/editorial
+movement belongs in a `dragmapr_state` and can be composed downstream.
 
 ## Usage
 
@@ -52,13 +51,13 @@ layout_children(
 
 - radial_kick:
 
-  Additional outward movement in projected map units. Defaults to two
-  percent of the child layer's bounding-box diagonal.
+  Additional outward movement in metres. Defaults to two percent of the
+  child layer's bounding-box diagonal.
 
 - gap:
 
-  Minimum separation in projected map units. Defaults to one percent of
-  the child layer's bounding-box diagonal.
+  Minimum separation in metres. Defaults to one percent of the child
+  layer's bounding-box diagonal.
 
 - collision:
 
@@ -81,7 +80,10 @@ layout_children(
 
 - max_iter:
 
-  Maximum collision-refinement iterations.
+  Maximum collision-refinement iterations. Each iteration scans all
+  feature pairs, so cost grows quadratically with the number of
+  features: for large `x`, lower this (the iteration cap is also reduced
+  automatically above 2,000 features) or lay out a subset of children.
 
 ## Value
 

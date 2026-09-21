@@ -29,6 +29,7 @@ explode_grouped(
   block_sep = NULL,
   max_iter = 60,
   fix_invalid = TRUE,
+  allow_other = FALSE,
   centroid_fun = c("centroid", "point_on_surface"),
   plot = TRUE,
   export = NULL,
@@ -67,7 +68,7 @@ explode_grouped(
 
 - alpha_l:
 
-  Local expansion parameter for Level 1 (metres)
+  Local expansion parameter for Level 1 (in metres)
 
 - p:
 
@@ -114,6 +115,13 @@ explode_grouped(
 - fix_invalid:
 
   Auto-repair invalid geometries (default TRUE)
+
+- allow_other:
+
+  Keep features labeled `"Other"` in the output without moving them:
+  they are excluded from the local explosion and anchor placement, then
+  recombined unchanged. Defaults to `FALSE` (error on `"Other"` unless
+  handled).
 
 - centroid_fun:
 

@@ -53,13 +53,13 @@ explode_sf(
 
 - alpha_r:
 
-  Optional manual override for regional separation (metres). May be
+  Optional manual override for regional separation (in metres). May be
   supplied independently of `alpha_l`.
 
 - alpha_l:
 
-  Optional manual override for local expansion (metres). May be supplied
-  independently of `alpha_r`.
+  Optional manual override for local expansion (in metres). May be
+  supplied independently of `alpha_r`.
 
 - refine:
 

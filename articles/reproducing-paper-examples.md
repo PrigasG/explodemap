@@ -522,7 +522,7 @@ The review pass also records rendered layouts and audits:
 sessionInfo()
 #> R version 4.6.1 (2026-06-24)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.4 LTS
+#> Running under: Ubuntu 24.04.5 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -541,18 +541,18 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] dplyr_1.2.1      sf_1.1-2         explodemap_0.4.0
+#> [1] dplyr_1.2.1      sf_1.1-3         explodemap_0.5.0
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] jsonlite_2.0.0     compiler_4.6.1     tidyselect_1.2.1   Rcpp_1.1.2        
 #>  [5] jquerylib_0.1.4    systemfonts_1.3.2  textshaping_1.0.5  yaml_2.3.12       
 #>  [9] fastmap_1.2.0      R6_2.6.1           generics_0.1.4     classInt_0.4-11   
-#> [13] knitr_1.51         htmlwidgets_1.6.4  tibble_3.3.1       desc_1.4.3        
+#> [13] knitr_1.52         htmlwidgets_1.6.4  tibble_3.3.1       desc_1.4.3        
 #> [17] units_1.0-1        DBI_1.3.0          bslib_0.12.0       pillar_1.11.1     
-#> [21] rlang_1.3.0        cachem_1.1.0       xfun_0.60          fs_2.1.0          
+#> [21] rlang_1.3.0        cachem_1.1.0       xfun_0.61          fs_2.1.0          
 #> [25] sass_0.4.10        otel_0.2.0         cli_3.6.6          pkgdown_2.2.1     
 #> [29] magrittr_2.0.5     class_7.3-23       digest_0.6.39      grid_4.6.1        
 #> [33] lifecycle_1.0.5    vctrs_0.7.3        KernSmooth_2.23-26 proxy_0.4-29      
 #> [37] evaluate_1.0.5     glue_1.8.1         ragg_1.5.2         e1071_1.7-17      
-#> [41] rmarkdown_2.31     tools_4.6.1        pkgconfig_2.0.3    htmltools_0.5.9
+#> [41] rmarkdown_2.32     tools_4.6.1        pkgconfig_2.0.3    htmltools_0.5.9
 ```

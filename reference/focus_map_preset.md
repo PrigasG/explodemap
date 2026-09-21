@@ -1,6 +1,6 @@
 # Focus-map option presets
 
-Returns a named list of
+\[Experimental\] Returns a named list of
 [`focus_map()`](https://prigasg.github.io/explodemap/reference/focus_map.md)
 arguments for common interactive mapping workflows. Presets are
 intentionally plain lists so they can be inspected, modified, or passed

@@ -62,6 +62,13 @@ optimize_grouped_layout(
   Passed to
   [`explode_grouped()`](https://prigasg.github.io/explodemap/reference/explode_grouped.md).
 
+## Details
+
+The default grid evaluates 81 parameter combinations, each running a
+full
+[`explode_grouped()`](https://prigasg.github.io/explodemap/reference/explode_grouped.md)
+layout plus diagnostics. Pass a smaller `grid` to cut compute time.
+
 ## Value
 
 A `grouped_exploded_map` with `optimization` metadata.

@@ -29,11 +29,11 @@ explode_sf_core(
 
 - alpha_r:
 
-  Regional separation magnitude (metres)
+  Regional separation magnitude (in metres)
 
 - alpha_l:
 
-  Local expansion magnitude (metres)
+  Local expansion magnitude (in metres)
 
 - p:
 

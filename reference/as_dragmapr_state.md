@@ -8,10 +8,10 @@ Produces a
 which bundles geometry and absolute anchors into a handoff list, this
 emits the geometry-free *state* that the interactive editor and static
 renderers consume: the exploded anchors (`anchor_x`/`anchor_y`) are
-converted to the metre deltas (`dx_m`/`dy_m`) relative to the current
-region centroids that `dragmapr` expects, and the projected CRS plus a
-provenance `geometry_id` are recorded so the state can be reapplied
-safely in a later session.
+converted to the deltas (`dx_m`/`dy_m`, in metres) relative to the
+current region centroids that `dragmapr` expects, and the projected CRS
+plus a provenance `geometry_id` are recorded so the state can be
+reapplied safely in a later session.
 
 ## Usage
 

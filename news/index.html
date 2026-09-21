@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">explodemap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@
     <li><a class="dropdown-item" href="../articles/workflow-guide.html">Choosing a workflow</a></li>
     <li><a class="dropdown-item" href="../articles/grouped-layouts.html">Grouped layouts and anchor placement</a></li>
     <li><a class="dropdown-item" href="../articles/state-first-composition.html">State-first composition with dragmapr</a></li>
+    <li><a class="dropdown-item" href="../articles/explode-edit-render.html">Explode, edit, compare, render</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing paper examples and drag helpers</a></li>
   </ul></li>
@@ -44,6 +45,64 @@
       <small>Source: <a href="https://github.com/PrigasG/explodemap/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.0" id="explodemap-050">explodemap 0.5.0<a class="anchor" aria-label="anchor" href="#explodemap-050"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-5-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-5-0"></a></h3>
+<ul><li>New <code><a href="../reference/as_sf.html">as_sf()</a></code> converts an <code>exploded_map</code> or <code>grouped_exploded_map</code> back to a plain <code>sf</code> data frame (displaced, local, or original layer) for downstream GIS work.</li>
+<li>New <code><a href="../reference/displacement_magnitudes.html">displacement_magnitudes()</a></code> reports per-feature displacement (<code>dx</code>, <code>dy</code>, <code>distance</code>) in metres.</li>
+<li>New <code><a href="../reference/compare_layouts.html">compare_layouts()</a></code> summarises per-feature and aggregate displacement changes between two layouts of the same input (e.g. parameter tuning or before/after refinement). It now verifies that both layouts cover the same input features in the same order instead of only checking class and row count.</li>
+<li>New vignette <code>explode-edit-render</code> walks the full explode-measure-edit- compare-render loop, including a scripted editorial pass via <code><a href="../reference/update_exploded_layout.html">update_exploded_layout()</a></code> and export back to <code>sf</code>.</li>
+<li>Added <code>codemeta.json</code> metadata.</li>
+<li>
+<code><a href="../reference/focus_map.html">focus_map()</a></code> and friends, <code><a href="../reference/focus_map_preset.html">focus_map_preset()</a></code>, <code><a href="../reference/explode_state.html">explode_state()</a></code>, and <code><a href="../reference/hhs_focus_map.html">hhs_focus_map()</a></code> are now marked <code>[Experimental]</code> in their documentation.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-and-hardening-0-5-0">Bug fixes and hardening<a class="anchor" aria-label="anchor" href="#bug-fixes-and-hardening-0-5-0"></a></h3>
+<ul><li>
+<code><a href="../reference/validate_input.html">validate_input()</a></code> now enforces metre-based projected CRSs: inputs in non-metre map units (e.g. feet-based projections) are rejected with an error instead of a warning, so kilometre/metre labels, calibration columns, <code>_m</code> fields, offsets, and summaries are always in metres. The same enforcement now applies to <code><a href="../reference/apply_region_offsets.html">apply_region_offsets()</a></code>, <code><a href="../reference/layout_children.html">layout_children()</a></code>, and <code><a href="../reference/as_hhs_states.html">as_hhs_states()</a></code>, which previously accepted projected-feet data while treating their metre distances as feet. Missing/empty group values are still rejected, and <code><a href="../reference/explode_sf.html">explode_sf()</a></code> “Other” detection is NA-safe.</li>
+<li>
+<code>explode_grouped(allow_other = TRUE)</code> now honours its documentation: <code>"Other"</code> features are excluded from the local explosion and anchor placement, then recombined unchanged (original row order preserved).</li>
+<li>
+<code><a href="../reference/assign_spatial_groups.html">assign_spatial_groups()</a></code> rejects <code>groups &lt; 2</code> for <code>method = "clusters"</code> instead of silently promoting <code>1</code> to two groups.</li>
+<li>
+<code>ggiraph</code> is restored to <code>Suggests</code>: it is used by the shipped <code>inst/examples/hhs_app.R</code> example.</li>
+<li>Geometry replacement now goes through <code><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">sf::st_geometry()</a></code> in <code><a href="../reference/explode_sf_core.html">explode_sf_core()</a></code>, <code>.translate_by_offsets()</code>, and <code><a href="../reference/explode_grouped.html">explode_grouped()</a></code>, so inputs whose geometry column is not named <code>"geometry"</code> translate correctly.</li>
+<li>
+<code><a href="../reference/validate_input.html">validate_input()</a></code> rejects missing/empty group values and warns on non-metre projected units; <code><a href="../reference/explode_sf.html">explode_sf()</a></code> “Other” detection is NA-safe.</li>
+<li>
+<code><a href="../reference/explode_section.html">explode_section()</a></code> errors with a targeted message when the selected section has fewer than two distinct <code>region_col</code> values (the <code>section_col</code> default only works with <code>section = "all"</code>).</li>
+<li>TIGER helpers: fixed <code>.compass()</code> direction mapping (was ~180° off), named <code>region_map</code> entries assigned to multiple regions now error, corrupt cache files are dropped and re-downloaded, and zip listings are sanity-checked.</li>
+<li>
+<code><a href="../reference/explode_sf_with_lookup.html">explode_sf_with_lookup()</a></code> rejects duplicated join keys; named <code>region_map</code> paths in the county/TIGER helpers reject counties mapped to multiple regions.</li>
+<li>
+<code><a href="../reference/export_topojson.html">export_topojson()</a></code> removes stale output before running mapshaper and checks the mapshaper exit status.</li>
+<li>
+<code>feature_ids()</code> rejects duplicated IDs; <code><a href="../reference/layout_offsets.html">layout_offsets()</a></code>, <code><a href="../reference/transition_data.html">transition_data()</a></code>, and <code><a href="../reference/connector_geometry.html">connector_geometry()</a></code> now resolve the <code>require_stable_id</code> default after <code>match.arg(level)</code>.</li>
+<li>
+<code><a href="../reference/explode_grouped.html">explode_grouped()</a></code> gains <code>allow_other = FALSE</code> for parity with <code><a href="../reference/explode_sf.html">explode_sf()</a></code>.</li>
+<li>
+<code><a href="../reference/optimize_grouped_layout.html">optimize_grouped_layout()</a></code> rejects empty grids and invalid weights; default grid cost documented (81 full layouts).</li>
+<li>
+<code><a href="../reference/diagnose_layout.html">diagnose_layout()</a></code> per-group nearest gap considers both pair endpoints.</li>
+<li>
+<code><a href="../reference/validate_explodemap_input.html">validate_explodemap_input()</a></code> rejects invalid geometries and geographic (lon/lat) CRS; <code><a href="../reference/assign_spatial_groups.html">assign_spatial_groups()</a></code> validates <code>groups</code>.</li>
+<li>
+<code><a href="../reference/focus_map.html">focus_map()</a></code> and <code><a href="../reference/as_hhs_states.html">as_hhs_states()</a></code> error on a missing CRS instead of silently assuming WGS 84.</li>
+<li>
+<code><a href="../reference/layout_children.html">layout_children()</a></code> caps <code>max_iter</code> at 50 above 2,000 features (quadratic per-iteration cost) with a warning.</li>
+<li>Degenerate numeric inputs yield <code>NA</code> instead of <code>Inf</code>/<code>NaN</code> in implied gamma and ratio statistics.</li>
+<li>Added a real R-CMD-check workflow (macOS R 4.5, Windows release, Ubuntu release/devel/oldrel-1); README badge now reflects it.</li>
+<li>README: install block leads with the GitHub development version (0.5.0); <code>dragmapr</code> handoff shows Shiny state capture via <code><a href="https://prigasg.github.io/dragmapr/reference/d_widget_state.html" class="external-link">d_widget_state()</a></code>.</li>
+<li>
+<code>ggiraph</code> restored to <code>Suggests</code> (used by <code>inst/examples/hhs_app.R</code>); removed the stray <code>tests/testthat/Rplots.pdf</code> from version control.</li>
+<li>
+<code><a href="../reference/compare_layouts.html">compare_layouts()</a></code> compares primary layout classes, so mixing an <code>exploded_map</code> with a <code>grouped_exploded_map</code> (which inherits from it) is rejected with the documented class-mismatch error instead of a confusing feature-count error.</li>
+<li>Grouped geometry unions (in <code><a href="../reference/compute_stats.html">compute_stats()</a></code>, <code><a href="../reference/explode_sf_core.html">explode_sf_core()</a></code>, <code><a href="../reference/explode_grouped.html">explode_grouped()</a></code> internals, <code><a href="../reference/estimate_block_radii.html">estimate_block_radii()</a></code>, <code><a href="../reference/original_geometry.html">group_geometry()</a></code>, <code>.region_centroids()</code>, <code>.group_gap_report()</code>, and <code>.hhs_region_label_points()</code>) resolve the active geometry column instead of hardcoding <code>"geometry"</code>, so inputs with a renamed geometry column work end to end.</li>
+<li>Named <code>region_map</code> assignment in <code><a href="../reference/dot-attach_regions_county.html">.attach_regions_county()</a></code> and <code><a href="../reference/dot-attach_regions_tiger.html">.attach_regions_tiger()</a></code> replaces a pre-existing <code>region</code> column instead of producing a broken <code>region.x</code> / <code>region.y</code> join.</li>
+<li>dragmapr integration is version-tolerant: <code><a href="https://prigasg.github.io/dragmapr/reference/apply_dragmapr_state.html" class="external-link">apply_dragmapr_state()</a></code> is resolved at runtime (no <code>dragmapr::</code> check warning on older dragmapr), and dragmapr-dependent tests skip cleanly when the installed dragmapr predates the state API.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.0" id="explodemap-040">explodemap 0.4.0<a class="anchor" aria-label="anchor" href="#explodemap-040"></a></h2>
 <ul><li>Cleaned up the remaining package-prefixed API name: <code>explodemap_fingerprint()</code> is now <code><a href="../reference/e_fingerprint.html">e_fingerprint()</a></code>. The old name is no longer exported. Object class names and persisted fingerprint values are unchanged.</li>

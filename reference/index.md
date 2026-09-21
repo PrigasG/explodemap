@@ -12,6 +12,18 @@ projected sf data or state-level TIGER/Line inputs.
 - [`explode_state()`](https://prigasg.github.io/explodemap/reference/explode_state.md)
   : Explode a US state from TIGER/Line data
 
+## Geometry conversion and displacement analysis
+
+Convert exploded layouts back to plain sf geometry and measure or
+compare per-feature displacement.
+
+- [`as_sf()`](https://prigasg.github.io/explodemap/reference/as_sf.md) :
+  Extract plain sf geometry from an exploded layout
+- [`displacement_magnitudes()`](https://prigasg.github.io/explodemap/reference/displacement_magnitudes.md)
+  : Per-feature displacement magnitudes of an exploded layout
+- [`compare_layouts()`](https://prigasg.github.io/explodemap/reference/compare_layouts.md)
+  : Compare displacement between two exploded layouts
+
 ## Interactive focus maps
 
 htmlwidgets and Shiny helpers for selected-feature focus, labels, and
@@ -29,7 +41,7 @@ non-blocking information cards.
   [`update_focus_labels()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md)
   [`update_focus_palette()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md)
   [`update_focus_data()`](https://prigasg.github.io/explodemap/reference/focusMapProxy.md)
-  : Focus-map Shiny proxy
+  : \[Experimental\] Focus-map Shiny proxy
 
 ## Grouped layouts
 
@@ -154,7 +166,7 @@ palettes, and a one-call focus map for HHS-style placeholder shapes.
 - [`hhs_layout()`](https://prigasg.github.io/explodemap/reference/hhs_layout.md)
   : Build an HHS reference layout
 - [`hhs_focus_map()`](https://prigasg.github.io/explodemap/reference/hhs_focus_map.md)
-  : Create a focus-map widget for HHS regions
+  : \[Experimental\] Create a focus-map widget for HHS regions
 - [`as_hhs_states()`](https://prigasg.github.io/explodemap/reference/as_hhs_states.md)
   : Standardize state polygons for HHS reference maps
 - [`hhs_regions()`](https://prigasg.github.io/explodemap/reference/hhs_regions.md)

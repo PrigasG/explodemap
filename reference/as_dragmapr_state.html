@@ -4,14 +4,14 @@ contract – from a grouped_exploded_map. Unlike as_dragmapr(), which
 bundles geometry and absolute anchors into a handoff list, this emits the
 geometry-free state that the interactive editor and static renderers
 consume: the exploded anchors (anchor_x/anchor_y) are converted to the
-metre deltas (dx_m/dy_m) relative to the current region centroids that
+deltas (dx_m/dy_m, in metres) relative to the current region centroids that
 dragmapr expects, and the projected CRS plus a provenance geometry_id
 are recorded so the state can be reapplied safely in a later session."><meta property="og:description" content="Produces a dragmapr::d_state() – the shared editorial composition
 contract – from a grouped_exploded_map. Unlike as_dragmapr(), which
 bundles geometry and absolute anchors into a handoff list, this emits the
 geometry-free state that the interactive editor and static renderers
 consume: the exploded anchors (anchor_x/anchor_y) are converted to the
-metre deltas (dx_m/dy_m) relative to the current region centroids that
+deltas (dx_m/dy_m, in metres) relative to the current region centroids that
 dragmapr expects, and the projected CRS plus a provenance geometry_id
 are recorded so the state can be reapplied safely in a later session."><meta property="og:image" content="https://prigasg.github.io/explodemap/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -21,7 +21,7 @@ are recorded so the state can be reapplied safely in a later session."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">explodemap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,7 @@ are recorded so the state can be reapplied safely in a later session."><meta pro
     <li><a class="dropdown-item" href="../articles/workflow-guide.html">Choosing a workflow</a></li>
     <li><a class="dropdown-item" href="../articles/grouped-layouts.html">Grouped layouts and anchor placement</a></li>
     <li><a class="dropdown-item" href="../articles/state-first-composition.html">State-first composition with dragmapr</a></li>
+    <li><a class="dropdown-item" href="../articles/explode-edit-render.html">Explode, edit, compare, render</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/reproducing-paper-examples.html">Reproducing paper examples and drag helpers</a></li>
   </ul></li>
@@ -65,7 +66,7 @@ contract – from a <code>grouped_exploded_map</code>. Unlike <code><a href="as_
 bundles geometry and absolute anchors into a handoff list, this emits the
 geometry-free <em>state</em> that the interactive editor and static renderers
 consume: the exploded anchors (<code>anchor_x</code>/<code>anchor_y</code>) are converted to the
-metre deltas (<code>dx_m</code>/<code>dy_m</code>) relative to the current region centroids that
+deltas (<code>dx_m</code>/<code>dy_m</code>, in metres) relative to the current region centroids that
 <code>dragmapr</code> expects, and the projected CRS plus a provenance <code>geometry_id</code>
 are recorded so the state can be reapplied safely in a later session.</p>
     </div>
