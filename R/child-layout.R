@@ -1,6 +1,6 @@
 #' Lay out child geography around a parent
 #'
-#' Computes a renderer-neutral child expansion in projected map units. Child
+#' Computes a renderer-neutral child expansion in metres. Child
 #' features move radially away from the parent anchor, then a bounded
 #' axis-aligned bounding-box or circle solver separates collisions while an
 #' attraction term and bearing guard preserve the source geography's mental
@@ -13,9 +13,9 @@
 #' @param parent_geometry Optional parent `sf`, `sfc`, or `sfg` geometry whose
 #'   representative point anchors the expansion. Defaults to the union of `x`.
 #' @param scale Radial expansion multiplier applied to source vectors.
-#' @param radial_kick Additional outward movement in projected map units.
+#' @param radial_kick Additional outward movement in metres.
 #'   Defaults to two percent of the child layer's bounding-box diagonal.
-#' @param gap Minimum separation in projected map units. Defaults to one
+#' @param gap Minimum separation in metres. Defaults to one
 #'   percent of the child layer's bounding-box diagonal.
 #' @param collision Collision approximation: feature bounding boxes or
 #'   centroid circles derived from those boxes.
@@ -69,6 +69,7 @@ layout_children <- function(x,
     stop("`x` must use a projected CRS; longitude/latitude is not supported.",
          call. = FALSE)
   }
+  .check_metre_crs(x)
   collision <- match.arg(collision)
   scale <- child_numeric_scalar(scale, "scale", min = 0)
   attraction <- child_numeric_scalar(attraction, "attraction", min = 0, max = 1)

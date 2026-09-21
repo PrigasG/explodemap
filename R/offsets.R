@@ -301,6 +301,7 @@ read_drag_offsets <- function(x, dir = ".", quiet = FALSE) {
     stop("`x` is in geographic lon/lat coordinates. ",
          "Project it before applying metric offsets.", call. = FALSE)
   }
+  .check_metre_crs(sf_obj)
 
   out <- sf_obj
   known_regions <- as.character(unique(out[[region_col]]))

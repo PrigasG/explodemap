@@ -25,6 +25,9 @@
   non-metre map units (e.g. feet-based projections) are rejected with an
   error instead of a warning, so kilometre/metre labels, calibration
   columns, `_m` fields, offsets, and summaries are always in metres.
+  The same enforcement now applies to `apply_region_offsets()`,
+  `layout_children()`, and `as_hhs_states()`, which previously accepted
+  projected-feet data while treating their metre distances as feet.
   Missing/empty group values are still rejected, and `explode_sf()` "Other"
   detection is NA-safe.
 * `explode_grouped(allow_other = TRUE)` now honours its documentation:

@@ -128,6 +128,23 @@ validate_input <- function(sf_obj, region_col,
   sf_obj
 }
 
+# Shared metre-unit enforcement for entry points that interpret distances in
+# metres (offsets, child-layout gaps/kicks, HHS display offsets). Call after
+# the CRS is known to be present and projected.
+.check_metre_crs <- function(x, arg = "x") {
+  units <- sf::st_crs(x)$units
+  if (!is.null(units) && length(units) == 1L && !is.na(units) &&
+      !tolower(units) %in% c("m", "metre", "meter")) {
+    stop(
+      "`", arg, "` uses map units '", units, "' instead of metres. ",
+      "Distances are interpreted in metres; ",
+      "reproject to a metre-based CRS with st_transform().",
+      call. = FALSE
+    )
+  }
+  invisible(x)
+}
+
 .validate_sf_geometry_column <- function(sf_obj) {
   geom_col <- attr(sf_obj, "sf_column")
   if (is.null(geom_col) || length(geom_col) != 1L || !nzchar(geom_col)) {

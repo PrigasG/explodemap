@@ -43,3 +43,10 @@ test_that("hhs_focus_map returns a grouped focus widget", {
   expect_equal(widget$x$options$groupLabels[["1"]], "HHS 1")
   expect_equal(widget$x$options$coordinateSystem, "planar")
 })
+
+test_that("as_hhs_states rejects non-metre projected units", {
+  states <- make_hhs_state_sf()
+  states_ft <- sf::st_set_crs(states, 2272)
+
+  expect_error(as_hhs_states(states_ft), "instead of metres")
+})

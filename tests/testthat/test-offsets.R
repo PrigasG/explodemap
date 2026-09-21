@@ -62,3 +62,18 @@ test_that("apply_region_offsets updates grouped_exploded_map outputs", {
   expect_equal(after[out$sf_grouped$region == "R2", "X"], before[grouped$sf_grouped$region == "R2", "X"] - 25)
   expect_equal(after[out$sf_grouped$region == "R2", "Y"], before[grouped$sf_grouped$region == "R2", "Y"] + 40)
 })
+
+test_that("apply_region_offsets rejects non-metre projected units", {
+  x <- make_test_sf()
+  x_ft <- sf::st_set_crs(x, 2272)
+  offsets <- data.frame(
+    region = c("A", "B"),
+    dx_m = c(10, 0),
+    dy_m = c(0, 5)
+  )
+
+  expect_error(
+    apply_region_offsets(x_ft, offsets, region_col = "region"),
+    "instead of metres"
+  )
+})

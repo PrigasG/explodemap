@@ -172,6 +172,7 @@ as_hhs_states <- function(states, crs = 5070) {
   if (isTRUE(sf::st_is_longlat(states))) {
     states <- sf::st_transform(states, crs)
   }
+  .check_metre_crs(states, "states")
 
   states
 }
