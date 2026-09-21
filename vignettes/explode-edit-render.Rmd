@@ -56,13 +56,10 @@ plot(layout)
 
 ## 2. Measure the layout
 
-Before editing, quantify what the algorithm did. `explodemap_units()`
-reports the map units all distances are expressed in, and
-`displacement_magnitudes()` gives the per-feature movement:
+Before editing, quantify what the algorithm did. `displacement_magnitudes()`
+gives the per-feature movement in metres:
 
 ```{r measure}
-explodemap_units(layout)
-
 dm <- displacement_magnitudes(layout)
 tapply(dm$distance, as_sf(layout)$region, function(d) round(c(mean = mean(d), max = max(d))))
 ```
@@ -87,8 +84,7 @@ dragmapr::d_edit(layout, state = state)
 ```
 
 For a reproducible tweak — or anywhere without a browser — apply the same
-kind of edit as data. Here region "B" is nudged 50 km east, in the layout's
-CRS units:
+kind of edit as data. Here region "B" is nudged 50 km east:
 
 ```{r edit-scripted}
 nudge <- data.frame(

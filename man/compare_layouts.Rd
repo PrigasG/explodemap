@@ -15,7 +15,7 @@ A list with two elements:
 \itemize{
 \item \code{per_feature}: \code{data.frame} with one row per feature and columns
 \code{distance_before}, \code{distance_after}, and \code{delta} (after minus before),
-in the layout's CRS units.
+in metres.
 \item \code{summary}: \code{data.frame} with one row per layout (\code{"before"}, \code{"after"})
 and columns \code{total}, \code{mean}, and \code{max} displacement.
 }
@@ -24,7 +24,9 @@ and columns \code{total}, \code{mean}, and \code{max} displacement.
 Summarises how per-feature displacement changes between two layouts of the
 same input (e.g. different \code{alpha_r}/\code{alpha_l}/\code{gamma} choices or
 before/after collision refinement). Both layouts must be of the same class
-and cover the same features in the same row order.
+and cover the same input features in the same row order; this is verified
+by comparing the original geometries pairwise, so comparing two unrelated
+layouts of equal size is an error.
 }
 \examples{
 \donttest{

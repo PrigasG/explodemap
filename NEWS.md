@@ -1,4 +1,4 @@
-# explodemap (development version)
+# explodemap 0.5.0
 
 ## New features
 
@@ -6,13 +6,12 @@
   a plain `sf` data frame (displaced, local, or original layer) for
   downstream GIS work.
 * New `displacement_magnitudes()` reports per-feature displacement (`dx`,
-  `dy`, `distance`) in the layout's CRS units.
+  `dy`, `distance`) in metres.
 * New `compare_layouts()` summarises per-feature and aggregate displacement
   changes between two layouts of the same input (e.g. parameter tuning or
-  before/after refinement).
-* New `explodemap_units()` returns the CRS unit string (e.g. `"m"`) for a
-  layout or `sf` object; documentation now says "CRS units" wherever the
-  code does not actually enforce metres.
+  before/after refinement). It now verifies that both layouts cover the same
+  input features in the same order instead of only checking class and row
+  count.
 * New vignette `explode-edit-render` walks the full explode-measure-edit-
   compare-render loop, including a scripted editorial pass via
   `update_exploded_layout()` and export back to `sf`.
@@ -22,6 +21,19 @@
 
 ## Bug fixes and hardening
 
+* `validate_input()` now enforces metre-based projected CRSs: inputs in
+  non-metre map units (e.g. feet-based projections) are rejected with an
+  error instead of a warning, so kilometre/metre labels, calibration
+  columns, `_m` fields, offsets, and summaries are always in metres.
+  Missing/empty group values are still rejected, and `explode_sf()` "Other"
+  detection is NA-safe.
+* `explode_grouped(allow_other = TRUE)` now honours its documentation:
+  `"Other"` features are excluded from the local explosion and anchor
+  placement, then recombined unchanged (original row order preserved).
+* `assign_spatial_groups()` rejects `groups < 2` for `method = "clusters"`
+  instead of silently promoting `1` to two groups.
+* `ggiraph` is restored to `Suggests`: it is used by the shipped
+  `inst/examples/hhs_app.R` example.
 * Geometry replacement now goes through `sf::st_geometry()` in
   `explode_sf_core()`, `.translate_by_offsets()`, and `explode_grouped()`, so
   inputs whose geometry column is not named `"geometry"` translate correctly.
@@ -55,10 +67,10 @@
   and ratio statistics.
 * Added a real R-CMD-check workflow (macOS R 4.5, Windows release, Ubuntu
   release/devel/oldrel-1); README badge now reflects it.
-* README: install block leads with the GitHub development version (0.4.0);
+* README: install block leads with the GitHub development version (0.5.0);
   `dragmapr` handoff shows Shiny state capture via `d_widget_state()`.
-* Removed `ggiraph` from Suggests (unused) and removed the stray
-  `tests/testthat/Rplots.pdf` from version control.
+* `ggiraph` restored to `Suggests` (used by `inst/examples/hhs_app.R`); removed
+  the stray `tests/testthat/Rplots.pdf` from version control.
 * `compare_layouts()` compares primary layout classes, so mixing an
   `exploded_map` with a `grouped_exploded_map` (which inherits from it) is
   rejected with the documented class-mismatch error instead of a confusing

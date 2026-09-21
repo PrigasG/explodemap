@@ -86,7 +86,7 @@ as_sf <- function(layout, which = c("exploded", "original")) {
 #'
 #' @return A `data.frame` with one row per feature (in feature order) and
 #'   columns `dx`, `dy` (signed displacement components) and `distance`
-#'   (Euclidean displacement magnitude), all in the layout's CRS units.
+#'   (Euclidean displacement magnitude), all in metres.
 #' @export
 #'
 #' @examples
@@ -141,7 +141,9 @@ displacement_magnitudes <- function(layout) {
 #' Summarises how per-feature displacement changes between two layouts of the
 #' same input (e.g. different `alpha_r`/`alpha_l`/`gamma` choices or
 #' before/after collision refinement). Both layouts must be of the same class
-#' and cover the same features in the same row order.
+#' and cover the same input features in the same row order; this is verified
+#' by comparing the original geometries pairwise, so comparing two unrelated
+#' layouts of equal size is an error.
 #'
 #' @param before,after `exploded_map` objects (or both
 #'   `grouped_exploded_map` objects) to compare.
@@ -149,7 +151,7 @@ displacement_magnitudes <- function(layout) {
 #' @return A list with two elements:
 #' * `per_feature`: `data.frame` with one row per feature and columns
 #'   `distance_before`, `distance_after`, and `delta` (after minus before),
-#'   in the layout's CRS units.
+#'   in metres.
 #' * `summary`: `data.frame` with one row per layout (`"before"`, `"after"`)
 #'   and columns `total`, `mean`, and `max` displacement.
 #' @export
@@ -195,6 +197,23 @@ compare_layouts <- function(before, after) {
   if (length(d_before) != length(d_after)) {
     stop("`before` and `after` cover different numbers of features.",
          call. = FALSE)
+  }
+  # Same-input check: the original geometries must match pairwise, in order.
+  # Class and row count alone cannot tell two unrelated same-sized layouts
+  # apart, and comparing those would return plausible but meaningless numbers.
+  g_before <- sf::st_geometry(before$sf_orig)
+  g_after <- sf::st_geometry(after$sf_orig)
+  same_input <- vapply(
+    seq_along(g_before),
+    function(i) isTRUE(sf::st_equals(g_before[i], g_after[i], sparse = FALSE)[1, 1]),
+    logical(1)
+  )
+  if (!all(same_input)) {
+    stop(
+      "`before` and `after` must be layouts of the same input: the original ",
+      "geometries differ (or are in a different row order).",
+      call. = FALSE
+    )
   }
   per_feature <- data.frame(
     distance_before = d_before,

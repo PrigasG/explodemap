@@ -12,7 +12,7 @@ displacement_magnitudes(layout)
 \value{
 A \code{data.frame} with one row per feature (in feature order) and
 columns \code{dx}, \code{dy} (signed displacement components) and \code{distance}
-(Euclidean displacement magnitude), all in the layout's CRS units.
+(Euclidean displacement magnitude), all in metres.
 }
 \description{
 Measures how far each feature moved from its original position by comparing

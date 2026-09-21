@@ -15,13 +15,13 @@ test_that("validate_input rejects missing or empty group values", {
 })
 
 
-test_that("validate_input warns on non-metre projected units", {
+test_that("validate_input errors on non-metre projected units", {
   x <- make_test_sf()
-  expect_no_warning(validate_input(x, "region"))
+  expect_no_error(validate_input(x, "region"))
 
   # NAD83 / Texas South Central (ftUS): projected, but not metre-based
   x_ft <- sf::st_set_crs(x, 2272)
-  expect_warning(validate_input(x_ft, "region"), "instead of metres")
+  expect_error(validate_input(x_ft, "region"), "instead of metres")
 })
 
 

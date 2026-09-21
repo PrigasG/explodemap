@@ -202,7 +202,11 @@ test_that("assign_spatial_groups validates the groups argument", {
   )
   expect_error(
     assign_spatial_groups(x, method = "clusters", groups = 0),
-    "at least 1"
+    "at least 2"
+  )
+  expect_error(
+    assign_spatial_groups(x, method = "clusters", groups = 1),
+    "at least 2"
   )
 })
 

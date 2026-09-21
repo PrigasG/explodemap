@@ -63,24 +63,6 @@ test_that("as_sf validates its inputs", {
   expect_error(as_sf(grouped, which = "exploded"), "match.arg|should be one of")
 })
 
-test_that("explodemap_units reports CRS units", {
-  x <- make_test_sf()
-  expect_equal(explodemap_units(x), "m")
-
-  layout <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
-  expect_equal(explodemap_units(layout), "m")
-
-  grouped <- explode_grouped(
-    make_grouped_sf(), region_col = "region", plot = FALSE, quiet = TRUE
-  )
-  expect_equal(explodemap_units(grouped), "m")
-
-  no_crs <- sf::st_set_crs(x, NA)
-  expect_equal(explodemap_units(no_crs), NA_character_)
-
-  expect_error(explodemap_units(data.frame(a = 1)), "must be an")
-})
-
 test_that("displacement_magnitudes is deterministic and zero without displacement", {
   x <- make_test_sf()
   still <- explode_sf(
@@ -134,4 +116,22 @@ test_that("compare_layouts validates its inputs", {
   )
   expect_error(compare_layouts(a, g), "both be")
   expect_error(compare_layouts(x, a), "both be")
+})
+
+test_that("compare_layouts rejects unrelated same-sized layouts", {
+  x <- make_test_sf()
+  a <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
+
+  # Same number of features, different input geometries: must not compare.
+  y <- x
+  geoms <- sf::st_geometry(y)
+  geoms[c(1, 2)] <- geoms[c(2, 1)]
+  sf::st_geometry(y) <- geoms
+  b <- explode_sf(y, region_col = "region", plot = FALSE, quiet = TRUE)
+  expect_error(compare_layouts(a, b), "same input")
+
+  # Same input in a different row order: must not compare.
+  rev_x <- x[rev(seq_len(nrow(x))), ]
+  c <- explode_sf(rev_x, region_col = "region", plot = FALSE, quiet = TRUE)
+  expect_error(compare_layouts(a, c), "same input")
 })

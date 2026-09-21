@@ -49,7 +49,7 @@ explode_grouped(
 \item{preserve_manual}{When \code{TRUE}, use \code{initial_layout} as starting anchors
 so parameter changes refine an existing composition instead of replacing it.}
 
-\item{alpha_l}{Local expansion parameter for Level 1 (in CRS units)}
+\item{alpha_l}{Local expansion parameter for Level 1 (in metres)}
 
 \item{p}{Distance scaling exponent (default 1.25)}
 
@@ -77,7 +77,8 @@ visual effect rather than the solver term.}
 \item{fix_invalid}{Auto-repair invalid geometries (default TRUE)}
 
 \item{allow_other}{Keep features labeled \code{"Other"} in the output without
-moving them. Defaults to \code{FALSE} (error on \code{"Other"} unless handled).}
+moving them: they are excluded from the local explosion and anchor
+placement, then recombined unchanged. Defaults to \code{FALSE} (error on \code{"Other"} unless handled).}
 
 \item{centroid_fun}{"centroid" or "point_on_surface"}
 

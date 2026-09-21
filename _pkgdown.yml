@@ -88,11 +88,10 @@ reference:
   - explode_state
 - title: Geometry conversion and displacement analysis
   desc: |
-    Convert exploded layouts back to plain sf geometry, inspect CRS units,
+    Convert exploded layouts back to plain sf geometry
     and measure or compare per-feature displacement.
   contents:
   - as_sf
-  - explodemap_units
   - displacement_magnitudes
   - compare_layouts
 - title: Interactive focus maps

@@ -46,9 +46,9 @@
 #' @param gamma_r Regional clearance coefficient (default 3.0)
 #' @param gamma_l Local clearance coefficient (default 1.136)
 #' @param p Distance scaling exponent (default 1.25)
-#' @param alpha_r Optional manual override for regional separation (in CRS units).
+#' @param alpha_r Optional manual override for regional separation (in metres).
 #'   May be supplied independently of `alpha_l`.
-#' @param alpha_l Optional manual override for local expansion (in CRS units).
+#' @param alpha_l Optional manual override for local expansion (in metres).
 #'   May be supplied independently of `alpha_r`.
 #' @param refine If TRUE, apply a bounded collision-refinement pass after the
 #'   analytical displacement. Default is FALSE.
@@ -180,9 +180,9 @@ explode_state <- function(state_fips    = NULL,
 #' @param gamma_r Regional clearance coefficient (default 3.0)
 #' @param gamma_l Local clearance coefficient (default 1.136)
 #' @param p Distance scaling exponent (default 1.25)
-#' @param alpha_r Optional manual override for regional separation (in CRS units).
+#' @param alpha_r Optional manual override for regional separation (in metres).
 #'   May be supplied independently of `alpha_l`.
-#' @param alpha_l Optional manual override for local expansion (in CRS units).
+#' @param alpha_l Optional manual override for local expansion (in metres).
 #'   May be supplied independently of `alpha_r`.
 #' @param refine If TRUE, apply a bounded collision-refinement pass after the
 #'   analytical displacement. Default is FALSE.

@@ -361,7 +361,7 @@ layout_regions <- function(sf_obj, region_col,
 #'   `preserve_manual = TRUE`.
 #' @param preserve_manual When `TRUE`, use `initial_layout` as starting anchors
 #'   so parameter changes refine an existing composition instead of replacing it.
-#' @param alpha_l Local expansion parameter for Level 1 (in CRS units)
+#' @param alpha_l Local expansion parameter for Level 1 (in metres)
 #' @param p Distance scaling exponent (default 1.25)
 #' @param gamma_l Local clearance coefficient (default 1.136); used if alpha_l is NULL
 #' @param kappa Radial expansion factor (default 1.8)
@@ -377,7 +377,9 @@ layout_regions <- function(sf_obj, region_col,
 #' @param max_iter Max collision iterations (default 60)
 #' @param fix_invalid Auto-repair invalid geometries (default TRUE)
 #' @param allow_other Keep features labeled `"Other"` in the output without
-#'   moving them. Defaults to `FALSE` (error on `"Other"` unless handled).
+#'   moving them: they are excluded from the local explosion and anchor
+#'   placement, then recombined unchanged. Defaults to `FALSE` (error on
+#'   `"Other"` unless handled).
 #' @param centroid_fun "centroid" or "point_on_surface"
 #' @param plot Print plots (default TRUE). Automatically suppressed inside a
 #'   live Shiny session; use [plot.grouped_exploded_map()] inside `renderPlot()`.
@@ -427,8 +429,15 @@ explode_grouped <- function(sf_obj, region_col,
     fix_invalid = fix_invalid
   )
 
-  sf_clean <- sf_obj[sf_obj[[region_col]] != "Other", ]
-  stats <- compute_stats(sf_clean, region_col, centroid_fun = centroid_fun)
+  # "Other" features bypass the layout entirely: they are excluded from the
+  # local explosion and anchor placement below, then recombined unchanged
+  # (original row order restored) before the result is assembled.
+  other_idx <- which(sf_obj[[region_col]] == "Other")
+  work_idx <- which(sf_obj[[region_col]] != "Other")
+  sf_other <- sf_obj[other_idx, , drop = FALSE]
+  sf_work <- sf_obj[work_idx, , drop = FALSE]
+
+  stats <- compute_stats(sf_work, region_col, centroid_fun = centroid_fun)
 
   if (is.null(alpha_l)) {
     alpha_l <- gamma_l * 2 * stats$R_local / sqrt(stats$n_bar)
@@ -437,7 +446,7 @@ explode_grouped <- function(sf_obj, region_col,
   if (!quiet)
     message("Level 1: Applying local explosion (alpha_l = ", round(alpha_l), " m)...")
   sf_local <- explode_sf_core(
-    sf_obj,
+    sf_work,
     region_col,
     alpha_r = 0,
     alpha_l = alpha_l,
@@ -512,6 +521,15 @@ explode_grouped <- function(sf_obj, region_col,
   sf_grouped <- sf_local
   sf::st_geometry(sf_grouped) <- sf::st_sfc(new_geoms, crs = orig_crs)
   sf_grouped <- sf::st_as_sf(sf_grouped)
+
+  if (nrow(sf_other) > 0L) {
+    sf_local <- rbind(sf_local, sf_other)
+    sf_grouped <- rbind(sf_grouped, sf_other)
+    ord <- order(c(work_idx, other_idx))
+    sf_local <- sf_local[ord, , drop = FALSE]
+    sf_grouped <- sf_grouped[ord, , drop = FALSE]
+  }
+
   sf_grouped_wgs <- sf::st_transform(sf_grouped, 4326)
 
   params <- list(

@@ -100,4 +100,22 @@ test_that("explode_grouped rejects 'Other' by default, keeps it when allowed", {
   )
   expect_s3_class(out, "grouped_exploded_map")
   expect_equal(nrow(out$sf_grouped), nrow(x))
+
+  # "Other" features must survive completely unmoved: identical coordinates
+  # in both the local and grouped layers, in the original row order.
+  other_in <- x[x$region == "Other", ]
+  other_local <- out$sf_local[out$sf_local$region == "Other", ]
+  other_grouped <- out$sf_grouped[out$sf_grouped$region == "Other", ]
+  expect_equal(
+    sf::st_coordinates(other_local),
+    sf::st_coordinates(other_in)
+  )
+  expect_equal(
+    sf::st_coordinates(other_grouped),
+    sf::st_coordinates(other_in)
+  )
+  expect_equal(
+    out$sf_grouped$region,
+    x$region
+  )
 })

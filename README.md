@@ -14,7 +14,7 @@ Use it when you want to:
 ## Install
 
 ``` r
-# Development version (GitHub, currently 0.4.0)
+# Development version (GitHub, currently 0.5.0)
 # install.packages("pak")
 # pak::pak("PrigasG/explodemap")
 

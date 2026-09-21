@@ -90,7 +90,7 @@ hhs_palette <- function() {
 #' HHS reference-layout display offsets
 #'
 #' These offsets are a small documented finishing step for the national HHS
-#' reference view. They are interpreted in the layout's CRS units for projected layouts.
+#' reference view. They are interpreted in metres.
 #'
 #' @return A data frame with `region`, `dx_m`, and `dy_m`.
 #' @export

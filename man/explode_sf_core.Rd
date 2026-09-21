@@ -18,9 +18,9 @@ explode_sf_core(
 
 \item{region_col}{Grouping column name}
 
-\item{alpha_r}{Regional separation magnitude (in CRS units)}
+\item{alpha_r}{Regional separation magnitude (in metres)}
 
-\item{alpha_l}{Local expansion magnitude (in CRS units)}
+\item{alpha_l}{Local expansion magnitude (in metres)}
 
 \item{p}{Distance scaling exponent (default 1.25)}
 

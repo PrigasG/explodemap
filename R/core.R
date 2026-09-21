@@ -57,9 +57,10 @@ centroid_geoms <- function(x, centroid_fun = c("centroid", "point_on_surface")) 
 
 #' Validate inputs before explosion
 #'
-#' Checks CRS (present, projected, metre-based with a warning otherwise),
-#' empty geometries, invalid geometries, missing/empty group values, region
-#' count, and unmatched "Other" units. Optionally repairs invalid geometries.
+#' Checks CRS (present, projected, and metre-based -- anything else is an
+#' error), empty geometries, invalid geometries, missing/empty group values,
+#' region count, and unmatched "Other" units. Optionally repairs invalid
+#' geometries.
 #'
 #' @param sf_obj sf object to validate
 #' @param region_col Name of the grouping column
@@ -90,10 +91,10 @@ validate_input <- function(sf_obj, region_col,
   units <- sf::st_crs(sf_obj)$units
   if (!is.null(units) && length(units) == 1L && !is.na(units) &&
       !tolower(units) %in% c("m", "metre", "meter")) {
-    warning(
+    stop(
       "`sf_obj` uses map units '", units, "' instead of metres. ",
       "Distance parameters (alpha_r, alpha_l, gaps, ...) are interpreted in metres; ",
-      "consider reprojecting to a metre-based CRS.",
+      "reproject to a metre-based CRS with st_transform().",
       call. = FALSE
     )
   }
@@ -280,8 +281,8 @@ derive_params <- function(stats, gamma_r = 3.0, gamma_l = 1.136, p = 1.25) {
 #'
 #' @param sf_obj Projected sf object with region column
 #' @param region_col Grouping column name
-#' @param alpha_r Regional separation magnitude (in CRS units)
-#' @param alpha_l Local expansion magnitude (in CRS units)
+#' @param alpha_r Regional separation magnitude (in metres)
+#' @param alpha_l Local expansion magnitude (in metres)
 #' @param p Distance scaling exponent (default 1.25)
 #' @param centroid_fun "centroid" (default) or "point_on_surface"
 #' @return Exploded sf object (same CRS as input)

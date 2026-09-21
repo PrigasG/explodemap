@@ -62,7 +62,7 @@ group_palette <- function(groups, palette = "Dark 3", existing = NULL) {
 #'
 #' @param x An `sf` object.
 #' @param method One of `"quadrants"`, `"clusters"`, or `"individual"`.
-#' @param groups Number of clusters for `method = "clusters"`.
+#' @param groups Number of clusters for `method = "clusters"` (minimum 2).
 #' @param seed Random seed for deterministic clustering.
 #' @param group_col Name of the output grouping column.
 #'
@@ -116,8 +116,8 @@ assign_spatial_groups <- function(x,
     stop("`groups` must be a single whole number.", call. = FALSE)
   }
   groups <- as.integer(groups_num)
-  if (groups < 1L) {
-    stop("`groups` must be at least 1.", call. = FALSE)
+  if (groups < 2L) {
+    stop("`groups` must be at least 2 for method = \"clusters\".", call. = FALSE)
   }
   if (groups > nrow(x)) {
     stop(
@@ -125,7 +125,6 @@ assign_spatial_groups <- function(x,
       call. = FALSE
     )
   }
-  groups <- max(2L, min(groups, nrow(x)))
   seed <- suppressWarnings(as.integer(seed))
   if (length(seed) != 1L || is.na(seed)) {
     stop("`seed` must be a single whole number.", call. = FALSE)

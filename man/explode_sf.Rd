@@ -38,10 +38,10 @@ explode_sf(
 
 \item{p}{Distance scaling exponent (default 1.25)}
 
-\item{alpha_r}{Optional manual override for regional separation (in CRS units).
+\item{alpha_r}{Optional manual override for regional separation (in metres).
 May be supplied independently of \code{alpha_l}.}
 
-\item{alpha_l}{Optional manual override for local expansion (in CRS units).
+\item{alpha_l}{Optional manual override for local expansion (in metres).
 May be supplied independently of \code{alpha_r}.}
 
 \item{refine}{If TRUE, apply a bounded collision-refinement pass after the
