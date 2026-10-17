@@ -34,6 +34,16 @@ x <- sf::st_sf(
   geometry = sf::st_sfc(sq(0, 0), sq(2, 0), sq(10, 0), sq(12, 0), crs = 3857)
 )
 layout <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
-head(displacement_magnitudes(layout))
+dm <- displacement_magnitudes(layout)
+head(dm)
+
+# Summarise movement per region, then compare against a stronger push
+tapply(dm$distance, layout$sf_exp$region, mean)
+big <- explode_sf(x, region_col = "region", alpha_r = 100, alpha_l = 100,
+                  plot = FALSE, quiet = TRUE)
+compare_layouts(layout, big)$summary
 }
+}
+\seealso{
+\code{\link[=compare_layouts]{compare_layouts()}} for comparing two layouts.
 }

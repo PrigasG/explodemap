@@ -19,3 +19,21 @@ grouping diagnostics, anchor parameters, and anchor radii.
 \description{
 Summary of a grouped_exploded_map object
 }
+\examples{
+\donttest{
+sq <- function(xmin, ymin, size = 1) {
+  sf::st_polygon(list(matrix(
+    c(xmin, ymin, xmin + size, ymin, xmin + size, ymin + size,
+      xmin, ymin + size, xmin, ymin),
+    ncol = 2, byrow = TRUE
+  )))
+}
+x <- sf::st_sf(
+  id = c("a1", "a2", "b1", "b2"),
+  region = c("A", "A", "B", "B"),
+  geometry = sf::st_sfc(sq(0, 0), sq(2, 0), sq(10, 0), sq(12, 0), crs = 3857)
+)
+glayout <- explode_grouped(x, region_col = "region", plot = FALSE, quiet = TRUE)
+summary(glayout)
+}
+}

@@ -68,6 +68,33 @@ group_palette <- function(groups, palette = "Dark 3", existing = NULL) {
 #'
 #' @return `x` with `group_col` assigned.
 #' @export
+#' @examples
+#' \donttest{
+#' sq <- function(xmin, ymin, size = 1) {
+#'   sf::st_polygon(list(matrix(
+#'     c(xmin, ymin, xmin + size, ymin, xmin + size, ymin + size,
+#'       xmin, ymin + size, xmin, ymin),
+#'     ncol = 2, byrow = TRUE
+#'   )))
+#' }
+#' x <- sf::st_sf(
+#'   id = paste0("f", 1:6),
+#'   geometry = sf::st_sfc(sq(0, 0), sq(2, 0), sq(10, 0), sq(12, 0),
+#'                         sq(0, 10), sq(2, 10), crs = 3857)
+#' )
+#'
+#' # Deterministic quadrants from bounding-box centres
+#' table(assign_spatial_groups(x, method = "quadrants")$region)
+#'
+#' # K-means clustering on the same centres (seeded)
+#' table(assign_spatial_groups(x, method = "clusters", groups = 2, seed = 1)$region)
+#'
+#' # One group per feature
+#' head(assign_spatial_groups(x, method = "individual")$region)
+#'
+#' # groups < 2 is rejected for method = "clusters"
+#' try(assign_spatial_groups(x, method = "clusters", groups = 1))
+#' }
 assign_spatial_groups <- function(x,
                                   method = c("quadrants", "clusters", "individual"),
                                   groups = 6L,

@@ -47,19 +47,32 @@ informative message.
 }
 \examples{
 \dontrun{
+sq <- function(xmin, ymin, size = 1) {
+  sf::st_polygon(list(matrix(
+    c(xmin, ymin, xmin + size, ymin, xmin + size, ymin + size,
+      xmin, ymin + size, xmin, ymin),
+    ncol = 2, byrow = TRUE
+  )))
+}
+x <- sf::st_sf(
+  id = c("a1", "a2", "b1", "b2"),
+  region = c("A", "A", "B", "B"),
+  geometry = sf::st_sfc(sq(0, 0), sq(2, 0), sq(10, 0), sq(12, 0), crs = 3857)
+)
+
 # Two-level export
-result <- explode_sf(my_sf, region_col = "region", plot = FALSE)
+result <- explode_sf(x, region_col = "region", plot = FALSE)
 export_topojson(result, "exploded.topojson")
 
 # Three-level grouped export
-grp <- explode_grouped(my_sf, region_col = "region", plot = FALSE)
+grp <- explode_grouped(x, region_col = "region", plot = FALSE)
 export_topojson(grp, "grouped.topojson")
 
 # With simplification (breaks Proposition 1 guarantee)
 export_topojson(result, "simplified.topojson", simplify = 0.5)
 
 # Raw sf object
-export_topojson(my_sf, "raw.topojson", overwrite = TRUE)
+export_topojson(x, "raw.topojson", overwrite = TRUE)
 }
 
 }

@@ -204,7 +204,28 @@ explode_state <- function(state_fips    = NULL,
 #' @param label Title for plots
 #' @param quiet If `TRUE`, suppress all `message()` output. Default `FALSE`.
 #' @return An `exploded_map` S3 object
+#' @seealso [summary.exploded_map()] for inspecting a layout,
+#'   [displacement_magnitudes()] for measuring movement,
+#'   [as_sf()] for converting back to sf.
 #' @export
+#' @examples
+#' \donttest{
+#' sq <- function(xmin, ymin, size = 1) {
+#'   sf::st_polygon(list(matrix(
+#'     c(xmin, ymin, xmin + size, ymin, xmin + size, ymin + size,
+#'       xmin, ymin + size, xmin, ymin),
+#'     ncol = 2, byrow = TRUE
+#'   )))
+#' }
+#' x <- sf::st_sf(
+#'   id = c("a1", "a2", "b1", "b2"),
+#'   region = c("A", "A", "B", "B"),
+#'   geometry = sf::st_sfc(sq(0, 0), sq(2, 0), sq(10, 0), sq(12, 0), crs = 3857)
+#' )
+#' layout <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
+#' summary(layout)
+#' head(displacement_magnitudes(layout))
+#' }
 explode_sf <- function(sf_obj,
                        region_col   = "region",
                        gamma_r      = 3.0,

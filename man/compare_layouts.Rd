@@ -48,5 +48,19 @@ big <- explode_sf(x, region_col = "region", alpha_r = 100, alpha_l = 100,
                   plot = FALSE, quiet = TRUE)
 cmp <- compare_layouts(small, big)
 cmp$summary
+head(cmp$per_feature)
+
+# Unrelated layouts of the same size are rejected, not silently compared
+y <- sf::st_sf(
+  id = c("c1", "c2", "c3", "c4"),
+  region = c("A", "A", "B", "B"),
+  geometry = sf::st_sfc(sq(0, 50), sq(2, 50), sq(10, 50), sq(12, 50), crs = 3857)
+)
+other <- explode_sf(y, region_col = "region", plot = FALSE, quiet = TRUE)
+try(compare_layouts(small, other))
 }
+}
+\seealso{
+\code{\link[=displacement_magnitudes]{displacement_magnitudes()}} for per-feature movement,
+\code{\link[=as_sf]{as_sf()}} for converting layouts back to sf.
 }
