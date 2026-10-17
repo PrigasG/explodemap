@@ -64,6 +64,23 @@ plot.exploded_map <- function(x, which = c("exploded", "original", "both"), ...)
 #'   of dataset size, geometry statistics, displacement parameters, refinement
 #'   diagnostics, and implied calibration coefficients.
 #' @export
+#' @examples
+#' \donttest{
+#' sq <- function(xmin, ymin, size = 1) {
+#'   sf::st_polygon(list(matrix(
+#'     c(xmin, ymin, xmin + size, ymin, xmin + size, ymin + size,
+#'       xmin, ymin + size, xmin, ymin),
+#'     ncol = 2, byrow = TRUE
+#'   )))
+#' }
+#' x <- sf::st_sf(
+#'   id = c("a1", "a2", "b1", "b2"),
+#'   region = c("A", "A", "B", "B"),
+#'   geometry = sf::st_sfc(sq(0, 0), sq(2, 0), sq(10, 0), sq(12, 0), crs = 3857)
+#' )
+#' layout <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
+#' summary(layout)
+#' }
 summary.exploded_map <- function(object, ...) {
   stats  <- object$stats
   params <- object$params
@@ -190,6 +207,23 @@ plot.grouped_exploded_map <- function(x, which = c("grouped", "original", "local
 #'   object. The method is called for its side effect of printing dataset size,
 #'   grouping diagnostics, anchor parameters, and anchor radii.
 #' @export
+#' @examples
+#' \donttest{
+#' sq <- function(xmin, ymin, size = 1) {
+#'   sf::st_polygon(list(matrix(
+#'     c(xmin, ymin, xmin + size, ymin, xmin + size, ymin + size,
+#'       xmin, ymin + size, xmin, ymin),
+#'     ncol = 2, byrow = TRUE
+#'   )))
+#' }
+#' x <- sf::st_sf(
+#'   id = c("a1", "a2", "b1", "b2"),
+#'   region = c("A", "A", "B", "B"),
+#'   geometry = sf::st_sfc(sq(0, 0), sq(2, 0), sq(10, 0), sq(12, 0), crs = 3857)
+#' )
+#' glayout <- explode_grouped(x, region_col = "region", plot = FALSE, quiet = TRUE)
+#' summary(glayout)
+#' }
 summary.grouped_exploded_map <- function(object, ...) {
   stats  <- object$stats
   params <- object$params

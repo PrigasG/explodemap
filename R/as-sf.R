@@ -42,6 +42,15 @@
 #'
 #' # The untouched input geometries
 #' orig_sf <- as_sf(layout, which = "original")
+#'
+#' # Round-trip: write the displaced layer and read it back
+#' tmp <- tempfile(fileext = ".gpkg")
+#' sf::st_write(exp_sf, tmp, quiet = TRUE)
+#' identical(nrow(sf::st_read(tmp, quiet = TRUE)), nrow(exp_sf))
+#'
+#' # Grouped layouts: "grouped" displaces, "local" and "original" also available
+#' grp <- explode_grouped(x, region_col = "region", plot = FALSE, quiet = TRUE)
+#' as_sf(grp, which = "grouped")
 #' }
 as_sf <- function(layout, which = c("exploded", "original")) {
   if (inherits(layout, "grouped_exploded_map")) {
@@ -87,6 +96,7 @@ as_sf <- function(layout, which = c("exploded", "original")) {
 #' @return A `data.frame` with one row per feature (in feature order) and
 #'   columns `dx`, `dy` (signed displacement components) and `distance`
 #'   (Euclidean displacement magnitude), all in metres.
+#' @seealso [compare_layouts()] for comparing two layouts.
 #' @export
 #'
 #' @examples
@@ -104,7 +114,14 @@ as_sf <- function(layout, which = c("exploded", "original")) {
 #'   geometry = sf::st_sfc(sq(0, 0), sq(2, 0), sq(10, 0), sq(12, 0), crs = 3857)
 #' )
 #' layout <- explode_sf(x, region_col = "region", plot = FALSE, quiet = TRUE)
-#' head(displacement_magnitudes(layout))
+#' dm <- displacement_magnitudes(layout)
+#' head(dm)
+#'
+#' # Summarise movement per region, then compare against a stronger push
+#' tapply(dm$distance, layout$sf_exp$region, mean)
+#' big <- explode_sf(x, region_col = "region", alpha_r = 100, alpha_l = 100,
+#'                   plot = FALSE, quiet = TRUE)
+#' compare_layouts(layout, big)$summary
 #' }
 displacement_magnitudes <- function(layout) {
   if (inherits(layout, "grouped_exploded_map")) {
@@ -154,6 +171,8 @@ displacement_magnitudes <- function(layout) {
 #'   in metres.
 #' * `summary`: `data.frame` with one row per layout (`"before"`, `"after"`)
 #'   and columns `total`, `mean`, and `max` displacement.
+#' @seealso [displacement_magnitudes()] for per-feature movement,
+#'   [as_sf()] for converting layouts back to sf.
 #' @export
 #'
 #' @examples
@@ -176,6 +195,16 @@ displacement_magnitudes <- function(layout) {
 #'                   plot = FALSE, quiet = TRUE)
 #' cmp <- compare_layouts(small, big)
 #' cmp$summary
+#' head(cmp$per_feature)
+#'
+#' # Unrelated layouts of the same size are rejected, not silently compared
+#' y <- sf::st_sf(
+#'   id = c("c1", "c2", "c3", "c4"),
+#'   region = c("A", "A", "B", "B"),
+#'   geometry = sf::st_sfc(sq(0, 50), sq(2, 50), sq(10, 50), sq(12, 50), crs = 3857)
+#' )
+#' other <- explode_sf(y, region_col = "region", plot = FALSE, quiet = TRUE)
+#' try(compare_layouts(small, other))
 #' }
 compare_layouts <- function(before, after) {
   # Compare primary classes: grouped_exploded_map inherits from exploded_map,

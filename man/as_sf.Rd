@@ -47,5 +47,14 @@ sf::st_crs(exp_sf)
 
 # The untouched input geometries
 orig_sf <- as_sf(layout, which = "original")
+
+# Round-trip: write the displaced layer and read it back
+tmp <- tempfile(fileext = ".gpkg")
+sf::st_write(exp_sf, tmp, quiet = TRUE)
+identical(nrow(sf::st_read(tmp, quiet = TRUE)), nrow(exp_sf))
+
+# Grouped layouts: "grouped" displaces, "local" and "original" also available
+grp <- explode_grouped(x, region_col = "region", plot = FALSE, quiet = TRUE)
+as_sf(grp, which = "grouped")
 }
 }
